@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
-import { primaryNav, siteConfig } from '@/config/site'
+import { siteConfig } from '@/config/site'
 
-const router = useRouter()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const context = ref<CanvasRenderingContext2D | null>(null)
 const particles = ref<Particle[]>([])
@@ -23,11 +22,26 @@ interface Particle {
   opacity: number
 }
 
-const quickLinks = computed(() => primaryNav.filter((item) => item.path !== '/').slice(0, 3))
-
-const handleExplore = () => {
-  router.push('/blog')
-}
+const heroActions = [
+  {
+    label: '进入博客',
+    to: '/blog',
+    external: false,
+    icon: 'blog'
+  },
+  {
+    label: 'GitHub',
+    to: 'https://github.com/zsh260439',
+    external: true,
+    icon: 'github'
+  },
+  {
+    label: 'LeetCode',
+    to: 'https://leetcode.cn/u/qacter/',
+    external: true,
+    icon: 'code'
+  }
+] as const
 
 const createParticle = (canvasWidth: number, canvasHeight: number): Particle => ({
   x: Math.random() * canvasWidth,
@@ -163,19 +177,38 @@ watch(canvasRef, (canvas) => {
       </p>
 
       <div class="hero-actions">
-        <button class="hero-cta hero-cta--primary" @click="handleExplore">
-          <span>进入博客</span>
-          <span class="cta-line"></span>
-        </button>
-
-        <router-link
-          v-for="item in quickLinks"
-          :key="item.path"
-          :to="item.path"
-          class="hero-link"
+        <RouterLink
+          v-for="item in heroActions.filter((action) => !action.external)"
+          :key="item.label"
+          :to="item.to"
+          class="hero-action-card"
         >
-          {{ item.label }}
-        </router-link>
+          <span class="hero-action-card__icon" aria-hidden="true">
+            <svg v-if="item.icon === 'blog'" viewBox="0 0 24 24" class="hero-action-card__svg">
+              <path d="M7 6.5H17M7 12H17M7 17.5H13M5.5 4.5H18.5V19.5H5.5V4.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>{{ item.label }}</span>
+        </RouterLink>
+
+        <a
+          v-for="item in heroActions.filter((action) => action.external)"
+          :key="item.label"
+          :href="item.to"
+          class="hero-action-card"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span class="hero-action-card__icon" aria-hidden="true">
+            <svg v-if="item.icon === 'github'" viewBox="0 0 24 24" class="hero-action-card__svg">
+              <path d="M12 3C7.03 3 3 7.03 3 12C3 15.98 5.58 19.35 9.16 20.54C9.61 20.62 9.77 20.35 9.77 20.12V18.56C7.27 19.1 6.74 17.49 6.74 17.49C6.33 16.45 5.74 16.17 5.74 16.17C4.93 15.62 5.8 15.63 5.8 15.63C6.69 15.69 7.16 16.55 7.16 16.55C7.96 17.91 9.25 17.52 9.76 17.29C9.84 16.71 10.08 16.31 10.35 16.08C8.35 15.85 6.25 15.08 6.25 11.63C6.25 10.64 6.6 9.84 7.18 9.22C7.09 8.99 6.78 8.05 7.27 6.78C7.27 6.78 8.02 6.54 9.75 7.72C10.47 7.52 11.23 7.42 12 7.42C12.77 7.42 13.53 7.52 14.25 7.72C15.98 6.54 16.73 6.78 16.73 6.78C17.22 8.05 16.91 8.99 16.82 9.22C17.4 9.84 17.75 10.64 17.75 11.63C17.75 15.09 15.64 15.84 13.64 16.07C13.99 16.37 14.3 16.95 14.3 17.85V20.12C14.3 20.35 14.46 20.63 14.91 20.54C18.49 19.35 21.07 15.98 21.07 12C21.07 7.03 17.04 3 12 3Z" fill="currentColor" />
+            </svg>
+            <svg v-else-if="item.icon === 'code'" viewBox="0 0 24 24" class="hero-action-card__svg">
+              <path d="M8.5 8L4.5 12L8.5 16M15.5 8L19.5 12L15.5 16M13.5 5L10.5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>{{ item.label }}</span>
+        </a>
       </div>
     </div>
 
@@ -284,62 +317,43 @@ watch(canvasRef, (canvas) => {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.9rem;
+  gap: 1rem;
 }
 
-.hero-cta {
+.hero-action-card {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-primary);
-  font-size: 0.8rem;
-  transition: color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-}
-
-.hero-cta--primary {
-  padding: 0.85rem 1.25rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
+  gap: 0.75rem;
+  min-width: 11rem;
+  justify-content: center;
+  padding: 1rem 1.35rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
   color: var(--text-primary);
-  box-shadow: var(--shadow-soft);
-}
-
-.hero-cta:hover {
-  color: var(--accent-cyan);
-  transform: translateY(-2px);
-}
-
-.cta-line {
-  width: 0;
-  height: 1px;
-  background: var(--accent-cyan);
-  transition: width 0.4s ease;
-}
-
-.hero-cta:hover .cta-line {
-  width: 100%;
-}
-
-.hero-link {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--border-light);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.52);
-  backdrop-filter: blur(12px);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--text-secondary);
   text-decoration: none;
-  transition: transform 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: transform 0.24s ease, border-color 0.24s ease, background 0.24s ease;
 }
 
-.hero-link:hover {
+.hero-action-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 119, 204, 0.18);
+  border-color: rgba(15, 23, 42, 0.16);
+  background: #ffffff;
+}
+
+.hero-action-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-primary);
+}
+
+.hero-action-card__svg {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .scroll-hint {
@@ -386,6 +400,16 @@ watch(canvasRef, (canvas) => {
 @media (max-width: 767px) {
   .hero-content {
     padding: 0 1.25rem;
+  }
+
+  .hero-actions {
+    gap: 0.8rem;
+  }
+
+  .hero-action-card {
+    width: min(100%, 16rem);
+    min-width: 0;
+    padding: 0.95rem 1.1rem;
   }
 
   .hero-tagline {

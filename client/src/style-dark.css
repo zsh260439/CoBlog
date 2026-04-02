@@ -149,7 +149,7 @@ code, pre {
 }
 
 .page-content-reveal {
-  animation: contentReveal 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: contentReveal 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Subtle gradient backgrounds */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import 'highlight.js/styles/github.css'
 import { renderMarkdown } from '@/utils'
 
@@ -8,14 +8,90 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const viewerRef = ref<HTMLElement | null>(null)
+const resetTimers = new Map<HTMLButtonElement, number>()
 
 const renderedContent = computed(() => {
   return renderMarkdown(props.content)
 })
+
+const decorateCodeBlocks = () => {
+  const root = viewerRef.value
+
+  if (!root) {
+    return
+  }
+
+  root.querySelectorAll('pre').forEach((preElement) => {
+    if (preElement.parentElement?.classList.contains('code-block')) {
+      return
+    }
+
+    const wrapper = document.createElement('div')
+    wrapper.className = 'code-block'
+
+    preElement.parentNode?.insertBefore(wrapper, preElement)
+    wrapper.appendChild(preElement)
+
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'code-copy-button'
+    button.setAttribute('data-copy-code', 'true')
+    button.textContent = '复制代码'
+    wrapper.appendChild(button)
+  })
+}
+
+const handleCopyClick = async (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null
+  const button = target?.closest<HTMLButtonElement>('[data-copy-code="true"]')
+
+  if (!button) {
+    return
+  }
+
+  const wrapper = button.closest('.code-block')
+  const codeElement = wrapper?.querySelector('pre code')
+  const codeText = codeElement?.textContent ?? wrapper?.querySelector('pre')?.textContent ?? ''
+
+  if (!codeText.trim()) {
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(codeText)
+    button.textContent = '已复制'
+  } catch {
+    button.textContent = '复制失败'
+  }
+
+  const currentTimer = resetTimers.get(button)
+  if (currentTimer) {
+    window.clearTimeout(currentTimer)
+  }
+
+  const timer = window.setTimeout(() => {
+    button.textContent = '复制代码'
+    resetTimers.delete(button)
+  }, 1400)
+
+  resetTimers.set(button, timer)
+}
+
+watch(renderedContent, async () => {
+  await nextTick()
+  decorateCodeBlocks()
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  resetTimers.forEach((timer) => {
+    window.clearTimeout(timer)
+  })
+})
 </script>
 
 <template>
-  <div class="markdown-viewer" v-html="renderedContent"></div>
+  <div ref="viewerRef" class="markdown-viewer" v-html="renderedContent" @click="handleCopyClick"></div>
 </template>
 
 <style scoped>
@@ -78,6 +154,32 @@ const renderedContent = computed(() => {
   border: 1px solid var(--border-light);
   margin: 1.5rem 0 !important;
   overflow-x: auto;
+}
+
+.markdown-viewer :deep(.code-block) {
+  position: relative;
+}
+
+.markdown-viewer :deep(.code-copy-button) {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 1;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.34rem 0.72rem;
+  font-family: var(--font-primary);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.markdown-viewer :deep(.code-copy-button:hover) {
+  border-color: rgba(0, 119, 204, 0.24);
+  color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .markdown-viewer :deep(code) {
