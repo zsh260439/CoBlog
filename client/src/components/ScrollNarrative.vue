@@ -123,7 +123,6 @@ onUnmounted(() => {
 /* 左侧 */
 .narrative-left {
   width: 100%;
-  md: width 50%;
   padding: 6rem 4rem;
 }
 
@@ -149,8 +148,8 @@ onUnmounted(() => {
 }
 
 .section-number span {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 3rem;
+  font-family: var(--font-primary);
+  font-size: 2.5rem;
   font-weight: 300;
   color: var(--accent-cyan);
   opacity: 0.4;
@@ -164,8 +163,8 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-family: var(--font-primary);
+  font-size: clamp(1.75rem, 4.4vw, 3rem);
   font-weight: 300;
   letter-spacing: -0.01em;
   color: var(--text-primary);
@@ -174,7 +173,7 @@ onUnmounted(() => {
 }
 
 .section-subtitle {
-  font-size: 1rem;
+  font-size: 0.94rem;
   font-weight: 400;
   color: var(--accent-cyan);
   margin-bottom: 1.5rem;
@@ -182,7 +181,7 @@ onUnmounted(() => {
 }
 
 .section-content {
-  font-size: 1.0625rem;
+  font-size: 0.98rem;
   color: var(--text-secondary);
   line-height: 1.8;
   max-width: 28rem;
@@ -302,15 +301,15 @@ onUnmounted(() => {
 }
 
 .card-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.5rem;
+  font-family: var(--font-primary);
+  font-size: 1.32rem;
   font-weight: 300;
   color: var(--text-primary);
   margin: 0.75rem 0;
 }
 
 .card-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   line-height: 1.6;
 }

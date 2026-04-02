@@ -3,6 +3,22 @@
    Clean white backgrounds with subtle accents
    ============================================ */
 
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/outfit-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+}
+
 :root {
   /* Primary backgrounds - pure white */
   --primary: #ffffff;
@@ -10,6 +26,7 @@
   --tertiary: #f1f3f5;
 
   /* Accent colors */
+  --accent-muted: #7c8ea3;
   --accent-cyan: #0077cc;
   --accent-teal: #00a399;
 
@@ -20,17 +37,25 @@
   --bg-elevated: #f1f3f5;
 
   /* Text colors - dark for contrast */
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --text-muted: #9a9a9a;
+  --text-primary: #2b3340;
+  --text-secondary: #5f6978;
+  --text-muted: #98a3b3;
 
   /* Borders - subtle */
   --border-light: rgba(0, 0, 0, 0.06);
   --border-medium: rgba(0, 0, 0, 0.12);
 
   /* Typography */
-  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-primary: 'Outfit', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Outfit', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Layout */
+  --header-height: 72px;
+  --content-width: 1200px;
+
+  /* Shadows */
+  --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.05);
+  --shadow-strong: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -44,12 +69,17 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.75;
+  line-height: 1.8;
   font-weight: 400;
 }
 
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+}
+
 code, pre {
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
 }
 
 /* Soft Scrollbar */
@@ -94,6 +124,18 @@ code, pre {
   50% { opacity: 0.6; }
 }
 
+@keyframes contentReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
@@ -104,6 +146,10 @@ code, pre {
 
 .animate-slide-in {
   animation: slideInRight 0.6s ease-out forwards;
+}
+
+.page-content-reveal {
+  animation: contentReveal 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Subtle gradient backgrounds */
@@ -154,6 +200,14 @@ code, pre {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .page-content-reveal {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {

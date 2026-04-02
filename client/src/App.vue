@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import ScrollProgress from '@/components/ScrollProgress.vue'
+import BackToTopButton from '@/components/ui/BackToTopButton.vue'
 import AppHeader from '@/components/ui/AppHeader.vue'
 import AppFooter from '@/components/ui/AppFooter.vue'
+
+const route = useRoute()
+
+const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
+const routeViewKey = computed(() => JSON.stringify({ path: route.path, query: route.query }))
 </script>
 
 <template>
@@ -10,10 +18,13 @@ import AppFooter from '@/components/ui/AppFooter.vue'
     <ScrollProgress />
 
     <AppHeader />
-    <main class="main">
-      <router-view />
+    <main class="main" :class="{ 'main--overlay': isOverlayLayout }">
+      <RouterView v-slot="{ Component }">
+        <component :is="Component" :key="routeViewKey" class="route-page" />
+      </RouterView>
     </main>
     <AppFooter />
+    <BackToTopButton />
   </div>
 </template>
 
@@ -26,6 +37,15 @@ import AppFooter from '@/components/ui/AppFooter.vue'
 
 .main {
   flex: 1;
-  margin-top: 60px;
+  margin-top: var(--header-height);
+  overflow-x: clip;
+}
+
+.main--overlay {
+  margin-top: 0;
+}
+
+.route-page {
+  min-height: 100%;
 }
 </style>
