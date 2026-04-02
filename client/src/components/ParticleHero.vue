@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
+import { primaryNav, siteConfig } from '@/config/site'
 
 const router = useRouter()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-let animationId: number | null = null
+const context = ref<CanvasRenderingContext2D | null>(null)
+const particles = ref<Particle[]>([])
+const { width, height } = useWindowSize()
+const preferredReducedMotion = usePreferredReducedMotion()
 
-// 粒子配置
 const PARTICLE_COUNT = 40
 const CONNECTION_DISTANCE = 100
 
@@ -19,135 +23,162 @@ interface Particle {
   opacity: number
 }
 
+const quickLinks = computed(() => primaryNav.filter((item) => item.path !== '/').slice(0, 3))
+
 const handleExplore = () => {
   router.push('/blog')
 }
 
-const createParticle = (width: number, height: number): Particle => ({
-  x: Math.random() * width,
-  y: Math.random() * height,
+const createParticle = (canvasWidth: number, canvasHeight: number): Particle => ({
+  x: Math.random() * canvasWidth,
+  y: Math.random() * canvasHeight,
   vx: (Math.random() - 0.5) * 0.2,
   vy: (Math.random() - 0.5) * 0.2,
   size: Math.random() * 1.5 + 0.5,
   opacity: Math.random() * 0.2 + 0.08
 })
 
-const updateParticle = (p: Particle, width: number, height: number) => {
-  p.x += p.vx
-  p.y += p.vy
-  if (p.x < 0 || p.x > width) p.vx *= -1
-  if (p.y < 0 || p.y > height) p.vy *= -1
+const updateParticle = (particle: Particle, canvasWidth: number, canvasHeight: number) => {
+  particle.x += particle.vx
+  particle.y += particle.vy
+
+  if (particle.x < 0 || particle.x > canvasWidth) {
+    particle.vx *= -1
+  }
+
+  if (particle.y < 0 || particle.y > canvasHeight) {
+    particle.vy *= -1
+  }
 }
 
-const drawParticle = (ctx: CanvasRenderingContext2D, p: Particle) => {
-  ctx.fillStyle = `rgba(100, 160, 193, ${p.opacity})`
+const drawParticle = (ctx: CanvasRenderingContext2D, particle: Particle) => {
+  ctx.fillStyle = `rgba(100, 160, 193, ${particle.opacity})`
   ctx.beginPath()
-  ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+  ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
   ctx.fill()
 }
 
-const drawConnections = (
-  ctx: CanvasRenderingContext2D,
-  particles: Particle[],
-  width: number,
-  height: number
-) => {
+const drawConnections = (ctx: CanvasRenderingContext2D, items: Particle[]) => {
   ctx.strokeStyle = 'rgba(100, 160, 193, 0.025)'
   ctx.lineWidth = 0.5
 
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x
-      const dy = particles[i].y - particles[j].y
-      const dist = Math.sqrt(dx * dx + dy * dy)
+  for (let index = 0; index < items.length; index += 1) {
+    for (let nextIndex = index + 1; nextIndex < items.length; nextIndex += 1) {
+      const dx = items[index].x - items[nextIndex].x
+      const dy = items[index].y - items[nextIndex].y
+      const distance = Math.sqrt(dx * dx + dy * dy)
 
-      if (dist < CONNECTION_DISTANCE) {
+      if (distance < CONNECTION_DISTANCE) {
         ctx.beginPath()
-        ctx.moveTo(particles[i].x, particles[i].y)
-        ctx.lineTo(particles[j].x, particles[j].y)
+        ctx.moveTo(items[index].x, items[index].y)
+        ctx.lineTo(items[nextIndex].x, items[nextIndex].y)
         ctx.stroke()
       }
     }
   }
 }
 
-const initCanvas = () => {
+const syncCanvas = () => {
   const canvas = canvasRef.value
-  if (!canvas) return
 
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  let width = window.innerWidth
-  let height = window.innerHeight
-  canvas.width = width
-  canvas.height = height
-
-  const particles: Particle[] = []
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    particles.push(createParticle(width, height))
+  if (!canvas) {
+    return
   }
 
-  const animate = () => {
-    ctx.clearRect(0, 0, width, height)
-    drawConnections(ctx, particles, width, height)
-    particles.forEach(p => {
-      updateParticle(p, width, height)
-      drawParticle(ctx, p)
-    })
-    animationId = requestAnimationFrame(animate)
-  }
-
-  animate()
-
-  const handleResize = () => {
-    width = window.innerWidth
-    height = window.innerHeight
-    canvas.width = width
-    canvas.height = height
-  }
-
-  window.addEventListener('resize', handleResize)
+  context.value = canvas.getContext('2d')
+  canvas.width = width.value
+  canvas.height = height.value
 }
 
-onMounted(() => {
-  initCanvas()
-})
+const resetParticles = () => {
+  particles.value = Array.from({ length: PARTICLE_COUNT }, () => createParticle(width.value, height.value))
+}
 
-onUnmounted(() => {
-  if (animationId) {
-    cancelAnimationFrame(animationId)
+const drawScene = () => {
+  const ctx = context.value
+
+  if (!ctx) {
+    return
   }
-})
+
+  ctx.clearRect(0, 0, width.value, height.value)
+  drawConnections(ctx, particles.value)
+
+  particles.value.forEach((particle) => {
+    updateParticle(particle, width.value, height.value)
+    drawParticle(ctx, particle)
+  })
+}
+
+const { pause, resume } = useRafFn(() => {
+  if (preferredReducedMotion.value === 'reduce') {
+    return
+  }
+
+  drawScene()
+}, { immediate: false })
+
+watch([width, height], () => {
+  syncCanvas()
+  resetParticles()
+}, { immediate: true })
+
+watch(preferredReducedMotion, (value) => {
+  if (value === 'reduce') {
+    pause()
+    return
+  }
+
+  resume()
+}, { immediate: true })
+
+watch(canvasRef, (canvas) => {
+  if (!canvas) {
+    pause()
+    return
+  }
+
+  syncCanvas()
+  resetParticles()
+  resume()
+}, { immediate: true })
 </script>
 
 <template>
   <div class="particle-hero">
-    <!-- 背景装饰 -->
     <div class="hero-bg"></div>
     <canvas ref="canvasRef" class="hero-canvas"></canvas>
     <div class="hero-glow"></div>
 
-    <!-- 内容 -->
     <div class="hero-content">
-      <p class="hero-tagline typewriter-text">欢迎来到 Zsint 的博客作品集...</p>
+      <p class="hero-tagline typewriter-text">欢迎来到 Zsint的主页...</p>
 
       <h1 class="hero-title">
         <span class="text-cyan">C</span>o<span class="text-teal">B</span>log
       </h1>
 
       <p class="hero-subtitle">
-        代码与故事的交汇处<br />
+        {{ siteConfig.tagline }}<br />
         <span class="text-muted">Where code meets story</span>
       </p>
 
-      <button class="hero-cta" @click="handleExplore">
-        <span>进入博客</span>
-        <span class="cta-line"></span>
-      </button>
+      <div class="hero-actions">
+        <button class="hero-cta hero-cta--primary" @click="handleExplore">
+          <span>进入博客</span>
+          <span class="cta-line"></span>
+        </button>
+
+        <router-link
+          v-for="item in quickLinks"
+          :key="item.path"
+          :to="item.path"
+          class="hero-link"
+        >
+          {{ item.label }}
+        </router-link>
+      </div>
     </div>
 
-    <!-- 滚动提示 -->
     <div class="scroll-hint">
       <span>Scroll</span>
       <div class="scroll-line"></div>
@@ -194,14 +225,15 @@ onUnmounted(() => {
 .hero-content {
   position: relative;
   z-index: 1;
+  width: min(100%, 52rem);
   text-align: center;
   padding: 0 2rem;
   animation: fadeInUp 0.8s ease-out;
 }
 
 .hero-tagline {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
   letter-spacing: 0.2em;
   color: var(--text-muted);
   margin-bottom: 3rem;
@@ -226,8 +258,8 @@ onUnmounted(() => {
 }
 
 .hero-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(4rem, 12vw, 9rem);
+  font-family: var(--font-primary);
+  font-size: clamp(3.4rem, 10vw, 7.5rem);
   font-weight: 300;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -240,11 +272,19 @@ onUnmounted(() => {
 .text-muted { color: var(--text-muted); }
 
 .hero-subtitle {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   line-height: 1.8;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
   font-weight: 400;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.9rem;
 }
 
 .hero-cta {
@@ -252,17 +292,24 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  background: none;
   border: none;
   cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  transition: color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+.hero-cta--primary {
+  padding: 0.85rem 1.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
 }
 
 .hero-cta:hover {
   color: var(--accent-cyan);
+  transform: translateY(-2px);
 }
 
 .cta-line {
@@ -274,6 +321,25 @@ onUnmounted(() => {
 
 .hero-cta:hover .cta-line {
   width: 100%;
+}
+
+.hero-link {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: transform 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.hero-link:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 119, 204, 0.18);
+  color: var(--text-primary);
 }
 
 .scroll-hint {
@@ -289,7 +355,7 @@ onUnmounted(() => {
 }
 
 .scroll-hint span {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-primary);
   font-size: 0.625rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -315,5 +381,18 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: reduce) {
   .hero-canvas { display: none; }
   .hero-content, .scroll-hint { animation: none; }
+}
+
+@media (max-width: 767px) {
+  .hero-content {
+    padding: 0 1.25rem;
+  }
+
+  .hero-tagline {
+    white-space: normal;
+    border-right: none;
+    width: auto;
+    animation: fadeIn 0.8s ease-out;
+  }
 }
 </style>

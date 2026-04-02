@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import markdownIt from 'markdown-it'
-import highlightjs from 'markdown-it-highlightjs'
-import 'highlight.js/styles/github-dark.css'
+import 'highlight.js/styles/github.css'
+import { renderMarkdown } from '@/utils'
 
 interface Props {
   content: string
@@ -10,14 +9,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const md = markdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-}).use(highlightjs)
-
 const renderedContent = computed(() => {
-  return md.render(props.content)
+  return renderMarkdown(props.content)
 })
 </script>
 
@@ -27,11 +20,11 @@ const renderedContent = computed(() => {
 
 <style scoped>
 .markdown-viewer {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-primary);
   color: var(--text-secondary);
-  line-height: 1.8;
+  line-height: 1.9;
   max-width: 100%;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .markdown-viewer :deep(h1),
@@ -40,30 +33,29 @@ const renderedContent = computed(() => {
 .markdown-viewer :deep(h4),
 .markdown-viewer :deep(h5),
 .markdown-viewer :deep(h6) {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+  font-family: var(--font-primary);
+  font-weight: 500;
   color: var(--text-primary);
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  border-left: 3px solid var(--accent-cyan);
-  padding-left: 0.75rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.9rem;
+  letter-spacing: -0.02em;
 }
 
 .markdown-viewer :deep(h1) {
-  font-size: 1.75rem;
-  border-left-width: 4px;
+  font-size: 1.8rem;
 }
 
 .markdown-viewer :deep(h2) {
-  font-size: 1.375rem;
+  font-size: 1.38rem;
 }
 
 .markdown-viewer :deep(h3) {
-  font-size: 1.125rem;
+  font-size: 1.08rem;
 }
 
 .markdown-viewer :deep(p) {
-  margin-bottom: 1.25rem;
+  margin: 0 0 1.3rem;
   color: var(--text-secondary);
 }
 
@@ -79,17 +71,17 @@ const renderedContent = computed(() => {
 }
 
 .markdown-viewer :deep(pre) {
-  background: var(--bg-elevated) !important;
+  background: #f4f7fb !important;
   color: var(--text-primary) !important;
   padding: 1.25rem !important;
-  border-radius: 6px !important;
+  border-radius: 18px !important;
   border: 1px solid var(--border-light);
   margin: 1.5rem 0 !important;
   overflow-x: auto;
 }
 
 .markdown-viewer :deep(code) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-primary);
   font-size: 0.875em;
 }
 
@@ -105,17 +97,19 @@ const renderedContent = computed(() => {
   max-width: 100%;
   height: auto;
   border: 1px solid var(--border-light);
-  border-radius: 4px;
-  margin: 1.5rem 0;
+  border-radius: 18px;
+  margin: 2rem 0;
   display: block;
+  box-shadow: var(--shadow-soft);
 }
 
 .markdown-viewer :deep(blockquote) {
-  border-left: 3px solid var(--accent-purple);
-  padding-left: 1rem;
-  margin: 1.5rem 0;
-  color: var(--text-muted);
-  font-style: italic;
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 0 16px 16px 0;
+  background: rgba(0, 119, 204, 0.05);
+  color: var(--text-secondary);
 }
 
 .markdown-viewer :deep(ul),
@@ -140,6 +134,8 @@ const renderedContent = computed(() => {
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: 0.9em;
+  overflow: hidden;
+  border-radius: 14px;
 }
 
 .markdown-viewer :deep(th),
@@ -151,12 +147,12 @@ const renderedContent = computed(() => {
 
 .markdown-viewer :deep(th) {
   background: var(--bg-elevated);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--accent-cyan);
 }
 
 .markdown-viewer :deep(strong) {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 </style>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const version = '2026.04.01'
+import { primaryNav, siteConfig } from '@/config/site'
+
+const version = siteConfig.footerVersion
 </script>
 
 <template>
@@ -8,10 +10,17 @@ const version = '2026.04.01'
       <span class="footer-version">v{{ version }}</span>
 
       <nav class="footer-nav">
-        <!-- 保留链接位置 -->
+        <router-link
+          v-for="item in primaryNav"
+          :key="item.path"
+          :to="item.path"
+          class="footer-link"
+        >
+          {{ item.label }}
+        </router-link>
       </nav>
 
-      <span class="footer-license">MIT License</span>
+      <span class="footer-license">{{ siteConfig.footerLicense }}</span>
     </div>
   </footer>
 </template>
@@ -43,7 +52,7 @@ const version = '2026.04.01'
 
 .footer-version,
 .footer-license {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-primary);
   font-size: 0.7rem;
   color: var(--text-muted);
 }
@@ -54,14 +63,14 @@ const version = '2026.04.01'
 }
 
 .footer-nav a {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-primary);
   font-size: 0.7rem;
   color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.footer-nav a:hover {
+.footer-link:hover {
   color: var(--accent-cyan);
 }
 </style>
