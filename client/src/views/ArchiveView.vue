@@ -3,64 +3,23 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
+import PageHero from '@/components/ui/PageHero.vue'
+import { useArchive } from '@/composables/useArchive'
 import { archiveHeroImage } from '@/mocks/articles'
 import { siteConfig } from '@/config/site'
 import { usePosts } from '@/composables/usePosts'
 
 const { posts, isLoading, error } = usePosts()
-
-const heroStyle = computed(() => ({
-  backgroundImage: `linear-gradient(180deg, rgba(16, 20, 31, 0.18), rgba(16, 20, 31, 0.58)), url(${archiveHeroImage || siteConfig.aboutHeroImage})`
-}))
-
-const archiveGroups = computed(() => {
-  const groups = new Map<string, typeof posts.value>()
-
-  posts.value.forEach((post) => {
-    const year = new Date(post.createdAt).getFullYear().toString()
-    const currentGroup = groups.get(year) ?? []
-    currentGroup.push(post)
-    groups.set(year, currentGroup)
-  })
-
-  return [...groups.entries()].map(([year, items]) => ({
-    year,
-    posts: items.sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
-  }))
-})
-
-const siteStats = computed(() => {
-  const { onlineUsers, todayViews, totalViews, totalVisitors } = siteConfig.siteStatsSnapshot
-
-  return [
-    { label: '在线访客', value: String(onlineUsers) },
-    { label: '今日浏览', value: String(todayViews) },
-    { label: '总浏览量', value: String(totalViews) },
-    { label: '总访客量', value: String(totalVisitors) }
-  ]
-})
-
-const formatArchiveDate = (date: string) => {
-  const parsed = new Date(date)
-  const month = `${parsed.getMonth() + 1}`.padStart(2, '0')
-  const day = `${parsed.getDate()}`.padStart(2, '0')
-
-  return `${month}-${day}`
-}
+const { archiveGroups, formatArchiveDate } = useArchive(posts)
 </script>
 
 <template>
   <div class="archive-view">
-    <section class="archive-hero">
-      <div class="archive-hero__media" :style="heroStyle"></div>
-      <div class="archive-hero__overlay"></div>
-      <div class="archive-hero__mist"></div>
-
-      <div class="archive-hero__inner">
-        <h1 class="archive-hero__title">归档</h1>
-        <p class="archive-hero__description">时光轴上的足迹</p>
-      </div>
-    </section>
+    <PageHero
+      title="归档"
+      description="时光轴上的足迹"
+      :image="archiveHeroImage || siteConfig.aboutHeroImage"
+    />
 
     <section class="archive-shell page-content-reveal">
       <div class="archive-main">
@@ -96,13 +55,13 @@ const formatArchiveDate = (date: string) => {
       <aside class="archive-side">
         <ProfileSidebarCard
           :posts="posts"
-          :image-style="heroStyle"
+          :image-url="archiveHeroImage || siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
           :owner-location="siteConfig.ownerLocation"
         />
 
-        <SiteStatsCard :items="siteStats" />
+        <SiteStatsCard />
       </aside>
     </section>
   </div>
@@ -111,61 +70,6 @@ const formatArchiveDate = (date: string) => {
 <style scoped>
 .archive-view {
   background: linear-gradient(180deg, #f1f4f8 0%, #ffffff 34%, #ffffff 100%);
-}
-
-.archive-hero {
-  position: relative;
-  min-height: 370px;
-  overflow: hidden;
-  color: #ffffff;
-}
-
-.archive-hero__media,
-.archive-hero__overlay,
-.archive-hero__mist {
-  position: absolute;
-  inset: 0;
-}
-
-.archive-hero__media {
-  background:
-    linear-gradient(135deg, rgba(57, 64, 100, 0.88), rgba(27, 43, 89, 0.48)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 32%);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.02);
-}
-
-.archive-hero__overlay {
-  background: linear-gradient(180deg, rgba(11, 18, 28, 0.16), rgba(11, 18, 28, 0.38));
-}
-
-.archive-hero__mist {
-  top: auto;
-  height: 148px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.74) 60%, #ffffff 100%);
-}
-
-.archive-hero__inner {
-  position: relative;
-  z-index: 1;
-  width: min(100%, var(--content-width));
-  margin: 0 auto;
-  padding: calc(var(--header-height) + 3rem) 2rem 6.8rem;
-  text-align: center;
-}
-
-.archive-hero__title {
-  margin: 0;
-  font-size: clamp(2rem, 4.6vw, 2.8rem);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-}
-
-.archive-hero__description {
-  margin: 0.8rem 0 0;
-  font-size: 0.94rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .archive-shell {
@@ -291,14 +195,6 @@ const formatArchiveDate = (date: string) => {
 }
 
 @media (max-width: 767px) {
-  .archive-hero {
-    min-height: 320px;
-  }
-
-  .archive-hero__inner {
-    padding: calc(var(--header-height) + 2.4rem) 1.25rem 5.8rem;
-  }
-
   .archive-shell {
     padding: 0 1.25rem 4rem;
   }

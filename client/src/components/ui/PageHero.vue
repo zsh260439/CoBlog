@@ -1,21 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { PageHeroProps } from '@/types'
 
-interface Props {
-  eyebrow?: string
-  title: string
-  description?: string
-  image?: string
-  align?: 'left' | 'center'
-  height?: 'medium' | 'large'
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<PageHeroProps>(), {
   eyebrow: '',
   description: '',
   image: '',
   align: 'center',
-  height: 'large'
+  height: 'large',
+  mistHeight: 148
 })
 
 const heroStyle = computed(() => {
@@ -24,28 +17,51 @@ const heroStyle = computed(() => {
   }
 
   return {
-    backgroundImage: `linear-gradient(180deg, rgba(7, 13, 22, 0.18), rgba(7, 13, 22, 0.74)), url(${props.image})`
+    backgroundImage: `linear-gradient(180deg, rgba(16, 20, 31, 0.16), rgba(16, 20, 31, 0.58)), url(${props.image})`
   }
 })
+
+const mistStyle = computed(() => ({
+  height: `${props.mistHeight}px`
+}))
+
+const innerClass = computed(() => ({
+  'page-hero__inner--medium': props.height === 'medium',
+  'page-hero__inner--large': props.height === 'large'
+}))
+
+const metaClass = computed(() => ({
+  'page-hero__meta--left': props.align === 'left'
+}))
+
+const mediaClass = computed(() => ({
+  'page-hero__media--placeholder': !props.image
+}))
+
+const heroClass = computed(() => ({
+  'page-hero--medium': props.height === 'medium',
+  'page-hero--large': props.height === 'large',
+  'page-hero--left': props.align === 'left',
+  'page-hero--center': props.align === 'center'
+}))
+
+const descriptionClass = computed(() => ({
+  'page-hero__description--left': props.align === 'left'
+}))
 </script>
 
 <template>
-  <section
-    class="page-hero"
-    :class="[`page-hero--${align}`, `page-hero--${height}`, { 'page-hero--placeholder': !image }]"
-  >
-    <div class="page-hero__media" :style="heroStyle">
-      <div class="page-hero__pattern"></div>
-      <div class="page-hero__glow page-hero__glow--cyan"></div>
-      <div class="page-hero__glow page-hero__glow--warm"></div>
-    </div>
+  <section class="page-hero" :class="heroClass">
+    <div class="page-hero__media" :class="mediaClass" :style="heroStyle"></div>
+    <div class="page-hero__veil"></div>
+    <div class="page-hero__mist" :style="mistStyle"></div>
 
-    <div class="page-hero__inner">
+    <div class="page-hero__inner" :class="innerClass">
       <span v-if="eyebrow" class="page-hero__eyebrow">{{ eyebrow }}</span>
       <h1 class="page-hero__title">{{ title }}</h1>
-      <p v-if="description" class="page-hero__description">{{ description }}</p>
+      <p v-if="description" class="page-hero__description" :class="descriptionClass">{{ description }}</p>
 
-      <div v-if="$slots.meta" class="page-hero__meta">
+      <div v-if="$slots.meta" class="page-hero__meta" :class="metaClass">
         <slot name="meta" />
       </div>
     </div>
@@ -55,59 +71,46 @@ const heroStyle = computed(() => {
 <style scoped>
 .page-hero {
   position: relative;
-  display: flex;
-  align-items: flex-end;
   overflow: hidden;
   color: #ffffff;
 }
 
 .page-hero--large {
-  min-height: min(76vh, 680px);
+  min-height: 370px;
 }
 
 .page-hero--medium {
-  min-height: min(60vh, 520px);
+  min-height: 360px;
 }
 
 .page-hero__media {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(140deg, rgba(12, 26, 44, 0.94), rgba(43, 57, 93, 0.75) 42%, rgba(203, 119, 84, 0.52) 100%);
+    linear-gradient(135deg, rgba(57, 64, 100, 0.88), rgba(27, 43, 89, 0.48)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 32%);
   background-position: center;
   background-size: cover;
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
-.page-hero__pattern {
+.page-hero__media--placeholder {
+  background:
+    linear-gradient(135deg, rgba(57, 64, 100, 0.88), rgba(27, 43, 89, 0.48)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 32%);
+}
+
+.page-hero__veil {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 85%);
+  background: linear-gradient(180deg, rgba(11, 18, 28, 0.16), rgba(11, 18, 28, 0.38));
 }
 
-.page-hero__glow {
+.page-hero__mist {
   position: absolute;
-  border-radius: 999px;
-  filter: blur(18px);
-  opacity: 0.72;
-}
-
-.page-hero__glow--cyan {
-  inset: auto auto 8% -8%;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(87, 169, 227, 0.38), transparent 72%);
-}
-
-.page-hero__glow--warm {
-  inset: 6% -4% auto auto;
-  width: 360px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(239, 171, 120, 0.42), transparent 74%);
+  inset-inline: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.74) 60%, #ffffff 100%);
 }
 
 .page-hero__inner {
@@ -115,23 +118,27 @@ const heroStyle = computed(() => {
   z-index: 1;
   width: min(100%, var(--content-width));
   margin: 0 auto;
-  padding: calc(var(--header-height) + 4.5rem) 2rem 5rem;
+  text-align: center;
+}
+
+.page-hero__inner--large {
+  padding: calc(var(--header-height) + 3rem) 2rem 6.8rem;
+}
+
+.page-hero__inner--medium {
+  padding: calc(var(--header-height) + 2.8rem) 2rem 6.6rem;
 }
 
 .page-hero--left .page-hero__inner {
   text-align: left;
 }
 
-.page-hero--center .page-hero__inner {
-  text-align: center;
-}
-
 .page-hero__eyebrow {
   display: inline-block;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
   font-family: var(--font-primary);
   font-size: 0.7rem;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.76);
 }
@@ -147,37 +154,42 @@ const heroStyle = computed(() => {
 }
 
 .page-hero__description {
-  width: min(100%, 46rem);
-  margin: 1.5rem auto 0;
+  width: min(100%, 42rem);
+  margin: 0.95rem auto 0;
   font-size: 0.94rem;
-  line-height: 1.9;
-  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.page-hero--left .page-hero__description {
+.page-hero__description--left {
   margin-left: 0;
 }
 
 .page-hero__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.9rem 1.25rem;
-  align-items: center;
+  gap: 0.9rem;
   justify-content: center;
-  margin-top: 1.75rem;
+  margin-top: 1rem;
   font-family: var(--font-primary);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.86);
 }
 
-.page-hero--left .page-hero__meta {
+.page-hero__meta--left {
   justify-content: flex-start;
 }
 
 @media (max-width: 767px) {
-  .page-hero__inner {
-    padding: calc(var(--header-height) + 3.75rem) 1.25rem 3.5rem;
+  .page-hero--large,
+  .page-hero--medium {
+    min-height: 320px;
+  }
+
+  .page-hero__inner--large,
+  .page-hero__inner--medium {
+    padding: calc(var(--header-height) + 2.4rem) 1.25rem 5.8rem;
   }
 
   .page-hero__description {

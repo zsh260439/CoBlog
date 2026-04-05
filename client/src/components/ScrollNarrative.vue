@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { NarrativeSection } from '@/types'
+import type { ScrollNarrativeProps } from '@/types'
 
-interface Props {
-  sections: NarrativeSection[]
-}
-
-const props = defineProps<Props>()
+const props = defineProps<ScrollNarrativeProps>()
 
 const activeId = ref(props.sections[0]?.id)
 const sectionRefs = ref<HTMLElement[]>([])

@@ -1,150 +1,25 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useThrottleFn, useWindowScroll } from '@vueuse/core'
+import ArticleHero from '@/components/article/ArticleHero.vue'
 import PostToc from '@/components/blog/PostToc.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
-import { findArticleBySlug, getAdjacentArticles, getRelatedArticles } from '@/mocks/articles'
-import type { Article } from '@/types'
-import { estimateReadTime, extractHeadings, formatDate } from '@/utils'
+import { usePostDetail } from '@/composables/usePostDetail'
 
 const route = useRoute()
 const router = useRouter()
-const { y } = useWindowScroll()
+const currentSlug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
 
-const post = ref<Article | null>(null)
-const isLoading = ref(true)
-const error = ref<string | null>(null)
-const activeHeadingId = ref('')
-
-const heroStyle = computed(() => {
-  if (!post.value?.coverImage) {
-    return undefined
-  }
-
-  return {
-    backgroundImage: `linear-gradient(180deg, rgba(13, 18, 28, 0.18), rgba(13, 18, 28, 0.56)), url(${post.value.coverImage})`
-  }
-})
-
-const formattedDate = computed(() => {
-  if (!post.value) {
-    return ''
-  }
-
-  return formatDate(post.value.createdAt, 'long')
-})
-
-const estimatedReadTime = computed(() => {
-  if (!post.value) {
-    return '1 分钟阅读'
-  }
-
-  return estimateReadTime(post.value.content)
-})
-
-const tocItems = computed(() => {
-  if (!post.value) {
-    return []
-  }
-
-  return extractHeadings(post.value.content)
-})
-
-const articleStats = computed(() => {
-  if (!post.value) {
-    return []
-  }
-
-  return [
-    `${formatDate(post.value.createdAt, 'iso').slice(0, 16).replace('T', ' ')}`,
-    `${post.value.views} 浏览`,
-    `${post.value.comments} 评论`,
-    `${post.value.wordCount} 字`,
-    estimatedReadTime.value
-  ]
-})
-
-const relatedArticles = computed(() => {
-  if (!post.value) {
-    return []
-  }
-
-  return getRelatedArticles(post.value.slug, 6)
-})
-
-const adjacentArticles = computed(() => {
-  if (!post.value) {
-    return {
-      previous: null,
-      next: null
-    }
-  }
-
-  return getAdjacentArticles(post.value.slug)
-})
-
-const refreshActiveHeading = useThrottleFn(() => {
-  if (!tocItems.value.length) {
-    activeHeadingId.value = ''
-    return
-  }
-
-  const offset = 136
-  let currentId = tocItems.value[0].id
-
-  tocItems.value.forEach((item) => {
-    const element = document.getElementById(item.id)
-
-    if (!element) {
-      return
-    }
-
-    if (element.getBoundingClientRect().top <= offset) {
-      currentId = item.id
-    }
-  })
-
-  activeHeadingId.value = currentId
-}, 80)
-
-const syncPost = async (slug: string) => {
-  isLoading.value = true
-  error.value = null
-
-  const article = findArticleBySlug(slug)
-
-  if (!article) {
-    post.value = null
-    error.value = '文章未找到'
-    isLoading.value = false
-    return
-  }
-
-  post.value = article
-  await nextTick()
-  refreshActiveHeading()
-  isLoading.value = false
-}
-
-watch(
-  () => route.params.slug,
-  async (value) => {
-    if (typeof value !== 'string') {
-      post.value = null
-      error.value = '文章未找到'
-      isLoading.value = false
-      return
-    }
-
-    await syncPost(value)
-  },
-  { immediate: true }
-)
-
-watch([y, tocItems], () => {
-  refreshActiveHeading()
-})
+const {
+  post,
+  isLoading,
+  error,
+  activeHeadingId,
+  tocItems,
+  articleStats,
+  relatedArticles,
+  adjacentArticles
+} = usePostDetail(currentSlug)
 </script>
 
 <template>
@@ -163,19 +38,7 @@ watch([y, tocItems], () => {
     </div>
 
     <template v-else-if="post">
-      <section class="article-hero">
-        <div class="article-hero__media" :style="heroStyle"></div>
-        <div class="article-hero__veil"></div>
-        <div class="article-hero__mist"></div>
-
-        <div class="article-hero__inner">
-          <h1 class="article-hero__title">{{ post.title }}</h1>
-
-          <div class="article-hero__meta">
-            <span v-for="item in articleStats" :key="item">{{ item }}</span>
-          </div>
-        </div>
-      </section>
+      <ArticleHero :post="post" :stats="articleStats" />
 
       <section class="article-shell page-content-reveal">
         <div class="article-main">
@@ -287,67 +150,6 @@ watch([y, tocItems], () => {
   cursor: pointer;
 }
 
-.article-hero {
-  position: relative;
-  min-height: 420px;
-  overflow: hidden;
-  color: #ffffff;
-}
-
-.article-hero__media,
-.article-hero__veil,
-.article-hero__mist {
-  position: absolute;
-  inset: 0;
-}
-
-.article-hero__media {
-  background:
-    linear-gradient(135deg, rgba(45, 56, 76, 0.84), rgba(80, 88, 101, 0.32)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 36%);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.03);
-}
-
-.article-hero__veil {
-  background: linear-gradient(180deg, rgba(11, 18, 28, 0.16), rgba(11, 18, 28, 0.42));
-}
-
-.article-hero__mist {
-  top: auto;
-  height: 150px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 60%, #ffffff 100%);
-}
-
-.article-hero__inner {
-  position: relative;
-  z-index: 1;
-  width: min(100%, var(--content-width));
-  margin: 0 auto;
-  padding: calc(var(--header-height) + 3rem) 2rem 7rem;
-  text-align: center;
-}
-
-.article-hero__title {
-  margin: 0;
-  font-size: clamp(1.7rem, 4.2vw, 2.6rem);
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-  font-weight: 500;
-}
-
-.article-hero__meta {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.85rem 1rem;
-  margin-top: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.9);
-}
-
 .article-shell {
   position: relative;
   z-index: 2;
@@ -457,14 +259,6 @@ watch([y, tocItems], () => {
 }
 
 @media (max-width: 767px) {
-  .article-hero {
-    min-height: 360px;
-  }
-
-  .article-hero__inner {
-    padding: calc(var(--header-height) + 2.2rem) 1.25rem 6rem;
-  }
-
   .article-shell {
     margin-top: -12px;
     padding: 0 1.25rem 4rem;

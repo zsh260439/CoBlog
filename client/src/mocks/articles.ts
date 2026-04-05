@@ -1,16 +1,4 @@
-import type { Article } from '@/types'
-
-type CoverPalette = {
-  skyTop: string
-  skyBottom: string
-  glow: string
-  surface: string
-  silhouette: string
-}
-
-type ArticleSeed = Omit<Article, '_id' | 'updatedAt' | 'wordCount' | 'coverImage'> & {
-  coverPalette: CoverPalette
-}
+import type { Article, ArticleSeed, CoverPalette } from '@/types'
 
 const SHARED_COVER_IMAGE = '/images/about-hero.png'
 

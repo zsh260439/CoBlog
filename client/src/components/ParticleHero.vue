@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
 import { siteConfig } from '@/config/site'
+import type { Particle } from '@/types'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const context = ref<CanvasRenderingContext2D | null>(null)
@@ -12,15 +13,6 @@ const preferredReducedMotion = usePreferredReducedMotion()
 
 const PARTICLE_COUNT = 40
 const CONNECTION_DISTANCE = 100
-
-interface Particle {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  size: number
-  opacity: number
-}
 
 const heroActions = [
   {

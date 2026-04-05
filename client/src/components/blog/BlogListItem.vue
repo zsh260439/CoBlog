@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { Article } from '@/types'
+import type { BlogListItemProps } from '@/types'
 import { estimateReadTime, formatDate } from '@/utils'
 
-defineProps<{
-  post: Article
-}>()
+defineProps<BlogListItemProps>()
 </script>
 
 <template>

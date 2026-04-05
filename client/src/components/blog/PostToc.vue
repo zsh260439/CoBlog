@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import type { MarkdownHeading } from '@/types'
+import type { PostTocProps } from '@/types'
 
-interface Props {
-  items: MarkdownHeading[]
-  activeId?: string
-}
-
-withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<PostTocProps>(), {
   activeId: ''
 })
 

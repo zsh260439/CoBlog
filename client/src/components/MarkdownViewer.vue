@@ -2,12 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import 'highlight.js/styles/github.css'
 import { renderMarkdown } from '@/utils'
+import type { MarkdownViewerProps } from '@/types'
 
-interface Props {
-  content: string
-}
-
-const props = defineProps<Props>()
+const props = defineProps<MarkdownViewerProps>()
 const viewerRef = ref<HTMLElement | null>(null)
 const resetTimers = new Map<HTMLButtonElement, number>()
 
