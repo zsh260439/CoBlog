@@ -7,7 +7,6 @@ export interface Article {
   summary: string // 文章总结说明
   category: string // 分类中文名称
   categorySlug: string // 分类路由别名
-  tags: string[] // 标签数组
   coverImage?: string // 封面图地址，可选
   createdAt: string // 创建时间
   updatedAt: string // 更新时间
@@ -25,6 +24,5 @@ export interface ArticleFormData {
   summary?: string // 表单提交的总结说明，可选
   category: string // 表单里的分类名称
   categorySlug?: string // 表单里的分类别名，可选
-  tags: string[] // 表单里的标签数组
   coverImage?: string // 表单里的封面图地址，可选
 }

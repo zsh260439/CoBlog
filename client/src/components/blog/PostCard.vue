@@ -44,10 +44,6 @@ const readTime = computed(() => estimateReadTime(props.post.content))
       <p class="post-card__excerpt">{{ excerpt }}</p>
 
       <div class="post-card__footer">
-        <div class="post-card__tags">
-          <span v-for="tag in post.tags.slice(0, 3)" :key="tag" class="post-card__tag">{{ tag }}</span>
-        </div>
-
         <span class="post-card__action">阅读全文</span>
       </div>
     </div>
@@ -164,21 +160,6 @@ const readTime = computed(() => estimateReadTime(props.post.content))
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.85;
-}
-
-.post-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.post-card__tag {
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background: var(--bg-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text-secondary);
 }
 
 .post-card__action {

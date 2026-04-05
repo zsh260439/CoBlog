@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ArticleHeroProps } from '@/types'
-
+//测试
+import { getPostList } from '@/servers/wz'
+import { onMounted } from 'vue'
 const props = defineProps<ArticleHeroProps>()
 
 const heroStyle = computed(() => {
@@ -12,6 +14,10 @@ const heroStyle = computed(() => {
   return {
     backgroundImage: `linear-gradient(180deg, rgba(13, 18, 28, 0.18), rgba(13, 18, 28, 0.56)), url(${props.post.coverImage})`
   }
+})
+onMounted(async () => {
+  const res = await getPostList()
+  console.log(res)
 })
 </script>
 
