@@ -182,7 +182,7 @@ const parts = text.split(",");
 const output = parts.join(" / ");
 \`\`\`
 
-这两个方法非常适合处理标签、路径片段、关键词列表等字符串和数组之间的来回转换。
+  这两个方法非常适合处理路径片段、关键词列表等字符串和数组之间的来回转换。
 
 ## reduce/reduceRight
 
@@ -228,7 +228,6 @@ const articleSeeds: ArticleSeed[] = [
     summary: '这篇笔记先不急着钻细节，而是先把“计算机为什么能执行程序”这件事的全貌搭出来，适合作为后续复习的起点。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['学习', '成长'],
     createdAt: '2026-03-30T10:20:00.000Z',
     views: 42,
     comments: 2,
@@ -262,7 +261,6 @@ const articleSeeds: ArticleSeed[] = [
     summary: '这一篇主要整理对象和集合相关的基础能力，把遍历、映射、集合去重和结构拆解几个高频知识点串在一起。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['JavaScript', 'Map'],
     createdAt: '2026-03-29T14:36:00.000Z',
     views: 67,
     comments: 1,
@@ -292,7 +290,6 @@ Map 更适合键值映射，Set 更适合快速去重和存在性判断。
     summary: '这篇博客系统地整理了 JavaScript 数组的核心知识点与应用技巧，文档首先介绍了数组的创建、访问与修改元素的方法，再到分类解释数组的内置方法和实用技巧，适合作为日常编码时的速查手册。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['JavaScript', '数组'],
     createdAt: '2026-03-28T10:28:00.000Z',
     views: 121,
     comments: 0,
@@ -307,7 +304,6 @@ Map 更适合键值映射，Set 更适合快速去重和存在性判断。
     summary: '这篇更偏“容易混”的基础知识：对象是怎么转换成原始值的、数字和字符串有哪些经常忽略的小细节。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['JavaScript', '对象', '字符串'],
     createdAt: '2026-03-28T08:16:00.000Z',
     views: 86,
     comments: 0,
@@ -333,7 +329,6 @@ Map 更适合键值映射，Set 更适合快速去重和存在性判断。
     summary: '这一篇把语义比较散的几个知识点串起来复习，重点是理解运行机制和语法行为，而不是死记 API。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['JavaScript', '对象', 'Symbol'],
     createdAt: '2026-03-24T20:10:00.000Z',
     views: 74,
     comments: 0,
@@ -359,7 +354,6 @@ JavaScript 里最常见的是可达性算法，只要对象还能从根出发被
     summary: '这一篇是整组复习的开头，把后续内容经常反复用到的基础概念集中整理，适合先建立统一认知。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['JavaScript', '对象'],
     createdAt: '2026-03-21T19:26:00.000Z',
     views: 95,
     comments: 2,
@@ -385,7 +379,6 @@ JavaScript 里最常见的是可达性算法，只要对象还能从根出发被
     summary: '这篇更像生活随笔，不讲技巧，也不讲工程，而是把一段时间里真正留下来的感受收拢起来。',
     category: '日常',
     categorySlug: 'daily',
-    tags: ['生活', '成长'],
     createdAt: '2026-03-08T08:22:00.000Z',
     views: 39,
     comments: 0,
@@ -411,7 +404,6 @@ JavaScript 里最常见的是可达性算法，只要对象还能从根出发被
     summary: '不是鸡血式打卡，而是一次对“怎么把想做的事真正长期做下去”的记录。',
     category: '日常',
     categorySlug: 'daily',
-    tags: ['生活', '健身'],
     createdAt: '2026-03-05T07:40:00.000Z',
     views: 33,
     comments: 1,
@@ -437,7 +429,6 @@ JavaScript 里最常见的是可达性算法，只要对象还能从根出发被
     summary: '这篇主要是把“怎么把项目真正部署出去”这件事写成手册，方便以后复用，也方便别人直接照着做。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['部署', 'Vue', '博客'],
     createdAt: '2026-02-28T09:10:00.000Z',
     views: 110,
     comments: 3,
@@ -463,7 +454,6 @@ JavaScript 里最常见的是可达性算法，只要对象还能从根出发被
     summary: '这一篇更偏服务端部署，重点是项目怎么跑起来，以及前后端怎么通过代理连起来。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['Nginx', 'Ubuntu', '部署'],
     createdAt: '2026-02-22T13:18:00.000Z',
     views: 82,
     comments: 1,
@@ -489,7 +479,6 @@ Nginx 的 server 块需要明确转发路径、超时时间和静态资源规则
     summary: '如果你需要在一台服务器上挂多个前端站点，这篇会比从零试错更省时间。',
     category: '技术',
     categorySlug: 'technology',
-    tags: ['Nginx', 'Ubuntu', '部署'],
     createdAt: '2026-02-21T17:20:00.000Z',
     views: 73,
     comments: 0,
@@ -515,7 +504,6 @@ Nginx 的 server 块需要明确转发路径、超时时间和静态资源规则
     summary: '这篇像站点的开场白：为什么开始、怎么开始，以及接下来想把这个地方写成什么样。',
     category: '心得',
     categorySlug: 'insight',
-    tags: ['博客', '成长'],
     createdAt: '2026-02-21T10:03:00.000Z',
     views: 62,
     comments: 2,
@@ -580,8 +568,7 @@ export function getRelatedArticles(slug: string, limit = 5) {
   return mockArticles
     .filter((article) => article.slug !== slug)
     .map((article) => {
-      const tagOverlap = article.tags.filter((tag) => currentArticle.tags.includes(tag)).length
-      const score = (article.category === currentArticle.category ? 3 : 0) + tagOverlap
+      const score = article.category === currentArticle.category ? 3 : 0
 
       return { article, score }
     })

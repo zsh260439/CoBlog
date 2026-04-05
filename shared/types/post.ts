@@ -4,7 +4,6 @@ export interface Post {
   content: string;
   excerpt: string;
   category: string;
-  tags: string[];
   coverImage: string;
   createdAt: string;
   updatedAt: string;
