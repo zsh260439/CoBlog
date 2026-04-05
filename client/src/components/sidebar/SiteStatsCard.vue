@@ -1,12 +1,24 @@
 <script setup lang="ts">
-interface StatItem {
-  label: string
-  value: string
-}
+import { computed } from 'vue'
+import { siteConfig } from '@/config/site'
+import type { SiteStatsCardProps } from '@/types'
 
-defineProps<{
-  items: StatItem[]
-}>()
+const props = defineProps<SiteStatsCardProps>()
+
+const resolvedItems = computed(() => {
+  if (props.items?.length) {
+    return props.items
+  }
+
+  const { onlineUsers, todayViews, totalViews, totalVisitors } = siteConfig.siteStatsSnapshot
+
+  return [
+    { label: '在线访客', value: String(onlineUsers) },
+    { label: '今日浏览', value: String(todayViews) },
+    { label: '总浏览量', value: String(totalViews) },
+    { label: '总访客量', value: String(totalVisitors) }
+  ]
+})
 </script>
 
 <template>
@@ -14,7 +26,7 @@ defineProps<{
     <span class="stats-card__eyebrow">站点统计</span>
 
     <div class="stats-card__list">
-      <div v-for="item in items" :key="item.label" class="stats-card__row">
+      <div v-for="item in resolvedItems" :key="item.label" class="stats-card__row">
         <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
       </div>

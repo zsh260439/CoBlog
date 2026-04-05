@@ -1,97 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
+import PageHero from '@/components/ui/PageHero.vue'
+import { useGuestbook } from '@/composables/useGuestbook'
 import { siteConfig } from '@/config/site'
 import { usePosts } from '@/composables/usePosts'
 import { formatDate } from '@/utils'
 
-interface GuestbookEntry {
-  id: string
-  author: string
-  location: string
-  device: string
-  browser: string
-  content: string
-  createdAt: string
-}
-
-const mockMessages: GuestbookEntry[] = [
-  {
-    id: 'message-1',
-    author: 'FeiTwnd',
-    location: '河南-方城',
-    device: 'Android',
-    browser: 'Chrome',
-    content: '占楼占楼😙',
-    createdAt: '2026-02-21T11:13:00.000Z'
-  },
-  {
-    id: 'message-2',
-    author: '宿傩',
-    location: '河南-南阳',
-    device: 'Android',
-    browser: 'Chrome',
-    content: '差点找不到在哪',
-    createdAt: '2026-02-21T11:15:00.000Z'
-  },
-  {
-    id: 'message-3',
-    author: 'Zsint',
-    location: '河南-南阳',
-    device: 'Windows',
-    browser: 'Edge',
-    content: '这个页面后面会把真实留言接口接上，现在先把版式和视觉跑顺。',
-    createdAt: '2026-02-21T11:22:00.000Z'
-  },
-  {
-    id: 'message-4',
-    author: 'Lemon',
-    location: '江苏-苏州',
-    device: 'iPhone',
-    browser: 'Safari',
-    content: '顶部大图和内容区的衔接现在顺眼多了，等评论接起来应该会更完整。',
-    createdAt: '2026-02-21T11:39:00.000Z'
-  }
-]
-
 const { posts } = usePosts()
-
-const heroStyle = computed(() => ({
-  backgroundImage: `linear-gradient(180deg, rgba(16, 20, 31, 0.16), rgba(16, 20, 31, 0.58)), url(${siteConfig.aboutHeroImage})`
-}))
-
-const siteStats = computed(() => {
-  const { onlineUsers, todayViews, totalViews, totalVisitors } = siteConfig.siteStatsSnapshot
-
-  return [
-    { label: '在线访客', value: String(onlineUsers) },
-    { label: '今日浏览', value: String(todayViews) },
-    { label: '总浏览量', value: String(totalViews) },
-    { label: '总访客量', value: String(totalVisitors) }
-  ]
-})
-
-const totalMessages = computed(() => 24)
-
-const avatarStyle = (index: number) => ({
-  backgroundImage: `url(${siteConfig.aboutHeroImage})`,
-  backgroundPosition: `${20 + index * 18}% ${22 + index * 10}%`
-})
+const { messages, totalMessages, avatarStyle } = useGuestbook()
 </script>
 
 <template>
   <div class="message-view">
-    <section class="message-hero">
-      <div class="message-hero__media" :style="heroStyle"></div>
-      <div class="message-hero__veil"></div>
-      <div class="message-hero__mist"></div>
-
-      <div class="message-hero__inner">
-        <h1 class="message-hero__title">留言板</h1>
-        <p class="message-hero__description">说点什么吧</p>
-      </div>
-    </section>
+    <PageHero title="留言板" description="说点什么吧" :image="siteConfig.aboutHeroImage" />
 
     <section class="message-shell page-content-reveal">
       <div class="message-main">
@@ -118,7 +40,7 @@ const avatarStyle = (index: number) => ({
 
         <div class="message-count">共 {{ totalMessages }} 条留言</div>
 
-        <article v-for="(item, index) in mockMessages" :key="item.id" class="message-card guestbook-card">
+        <article v-for="(item, index) in messages" :key="item.id" class="message-card guestbook-card">
           <div class="guestbook-card__avatar" :style="avatarStyle(index)"></div>
 
           <div class="guestbook-card__body">
@@ -141,13 +63,13 @@ const avatarStyle = (index: number) => ({
       <aside class="message-side">
         <ProfileSidebarCard
           :posts="posts"
-          :image-style="heroStyle"
+          :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
           :owner-location="siteConfig.ownerLocation"
         />
 
-        <SiteStatsCard :items="siteStats" />
+        <SiteStatsCard />
       </aside>
     </section>
   </div>
@@ -156,61 +78,6 @@ const avatarStyle = (index: number) => ({
 <style scoped>
 .message-view {
   background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
-}
-
-.message-hero {
-  position: relative;
-  min-height: 360px;
-  overflow: hidden;
-  color: #ffffff;
-}
-
-.message-hero__media,
-.message-hero__veil,
-.message-hero__mist {
-  position: absolute;
-  inset: 0;
-}
-
-.message-hero__media {
-  background:
-    linear-gradient(135deg, rgba(57, 64, 100, 0.88), rgba(27, 43, 89, 0.48)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 32%);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.02);
-}
-
-.message-hero__veil {
-  background: linear-gradient(180deg, rgba(11, 18, 28, 0.16), rgba(11, 18, 28, 0.38));
-}
-
-.message-hero__mist {
-  top: auto;
-  height: 148px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.74) 60%, #ffffff 100%);
-}
-
-.message-hero__inner {
-  position: relative;
-  z-index: 1;
-  width: min(100%, var(--content-width));
-  margin: 0 auto;
-  padding: calc(var(--header-height) + 3rem) 2rem 6.8rem;
-  text-align: center;
-}
-
-.message-hero__title {
-  margin: 0;
-  font-size: clamp(2rem, 4.6vw, 2.8rem);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-}
-
-.message-hero__description {
-  margin: 0.8rem 0 0;
-  font-size: 0.94rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .message-shell {
@@ -366,14 +233,6 @@ const avatarStyle = (index: number) => ({
 }
 
 @media (max-width: 767px) {
-  .message-hero {
-    min-height: 320px;
-  }
-
-  .message-hero__inner {
-    padding: calc(var(--header-height) + 2.4rem) 1.25rem 5.8rem;
-  }
-
   .message-shell {
     padding: 0 1.25rem 4rem;
   }

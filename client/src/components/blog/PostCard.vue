@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Article } from '@/types'
+import type { PostCardProps } from '@/types'
 import { estimateReadTime, formatDate } from '@/utils'
 
-interface Props {
-  post: Article
-  featured?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<PostCardProps>(), {
   featured: false
 })
 

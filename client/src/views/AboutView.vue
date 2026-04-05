@@ -2,42 +2,19 @@
 import { computed } from 'vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
+import PageHero from '@/components/ui/PageHero.vue'
 import { aboutSections, siteConfig } from '@/config/site'
 import { usePosts } from '@/composables/usePosts'
 
 const { posts } = usePosts()
 
-const heroStyle = computed(() => ({
-  backgroundImage: `linear-gradient(180deg, rgba(16, 20, 31, 0.16), rgba(16, 20, 31, 0.58)), url(${siteConfig.aboutHeroImage})`
-}))
-
 const introSection = computed(() => aboutSections[0] ?? null)
 const detailSections = computed(() => aboutSections.slice(1))
-
-const siteStats = computed(() => {
-  const { onlineUsers, todayViews, totalViews, totalVisitors } = siteConfig.siteStatsSnapshot
-
-  return [
-    { label: '在线访客', value: String(onlineUsers) },
-    { label: '今日浏览', value: String(todayViews) },
-    { label: '总浏览量', value: String(totalViews) },
-    { label: '总访客量', value: String(totalVisitors) }
-  ]
-})
 </script>
 
 <template>
   <div class="about-view">
-    <section class="about-hero">
-      <div class="about-hero__media" :style="heroStyle"></div>
-      <div class="about-hero__veil"></div>
-      <div class="about-hero__mist"></div>
-
-      <div class="about-hero__inner">
-        <h1 class="about-hero__title">关于</h1>
-        <p class="about-hero__description">关于我和这个博客</p>
-      </div>
-    </section>
+    <PageHero title="关于" description="关于我和这个博客" :image="siteConfig.aboutHeroImage" />
 
     <section class="about-shell page-content-reveal">
       <div class="about-main">
@@ -59,13 +36,13 @@ const siteStats = computed(() => {
       <aside class="about-side">
         <ProfileSidebarCard
           :posts="posts"
-          :image-style="heroStyle"
+          :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
           :owner-location="siteConfig.ownerLocation"
         />
 
-        <SiteStatsCard :items="siteStats" />
+        <SiteStatsCard />
       </aside>
     </section>
   </div>
@@ -74,61 +51,6 @@ const siteStats = computed(() => {
 <style scoped>
 .about-view {
   background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
-}
-
-.about-hero {
-  position: relative;
-  min-height: 360px;
-  overflow: hidden;
-  color: #ffffff;
-}
-
-.about-hero__media,
-.about-hero__veil,
-.about-hero__mist {
-  position: absolute;
-  inset: 0;
-}
-
-.about-hero__media {
-  background:
-    linear-gradient(135deg, rgba(57, 64, 100, 0.88), rgba(27, 43, 89, 0.48)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 32%);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.02);
-}
-
-.about-hero__veil {
-  background: linear-gradient(180deg, rgba(11, 18, 28, 0.16), rgba(11, 18, 28, 0.38));
-}
-
-.about-hero__mist {
-  top: auto;
-  height: 148px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.74) 60%, #ffffff 100%);
-}
-
-.about-hero__inner {
-  position: relative;
-  z-index: 1;
-  width: min(100%, var(--content-width));
-  margin: 0 auto;
-  padding: calc(var(--header-height) + 3rem) 2rem 6.8rem;
-  text-align: center;
-}
-
-.about-hero__title {
-  margin: 0;
-  font-size: clamp(2rem, 4.6vw, 2.8rem);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-}
-
-.about-hero__description {
-  margin: 0.8rem 0 0;
-  font-size: 0.94rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .about-shell {
@@ -198,14 +120,6 @@ const siteStats = computed(() => {
 }
 
 @media (max-width: 767px) {
-  .about-hero {
-    min-height: 320px;
-  }
-
-  .about-hero__inner {
-    padding: calc(var(--header-height) + 2.4rem) 1.25rem 5.8rem;
-  }
-
   .about-shell {
     padding: 0 1.25rem 4rem;
   }

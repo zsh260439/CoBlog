@@ -1,22 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { StyleValue } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useEventListener } from '@vueuse/core'
-import type { Article } from '@/types'
+import type { ProfileSidebarCardProps } from '@/types'
 import { summarizeCategories } from '@/utils'
 
-interface Props {
-  posts: Article[]
-  ownerName: string
-  ownerRole: string
-  ownerLocation: string
-  imageStyle?: StyleValue
-  actionLabels?: string[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  imageStyle: undefined,
+const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
   actionLabels: () => ['GitHub', '邮箱', 'RSS']
 })
 
@@ -27,6 +16,15 @@ const modalRef = ref<HTMLElement | null>(null)
 const articleCount = computed(() => props.posts.length)
 const categoryItems = computed(() => summarizeCategories(props.posts))
 const categoryCount = computed(() => categoryItems.value.length)
+const avatarStyle = computed(() => {
+  if (!props.imageUrl) {
+    return undefined
+  }
+
+  return {
+    backgroundImage: `url(${props.imageUrl})`
+  }
+})
 
 const handleArticleClick = () => {
   router.push('/archive')
@@ -51,7 +49,7 @@ useEventListener(window, 'keydown', (event) => {
 
 <template>
   <div class="profile-card">
-    <div class="profile-card__avatar" :style="imageStyle"></div>
+    <div class="profile-card__avatar" :style="avatarStyle"></div>
     <h3>{{ ownerName }}</h3>
     <p class="profile-card__role">{{ ownerRole }}</p>
     <p class="profile-card__location">{{ ownerLocation }}</p>

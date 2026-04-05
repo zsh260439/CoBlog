@@ -1,5 +1,5 @@
 {
-  "name": "dev-blog",
+  "name": "co-blog",
   "private": true,
   "workspaces": [
     "client",
