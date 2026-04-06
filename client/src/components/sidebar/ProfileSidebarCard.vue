@@ -13,8 +13,8 @@ const router = useRouter()
 const showCategoryModal = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
-const articleCount = computed(() => props.posts.length)
-const categoryItems = computed(() => summarizeCategories(props.posts))
+const articleCount = computed(() => props.articles.length)
+const categoryItems = computed(() => summarizeCategories(props.articles))
 const categoryCount = computed(() => categoryItems.value.length)
 const avatarStyle = computed(() => {
   if (!props.imageUrl) {

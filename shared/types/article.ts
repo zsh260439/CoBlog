@@ -1,4 +1,4 @@
-export interface Post {
+export interface Article {
   id: string;
   title: string;
   content: string;
@@ -9,4 +9,4 @@ export interface Post {
   updatedAt: string;
 }
 
-export type CreatePostDto = Omit<Post, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateArticleDto = Omit<Article, 'id' | 'createdAt' | 'updatedAt'>;

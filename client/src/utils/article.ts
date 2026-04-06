@@ -8,20 +8,20 @@ export function estimateReadTime(content: string): string {
   return `${minutes} 分钟阅读`
 }
 
-export function summarizeCategories(posts: Article[]) {
+export function summarizeCategories(articles: Article[]) {
   const categoryCount = new Map<string, { label: string; slug: string; count: number }>()
 
-  posts.forEach((post) => {
-    const currentEntry = categoryCount.get(post.categorySlug)
+  articles.forEach((article) => {
+    const currentEntry = categoryCount.get(article.categorySlug)
 
     if (currentEntry) {
       currentEntry.count += 1
       return
     }
 
-    categoryCount.set(post.categorySlug, {
-      label: post.category,
-      slug: post.categorySlug,
+    categoryCount.set(article.categorySlug, {
+      label: article.category,
+      slug: article.categorySlug,
       count: 1
     })
   })

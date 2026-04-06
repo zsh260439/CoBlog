@@ -4,9 +4,9 @@ import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { aboutSections, siteConfig } from '@/config/site'
-import { usePosts } from '@/composables/usePosts'
+import { useArticles } from '@/composables/useArticles'
 
-const { posts } = usePosts()
+const { articles } = useArticles()
 
 const introSection = computed(() => aboutSections[0] ?? null)
 const detailSections = computed(() => aboutSections.slice(1))
@@ -35,7 +35,7 @@ const detailSections = computed(() => aboutSections.slice(1))
 
       <aside class="about-side">
         <ProfileSidebarCard
-          :posts="posts"
+          :articles="articles"
           :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"

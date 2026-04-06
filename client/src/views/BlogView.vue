@@ -5,12 +5,12 @@ import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
-import { usePosts } from '@/composables/usePosts'
+import { useArticles } from '@/composables/useArticles'
 import { summarizeCategories } from '@/utils'
 
-const { posts, isLoading, error } = usePosts()
+const { articles, isLoading, error } = useArticles()
 
-const categoryCount = computed(() => summarizeCategories(posts.value).length)
+const categoryCount = computed(() => summarizeCategories(articles.value).length)
 </script>
 
 <template>
@@ -23,7 +23,7 @@ const categoryCount = computed(() => summarizeCategories(posts.value).length)
       :mist-height="120"
     >
       <template #meta>
-        <span>{{ posts.length }} 篇文章</span>
+        <span>{{ articles.length }} 篇文章</span>
         <span>{{ categoryCount }} 个分类</span>
       </template>
     </PageHero>
@@ -32,14 +32,14 @@ const categoryCount = computed(() => summarizeCategories(posts.value).length)
       <div class="blog-main">
         <div v-if="isLoading" class="blog-state">正在整理文章列表...</div>
         <div v-else-if="error" class="blog-state blog-state--error">{{ error }}</div>
-        <div v-else-if="!posts.length" class="blog-state">还没有文章，后续内容会先落在这里。</div>
+        <div v-else-if="!articles.length" class="blog-state">还没有文章，后续内容会先落在这里。</div>
 
-        <BlogListItem v-for="post in posts" v-else :key="post.slug" :post="post" />
+        <BlogListItem v-for="article in articles" v-else :key="article.slug" :article="article" />
       </div>
 
       <aside class="blog-side">
         <ProfileSidebarCard
-          :posts="posts"
+          :articles="articles"
           :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"

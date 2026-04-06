@@ -6,13 +6,15 @@ import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { useCategory } from '@/composables/useCategory'
+import { useArticles } from '@/composables/useArticles'
 import { siteConfig } from '@/config/site'
-import { usePosts } from '@/composables/usePosts'
 
 const route = useRoute()
-const { posts } = usePosts()
 const currentSlug = computed(() => String(route.params.slug ?? ''))
-const { currentCategory, filteredPosts } = useCategory(posts, currentSlug)
+
+const { currentCategory, articles, isLoading, error } = useCategory(currentSlug)
+// 全站文章数量
+const { articles: allArticles } = useArticles()
 </script>
 
 <template>
@@ -28,14 +30,21 @@ const { currentCategory, filteredPosts } = useCategory(posts, currentSlug)
     <section class="category-shell page-content-reveal">
       <div class="category-main">
         <div v-if="!currentCategory" class="category-state">分类不存在。</div>
-        <div v-else-if="!filteredPosts.length" class="category-state">这个分类下暂时还没有文章。</div>
+        <div v-else-if="isLoading" class="category-state">正在加载分类文章...</div>
+        <div v-else-if="error" class="category-state">{{ error }}</div>
+        <div v-else-if="!articles.length" class="category-state">这个分类下暂时还没有文章。</div>
 
-        <BlogListItem v-for="post in filteredPosts" v-else :key="post.slug" :post="post" />
+        <BlogListItem
+          v-for="article in articles"
+          v-else
+          :key="article.slug"
+          :article="article"
+        />
       </div>
 
       <aside class="category-side">
         <ProfileSidebarCard
-          :posts="posts"
+          :articles="allArticles"
           :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
@@ -47,47 +56,3 @@ const { currentCategory, filteredPosts } = useCategory(posts, currentSlug)
     </section>
   </div>
 </template>
-
-<style scoped>
-.category-view {
-  background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
-}
-
-.category-shell {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 1120px);
-  margin: -14px auto 0;
-  padding: 0 2rem 5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1.58fr) 260px;
-  gap: 1.5rem;
-}
-
-.category-main,
-.category-side {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.category-state {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-  padding: 1.15rem;
-}
-
-@media (max-width: 1024px) {
-  .category-shell {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 767px) {
-  .category-shell {
-    padding: 0 1.25rem 4rem;
-  }
-}
-</style>

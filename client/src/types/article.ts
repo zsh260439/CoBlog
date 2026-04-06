@@ -15,7 +15,7 @@ export interface Article {
   likes: number // 点赞数
   wordCount: number // 字数统计
 }
-
+// 文章表单提交数据
 export interface ArticleFormData {
   slug?: string // 表单里的文章别名，可选
   title: string // 表单提交的标题
@@ -25,4 +25,9 @@ export interface ArticleFormData {
   category: string // 表单里的分类名称
   categorySlug?: string // 表单里的分类别名，可选
   coverImage?: string // 表单里的封面图地址，可选
+}
+// 归档分组
+export interface ArchiveGroup {
+  year: string
+  articles: Article[]
 }
