@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
-import { useArchive } from '@/composables/useArchive'
 import { archiveHeroImage } from '@/mocks/articles'
 import { siteConfig } from '@/config/site'
-import { usePosts } from '@/composables/usePosts'
+import { useArchive } from '@/composables/useArchive'
+import { useArticles } from '@/composables/useArticles'
 
-const { posts, isLoading, error } = usePosts()
-const { archiveGroups, formatArchiveDate } = useArchive(posts)
+const { articles } = useArticles()
+const { archiveGroups, isLoading, error, loadArchiveGroups, formatArchiveDate } = useArchive()
+
+onMounted(() => {
+  void loadArchiveGroups()
+})
 </script>
 
 <template>
@@ -29,7 +33,7 @@ const { archiveGroups, formatArchiveDate } = useArchive(posts)
 
         <article v-for="group in archiveGroups" :key="group.year" class="archive-card archive-card--timeline">
           <div class="archive-card__topline">
-            <span>共 {{ posts.length }} 篇文章</span>
+            <span>共 {{ articles.length }} 篇文章</span>
           </div>
 
           <div class="archive-year">
@@ -39,14 +43,14 @@ const { archiveGroups, formatArchiveDate } = useArchive(posts)
 
           <div class="archive-timeline">
             <RouterLink
-              v-for="post in group.posts"
-              :key="post._id"
-              :to="{ name: 'article', params: { slug: post.slug } }"
+              v-for="article in group.articles"
+              :key="article._id"
+              :to="{ name: 'article', params: { slug: article.slug } }"
               class="archive-item"
             >
               <span class="archive-item__line"></span>
-              <span class="archive-item__date">{{ formatArchiveDate(post.createdAt) }}</span>
-              <span class="archive-item__title">{{ post.title }}</span>
+              <span class="archive-item__date">{{ formatArchiveDate(article.createdAt) }}</span>
+              <span class="archive-item__title">{{ article.title }}</span>
             </RouterLink>
           </div>
         </article>
@@ -54,7 +58,7 @@ const { archiveGroups, formatArchiveDate } = useArchive(posts)
 
       <aside class="archive-side">
         <ProfileSidebarCard
-          :posts="posts"
+          :articles="articles"
           :image-url="archiveHeroImage || siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"

@@ -1,22 +1,28 @@
-import { computed, type Ref } from 'vue'
+import { ref } from 'vue'
+import { getArticlesByArchive } from '@/servers/article'
 import type { Article } from '@/types'
+import type { ArchiveGroup } from '@/types/article'
 
-export function useArchive(posts: Ref<Article[]>) {
-  const archiveGroups = computed(() => {
-    const groups = new Map<string, Article[]>()
+export function useArchive() {
+  const archiveGroups = ref<ArchiveGroup[]>([])
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
 
-    posts.value.forEach((post) => {
-      const year = new Date(post.createdAt).getFullYear().toString()
-      const currentGroup = groups.get(year) ?? []
-      currentGroup.push(post)
-      groups.set(year, currentGroup)
-    })
+  const loadArchiveGroups = async () => {
+    isLoading.value = true
+    error.value = null
 
-    return [...groups.entries()].map(([year, items]) => ({
-      year,
-      posts: items.sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
-    }))
-  })
+    try {
+      const result = await getArticlesByArchive()
+      archiveGroups.value = result.data
+    } catch (err) {
+      console.error(err)
+      archiveGroups.value = []
+      error.value = '归档加载失败'
+    } finally {
+      isLoading.value = false
+    }
+  }
 
   const formatArchiveDate = (date: string) => {
     const parsed = new Date(date)
@@ -28,6 +34,9 @@ export function useArchive(posts: Ref<Article[]>) {
 
   return {
     archiveGroups,
-    formatArchiveDate
+    isLoading,
+    error,
+    loadArchiveGroups,
+    formatArchiveDate,
   }
 }

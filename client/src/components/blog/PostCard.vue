@@ -1,35 +1,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PostCardProps } from '@/types'
+import type { ArticleCardProps } from '@/types'
 import { estimateReadTime, formatDate } from '@/utils'
 
-const props = withDefaults(defineProps<PostCardProps>(), {
+const props = withDefaults(defineProps<ArticleCardProps>(), {
   featured: false
 })
 
 const coverStyle = computed(() => {
-  if (!props.post.coverImage) {
+  if (!props.article.coverImage) {
     return undefined
   }
 
   return {
-    backgroundImage: `linear-gradient(180deg, rgba(12, 19, 30, 0.12), rgba(12, 19, 30, 0.7)), url(${props.post.coverImage})`
+    backgroundImage: `linear-gradient(180deg, rgba(12, 19, 30, 0.12), rgba(12, 19, 30, 0.7)), url(${props.article.coverImage})`
   }
 })
 
-const excerpt = computed(() => props.post.excerpt || props.post.content.slice(0, 140))
-const publishedAt = computed(() => formatDate(props.post.createdAt, 'long'))
-const readTime = computed(() => estimateReadTime(props.post.content))
+const excerpt = computed(() => props.article.excerpt || props.article.content.slice(0, 140))
+const publishedAt = computed(() => formatDate(props.article.createdAt, 'long'))
+const readTime = computed(() => estimateReadTime(props.article.content))
 </script>
 
 <template>
   <router-link
-    :to="{ name: 'article', params: { slug: post.slug } }"
+    :to="{ name: 'article', params: { slug: article.slug } }"
     class="post-card"
     :class="{ 'post-card--featured': featured }"
   >
-    <div class="post-card__media" :class="{ 'post-card__media--placeholder': !post.coverImage }" :style="coverStyle">
-      <span class="post-card__category">{{ post.category }}</span>
+    <div class="post-card__media" :class="{ 'post-card__media--placeholder': !article.coverImage }" :style="coverStyle">
+      <span class="post-card__category">{{ article.category }}</span>
       <div class="post-card__shine"></div>
     </div>
 
@@ -40,7 +40,7 @@ const readTime = computed(() => estimateReadTime(props.post.content))
         <span>{{ readTime }}</span>
       </div>
 
-      <h2 class="post-card__title">{{ post.title }}</h2>
+      <h2 class="post-card__title">{{ article.title }}</h2>
       <p class="post-card__excerpt">{{ excerpt }}</p>
 
       <div class="post-card__footer">

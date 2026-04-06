@@ -2,16 +2,16 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ArticleHero from '@/components/article/ArticleHero.vue'
-import PostToc from '@/components/blog/PostToc.vue'
+import ArticleToc from '@/components/article/ArticleToc.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
-import { usePostDetail } from '@/composables/usePostDetail'
+import { useArticleDetail } from '@/composables/useArticleDetail'
 
 const route = useRoute()
 const router = useRouter()
 const currentSlug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
 
 const {
-  post,
+  article,
   isLoading,
   error,
   activeHeadingId,
@@ -19,7 +19,7 @@ const {
   articleStats,
   relatedArticles,
   adjacentArticles
-} = usePostDetail(currentSlug)
+} = useArticleDetail(currentSlug)
 </script>
 
 <template>
@@ -37,19 +37,19 @@ const {
       </div>
     </div>
 
-    <template v-else-if="post">
-      <ArticleHero :post="post" :stats="articleStats" />
+    <template v-else-if="article">
+      <ArticleHero :article="article" :stats="articleStats" />
 
       <section class="article-shell page-content-reveal">
         <div class="article-main">
           <article class="article-card">
             <div class="article-summary">
               <span class="article-summary__icon">▣</span>
-              <p>{{ post.summary }}</p>
+              <p>{{ article.summary }}</p>
             </div>
 
             <div class="article-body">
-              <MarkdownViewer :content="post.content" />
+              <MarkdownViewer :content="article.content" />
             </div>
           </article>
 
@@ -90,7 +90,7 @@ const {
         </div>
 
         <aside class="article-side">
-          <PostToc :items="tocItems" :active-id="activeHeadingId" />
+          <ArticleToc :items="tocItems" :active-id="activeHeadingId" />
         </aside>
       </section>
     </template>

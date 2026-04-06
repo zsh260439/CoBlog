@@ -34,31 +34,31 @@ export interface PageHeroProps {
 }
 
 // 文章卡片组件的参数定义
-export interface PostCardProps {
-  post: Article // 卡片对应的文章数据
+export interface ArticleCardProps {
+  article: Article // 卡片对应的文章数据
   featured?: boolean // 是否重点展示
 }
 
 // 文章详情页顶部 Hero 组件的参数定义
 export interface ArticleHeroProps {
-  post: Article // 当前文章数据
+  article: Article // 当前文章数据
   stats: string[] // 文章顶部展示的统计信息数组
 }
 
 // 文章目录组件的参数定义
-export interface PostTocProps {
+export interface ArticleTocProps {
   items: MarkdownHeading[] // 目录项数组
   activeId?: string // 当前激活的标题 ID，可选
 }
 
 // 博客列表项组件的参数定义
 export interface BlogListItemProps {
-  post: Article // 列表项对应的文章数据
+  article: Article // 列表项对应的文章数据
 }
 
 // 右侧个人信息卡片的参数定义
 export interface ProfileSidebarCardProps {
-  posts: Article[] // 当前页面可用文章数组
+  articles: Article[] // 当前页面可用文章数组
   ownerName: string // 站点所有者名称
   ownerRole: string // 站点所有者角色
   ownerLocation: string // 站点所有者所在地

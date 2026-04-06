@@ -1,58 +1,95 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { siteConfig } from '@/config/site'
+import { createMessage, getMessageList } from '@/servers/message'
 import type { GuestbookEntry } from '@/types'
 
-const guestbookEntries: GuestbookEntry[] = [
-  {
-    id: 'message-1',
-    author: 'FeiTwnd',
-    location: '河南-方城',
-    device: 'Android',
-    browser: 'Chrome',
-    content: '占楼占楼😙',
-    createdAt: '2026-02-21T11:13:00.000Z'
-  },
-  {
-    id: 'message-2',
-    author: '宿傩',
-    location: '河南-南阳',
-    device: 'Android',
-    browser: 'Chrome',
-    content: '差点找不到在哪',
-    createdAt: '2026-02-21T11:15:00.000Z'
-  },
-  {
-    id: 'message-3',
-    author: 'Zsint',
-    location: '河南-南阳',
-    device: 'Windows',
-    browser: 'Edge',
-    content: '这个页面后面会把真实留言接口接上，现在先把版式和视觉跑顺。',
-    createdAt: '2026-02-21T11:22:00.000Z'
-  },
-  {
-    id: 'message-4',
-    author: 'Lemon',
-    location: '江苏-苏州',
-    device: 'iPhone',
-    browser: 'Safari',
-    content: '顶部大图和内容区的衔接现在顺眼多了，等评论接起来应该会更完整。',
-    createdAt: '2026-02-21T11:39:00.000Z'
-  }
-]
+export interface MessageFormData {
+  author: string
+  content: string
+  email: string
+  qq: string
+  isPrivate: boolean
+  enableEmailNotice: boolean
+  useMarkdown: boolean
+}
 
-export function useGuestbook() {
-  const messages = computed(() => guestbookEntries)
-  const totalMessages = computed(() => 24)
+export function useGuestbook(immediate = true) {
+  const messages = ref<GuestbookEntry[]>([])
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+
+  const submitLoading = ref(false)
+  const submitError = ref<string | null>(null)
+  const submitSuccess = ref('')
+
+  const loadMessages = async () => {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const result = await getMessageList()
+      messages.value = Array.isArray(result.data) ? result.data : []
+    } catch (err) {
+      console.error(err)
+      messages.value = []
+      error.value = '留言加载失败'
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const submitMessage = async (form: MessageFormData) => {
+    submitLoading.value = true
+    submitError.value = null
+    submitSuccess.value = ''
+
+    try {
+     const res =  await createMessage({
+        author: form.author,
+        content: form.content,
+        email: form.email || undefined,
+        qq: form.qq || undefined,
+        location: '河南-南阳',
+        device: navigator.platform || '未知设备',
+        browser: navigator.userAgent,
+        isPrivate: form.isPrivate,
+        enableEmailNotice: form.enableEmailNotice,
+        useMarkdown: form.useMarkdown,
+      })
+      console.log(res)
+      submitSuccess.value = '留言提交成功'
+      await loadMessages()
+      return true
+    } catch (err) {
+      console.error(err)
+      submitError.value = '留言提交失败'
+      return false
+    } finally {
+      submitLoading.value = false
+    }
+  }
+
+  if (immediate) {
+    void loadMessages()
+  }
+
+  const totalMessages = computed(() => messages.value.length)
 
   const avatarStyle = (index: number) => ({
     backgroundImage: `url(${siteConfig.aboutHeroImage})`,
-    backgroundPosition: `${20 + index * 18}% ${22 + index * 10}%`
+    backgroundPosition: `${20 + index * 18}% ${22 + index * 10}%`,
   })
 
   return {
     messages,
+    isLoading,
+    error,
     totalMessages,
-    avatarStyle
+    avatarStyle,
+    loadMessages,
+    submitMessage,
+    submitLoading,
+    submitError,
+    submitSuccess,
   }
 }

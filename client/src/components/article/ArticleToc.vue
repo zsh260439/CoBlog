@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { PostTocProps } from '@/types'
+import type { ArticleTocProps } from '@/types'
 
-withDefaults(defineProps<PostTocProps>(), {
+withDefaults(defineProps<ArticleTocProps>(), {
   activeId: ''
 })
 
@@ -15,24 +15,20 @@ const scrollToHeading = (id: string) => {
   const offset = 110
   const top = window.scrollY + element.getBoundingClientRect().top - offset
 
-  window.scrollTo({
-    top,
-    behavior: 'smooth'
-  })
+  window.scrollTo({ top, behavior: 'smooth' })
 }
 </script>
 
 <template>
-  <aside v-if="items.length" class="post-toc">
-    <div class="post-toc__card">
-      <span class="post-toc__eyebrow">目录</span>
-
+  <aside v-if="items.length" class="article-toc">
+    <div class="article-toc__card">
+      <span class="article-toc__eyebrow">目录</span>
       <a
         v-for="item in items"
         :key="item.id"
         :href="`#${item.id}`"
-        class="post-toc__link"
-        :class="[`post-toc__link--level-${item.level}`, { active: item.id === activeId }]"
+        class="article-toc__link"
+        :class="[`article-toc__link--level-${item.level}`, { active: item.id === activeId }]"
         @click.prevent="scrollToHeading(item.id)"
       >
         {{ item.text }}
@@ -42,12 +38,12 @@ const scrollToHeading = (id: string) => {
 </template>
 
 <style scoped>
-.post-toc {
+.article-toc {
   position: sticky;
   top: calc(var(--header-height) + 1.5rem);
 }
 
-.post-toc__card {
+.article-toc__card {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -58,7 +54,7 @@ const scrollToHeading = (id: string) => {
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
-.post-toc__eyebrow {
+.article-toc__eyebrow {
   margin-bottom: 0.4rem;
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -67,7 +63,7 @@ const scrollToHeading = (id: string) => {
   color: var(--text-muted);
 }
 
-.post-toc__link {
+.article-toc__link {
   position: relative;
   padding: 0.45rem 0.75rem 0.45rem 1rem;
   border-radius: 8px;
@@ -77,7 +73,7 @@ const scrollToHeading = (id: string) => {
   transition: color 0.25s ease, background 0.25s ease;
 }
 
-.post-toc__link::before {
+.article-toc__link::before {
   content: '';
   position: absolute;
   top: 0.48rem;
@@ -89,29 +85,29 @@ const scrollToHeading = (id: string) => {
   transition: background 0.25s ease;
 }
 
-.post-toc__link--level-1 {
+.article-toc__link--level-1 {
   font-weight: 500;
   color: var(--text-primary);
 }
 
-.post-toc__link--level-2 {
+.article-toc__link--level-2 {
   padding-left: 1.2rem;
   font-size: 0.9rem;
 }
 
-.post-toc__link--level-3 {
+.article-toc__link--level-3 {
   padding-left: 1.65rem;
   font-size: 0.84rem;
 }
 
-.post-toc__link:hover,
-.post-toc__link.active {
+.article-toc__link:hover,
+.article-toc__link.active {
   color: var(--text-primary);
   background: #f4f7fb;
 }
 
-.post-toc__link:hover::before,
-.post-toc__link.active::before {
+.article-toc__link:hover::before,
+.article-toc__link.active::before {
   background: var(--accent-cyan);
 }
 </style>

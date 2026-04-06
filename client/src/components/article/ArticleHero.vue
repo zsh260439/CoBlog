@@ -1,23 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ArticleHeroProps } from '@/types'
-//测试
-import { getPostList } from '@/servers/wz'
-import { onMounted } from 'vue'
+
 const props = defineProps<ArticleHeroProps>()
 
 const heroStyle = computed(() => {
-  if (!props.post.coverImage) {
+  if (!props.article.coverImage) {
     return undefined
   }
 
   return {
-    backgroundImage: `linear-gradient(180deg, rgba(13, 18, 28, 0.18), rgba(13, 18, 28, 0.56)), url(${props.post.coverImage})`
+    backgroundImage: `linear-gradient(180deg, rgba(13, 18, 28, 0.18), rgba(13, 18, 28, 0.56)), url(${props.article.coverImage})`
   }
-})
-onMounted(async () => {
-  const res = await getPostList()
-  console.log(res)
 })
 </script>
 
@@ -28,7 +22,7 @@ onMounted(async () => {
     <div class="article-hero__mist"></div>
 
     <div class="article-hero__inner">
-      <h1 class="article-hero__title">{{ post.title }}</h1>
+      <h1 class="article-hero__title">{{ article.title }}</h1>
 
       <div class="article-hero__meta">
         <span v-for="item in stats" :key="item">{{ item }}</span>

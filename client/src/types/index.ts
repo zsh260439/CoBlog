@@ -6,9 +6,9 @@ export * from './site'
 export * from './ui'
 
 export interface ApiResponse<T> {
+  code: number // 接口状态码
   data: T | null // 接口返回的数据主体
   message: string // 接口消息说明
-  success: boolean // 接口是否成功
 }
 
 export interface PaginatedResponse<T> {

@@ -1,14 +1,58 @@
 <script setup lang="ts">
+import { reactive } from 'vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { useGuestbook } from '@/composables/useGuestbook'
 import { siteConfig } from '@/config/site'
-import { usePosts } from '@/composables/usePosts'
+import { useArticles } from '@/composables/useArticles'
 import { formatDate } from '@/utils'
 
-const { posts } = usePosts()
-const { messages, totalMessages, avatarStyle } = useGuestbook()
+const { articles } = useArticles()
+
+const {
+  messages,
+  isLoading,
+  error,
+  totalMessages,
+  avatarStyle,
+  submitMessage,
+  submitLoading,
+  submitError,
+  submitSuccess,
+} = useGuestbook()
+
+const form = reactive({
+  author: '',
+  content: '',
+  email: '',
+  qq: '',
+  isPrivate: false,
+  enableEmailNotice: true,
+  useMarkdown: true,
+})
+
+const handleSubmit = async () => {
+  if (!form.author.trim()) {
+    return
+  }
+
+  if (!form.content.trim()) {
+    return
+  }
+
+  const success = await submitMessage(form)
+ 
+  if (success) {
+    form.author = ''
+    form.content = ''
+    form.email = ''
+    form.qq = ''
+    form.isPrivate = false
+    form.enableEmailNotice = true
+    form.useMarkdown = true
+  }
+}
 </script>
 
 <template>
@@ -20,27 +64,86 @@ const { messages, totalMessages, avatarStyle } = useGuestbook()
         <section class="message-card composer-card">
           <h2 class="composer-card__title">写留言</h2>
 
-          <form class="composer-form" @submit.prevent>
-            <textarea class="composer-form__textarea" placeholder="写点什么..." rows="5"></textarea>
+          <form class="composer-form" @submit.prevent="handleSubmit">
+            <textarea
+              v-model="form.content"
+              class="composer-form__textarea"
+              placeholder="写点什么..."
+              rows="5"
+            />
 
             <div class="composer-form__row">
-              <input class="composer-form__input" type="text" placeholder="昵称 *" />
-              <input class="composer-form__input" type="text" placeholder="邮箱/QQ号" />
-              <input class="composer-form__input" type="text" placeholder="验证码" />
+              <input
+                v-model="form.author"
+                class="composer-form__input"
+                type="text"
+                placeholder="昵称 *"
+              />
+              <input
+                v-model="form.email"
+                class="composer-form__input"
+                type="text"
+                placeholder="邮箱"
+              />
+              <input
+                v-model="form.qq"
+                class="composer-form__input"
+                type="text"
+                placeholder="QQ号"
+              />
             </div>
 
             <div class="composer-form__footer">
-              <label class="composer-form__check"><input type="checkbox" /> 悄悄话</label>
-              <label class="composer-form__check"><input type="checkbox" checked /> 邮件提醒</label>
-              <label class="composer-form__check"><input type="checkbox" checked /> Markdown</label>
-              <button class="composer-form__button" type="submit">留言</button>
+              <label class="composer-form__check">
+                <input v-model="form.isPrivate" type="checkbox" />
+                悄悄话
+              </label>
+
+              <label class="composer-form__check">
+                <input v-model="form.enableEmailNotice" type="checkbox" />
+                邮件提醒
+              </label>
+
+              <label class="composer-form__check">
+                <input v-model="form.useMarkdown" type="checkbox" />
+                Markdown
+              </label>
+
+              <button class="composer-form__button" type="submit" :disabled="submitLoading">
+                {{ submitLoading ? '提交中...' : '留言' }}
+              </button>
             </div>
           </form>
+
+          <p v-if="submitError" class="composer-form__message composer-form__message--error">
+            {{ submitError }}
+          </p>
+
+          <p v-if="submitSuccess" class="composer-form__message composer-form__message--success">
+            {{ submitSuccess }}
+          </p>
         </section>
 
         <div class="message-count">共 {{ totalMessages }} 条留言</div>
 
-        <article v-for="(item, index) in messages" :key="item.id" class="message-card guestbook-card">
+        <div v-if="isLoading" class="message-card message-card--state">
+          正在加载留言...
+        </div>
+
+        <div v-else-if="error" class="message-card message-card--state">
+          {{ error }}
+        </div>
+
+        <div v-else-if="!messages.length" class="message-card message-card--state">
+          还没有留言，来留下第一条吧。
+        </div>
+
+        <article
+          v-for="(item, index) in messages"
+          v-else
+          :key="item.id"
+          class="message-card guestbook-card"
+        >
           <div class="guestbook-card__avatar" :style="avatarStyle(index)"></div>
 
           <div class="guestbook-card__body">
@@ -62,7 +165,7 @@ const { messages, totalMessages, avatarStyle } = useGuestbook()
 
       <aside class="message-side">
         <ProfileSidebarCard
-          :posts="posts"
+          :articles="articles"
           :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
@@ -103,6 +206,11 @@ const { messages, totalMessages, avatarStyle } = useGuestbook()
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.message-card--state {
+  padding: 1rem 1.15rem;
+  color: var(--text-secondary);
 }
 
 .composer-card,
@@ -172,6 +280,24 @@ const { messages, totalMessages, avatarStyle } = useGuestbook()
   color: #ffffff;
   font: inherit;
   cursor: pointer;
+}
+
+.composer-form__button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.composer-form__message {
+  margin: 0.4rem 0 0;
+  font-size: 0.86rem;
+}
+
+.composer-form__message--error {
+  color: #c05656;
+}
+
+.composer-form__message--success {
+  color: #2f855a;
 }
 
 .message-count {
