@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PageHeroProps } from '@/types'
+import type { PageHeroProps } from '@/types/ui'
 
 const props = withDefaults(defineProps<PageHeroProps>(), {
   eyebrow: '',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ArticleTocProps } from '@/types'
+import type { ArticleTocProps } from '@/types/article'
 
 withDefaults(defineProps<ArticleTocProps>(), {
   activeId: ''

@@ -9,22 +9,21 @@ import AppFooter from '@/components/ui/AppFooter.vue'
 const route = useRoute()
 
 const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
+const isAdminShell = computed(() => route.meta.appShell === 'admin')
 const routeViewKey = computed(() => JSON.stringify({ path: route.path, query: route.query }))
 </script>
 
 <template>
   <div class="app">
-    <!-- 顶部滚动进度条 -->
-    <ScrollProgress />
-
-    <AppHeader />
-    <main class="main" :class="{ 'main--overlay': isOverlayLayout }">
+    <ScrollProgress v-if="!isAdminShell" />
+    <AppHeader v-if="!isAdminShell" />
+    <main class="main" :class="{ 'main--overlay': isOverlayLayout, 'main--plain': isAdminShell }">
       <RouterView v-slot="{ Component }">
         <component :is="Component" :key="routeViewKey" class="route-page" />
       </RouterView>
     </main>
-    <AppFooter />
-    <BackToTopButton />
+    <AppFooter v-if="!isAdminShell" />
+    <BackToTopButton v-if="!isAdminShell" />
   </div>
 </template>
 
@@ -42,6 +41,10 @@ const routeViewKey = computed(() => JSON.stringify({ path: route.path, query: ro
 }
 
 .main--overlay {
+  margin-top: 0;
+}
+
+.main--plain {
   margin-top: 0;
 }
 

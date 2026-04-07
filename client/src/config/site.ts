@@ -1,4 +1,4 @@
-import type { SiteCategory, SiteLink, SiteNavItem, SiteSection } from '@/types'
+import type { SiteCategory, SiteLink, SiteNavItem, SiteSection } from '@/types/site'
 
 export const siteConfig = {
   name: 'CoBlog',

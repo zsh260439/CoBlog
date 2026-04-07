@@ -5,6 +5,65 @@ import HomeView from '@/views/HomeView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: {
+      appShell: 'admin'
+    },
+    children: [
+      {
+        path: '',
+        name: 'admin-dashboard',
+        component: () => import('@/views/admin/AdminDashboardView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '仪表盘',
+          description: '查看内容概览、最近文章和后台快捷入口'
+        }
+      },
+      {
+        path: 'articles',
+        name: 'admin-articles',
+        component: () => import('@/views/admin/AdminArticlesView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '文章管理',
+          description: '浏览已有文章，快速筛选并跳转前台查看'
+        }
+      },
+      {
+        path: 'categories',
+        name: 'admin-categories',
+        component: () => import('@/views/admin/AdminCategoriesView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '分类管理',
+          description: '管理分类与标签结构'
+        }
+      },
+      {
+        path: 'article/new',
+        name: 'admin-article-new',
+        component: () => import('@/views/admin/AdminArticleNewView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '新建文章',
+          description: '填写必要字段并发布 Markdown 文章'
+        }
+      },
+      {
+        path: 'article/:id/edit',
+        name: 'admin-article-edit',
+        component: () => import('@/views/admin/AdminArticleNewView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '编辑文章',
+          description: '更新文章内容并重新发布'
+        }
+      }
+    ]
+  },
+  {
     path: '/',
     name: 'home',
     component: HomeView,
@@ -32,6 +91,14 @@ const routes: RouteRecordRaw[] = [
     path: '/category/:slug',
     name: 'category',
     component: () => import('@/views/CategoryView.vue'),
+    meta: {
+      headerStyle: 'overlay'
+    }
+  },
+  {
+    path: '/tag/:tag',
+    name: 'tag',
+    component: () => import('@/views/TagView.vue'),
     meta: {
       headerStyle: 'overlay'
     }

@@ -1,17 +1,7 @@
 import { computed, ref } from 'vue'
 import { siteConfig } from '@/config/site'
 import { createMessage, getMessageList } from '@/servers/message'
-import type { GuestbookEntry } from '@/types'
-
-export interface MessageFormData {
-  author: string
-  content: string
-  email: string
-  qq: string
-  isPrivate: boolean
-  enableEmailNotice: boolean
-  useMarkdown: boolean
-}
+import type { GuestbookEntry, MessageFormData } from '@/types/message'
 
 export function useGuestbook(immediate = true) {
   const messages = ref<GuestbookEntry[]>([])

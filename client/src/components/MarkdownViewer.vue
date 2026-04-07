@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import 'highlight.js/styles/github.css'
 import { renderMarkdown } from '@/utils'
-import type { MarkdownViewerProps } from '@/types'
+import type { MarkdownViewerProps } from '@/types/ui'
 
 const props = defineProps<MarkdownViewerProps>()
 const viewerRef = ref<HTMLElement | null>(null)

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useEventListener } from '@vueuse/core'
-import type { ProfileSidebarCardProps } from '@/types'
+import type { ProfileSidebarCardProps } from '@/types/ui'
 import { summarizeCategories, summarizeTags } from '@/utils'
 
 const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
@@ -11,12 +11,14 @@ const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
 
 const router = useRouter()
 const showCategoryModal = ref(false)
+const showTagModal = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
 const articleCount = computed(() => props.articles.length)
 const categoryItems = computed(() => summarizeCategories(props.articles))
 const categoryCount = computed(() => categoryItems.value.length)
-const tagCount = computed(() => summarizeTags(props.articles).length)
+const tagItems = computed(() => summarizeTags(props.articles))
+const tagCount = computed(() => tagItems.value.length)
 const avatarStyle = computed(() => {
   if (!props.imageUrl) {
     return undefined
@@ -32,6 +34,7 @@ const handleArticleClick = () => {
 }
 
 const openCategories = () => {
+  showTagModal.value = false
   showCategoryModal.value = true
 }
 
@@ -39,11 +42,25 @@ const closeCategories = () => {
   showCategoryModal.value = false
 }
 
-onClickOutside(modalRef, closeCategories)
+const openTags = () => {
+  showCategoryModal.value = false
+  showTagModal.value = true
+}
+
+const closeTags = () => {
+  showTagModal.value = false
+}
+
+const closeModals = () => {
+  closeCategories()
+  closeTags()
+}
+
+onClickOutside(modalRef, closeModals)
 
 useEventListener(window, 'keydown', (event) => {
   if (event.key === 'Escape') {
-    closeCategories()
+    closeModals()
   }
 })
 </script>
@@ -66,10 +83,10 @@ useEventListener(window, 'keydown', (event) => {
         <span>分类</span>
       </button>
 
-      <div class="profile-card__stat">
+      <button class="profile-card__stat profile-card__stat--button" type="button" @click="openTags">
         <strong>{{ tagCount }}</strong>
         <span>标签</span>
-      </div>
+      </button>
     </div>
 
     <div class="profile-card__actions">
@@ -93,6 +110,28 @@ useEventListener(window, 'keydown', (event) => {
               @click="closeCategories"
             >
               <span>{{ item.label }}</span>
+              <span>{{ item.count }} 篇</span>
+            </router-link>
+          </div>
+        </div>
+      </transition>
+
+      <transition name="category-modal-fade">
+        <div v-if="showTagModal" class="category-modal__overlay" @click="closeTags">
+          <div ref="modalRef" class="category-modal" @click.stop>
+            <div class="category-modal__header">
+              <h4>所有标签</h4>
+              <button type="button" class="category-modal__close" @click="closeTags">×</button>
+            </div>
+
+            <router-link
+              v-for="item in tagItems"
+              :key="item.label"
+              :to="{ name: 'tag', params: { tag: item.label } }"
+              class="category-modal__item"
+              @click="closeTags"
+            >
+              <span>#{{ item.label }}</span>
               <span>{{ item.count }} 篇</span>
             </router-link>
           </div>
