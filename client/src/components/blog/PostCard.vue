@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ArticleCardProps } from '@/types'
+import type { ArticleCardProps } from '@/types/article'
 import { estimateReadTime, formatDate } from '@/utils'
 
 const props = withDefaults(defineProps<ArticleCardProps>(), {

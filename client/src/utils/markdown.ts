@@ -1,6 +1,6 @@
 import markdownIt from 'markdown-it'
 import highlightjs from 'markdown-it-highlightjs'
-import type { MarkdownHeading } from '@/types'
+import type { MarkdownHeading } from '@/types/content'
 
 function createSlug(text: string, usedIds: Map<string, number>) {
   const baseSlug = text

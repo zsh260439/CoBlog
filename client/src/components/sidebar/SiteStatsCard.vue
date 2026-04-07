@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { siteConfig } from '@/config/site'
-import type { SiteStatsCardProps } from '@/types'
+import type { SiteStatsCardProps } from '@/types/ui'
 
 const props = defineProps<SiteStatsCardProps>()
 

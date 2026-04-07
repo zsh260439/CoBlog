@@ -1,7 +1,7 @@
 import { computed, nextTick, ref, watch, type Ref } from 'vue'
 import { useThrottleFn, useWindowScroll } from '@vueuse/core'
 import { getArticleDetail, getArticleList } from '@/servers/article'
-import type { Article } from '@/types'
+import type { Article } from '@/types/article'
 import { estimateReadTime, extractHeadings, formatDate } from '@/utils'
 
 export function useArticleDetail(slug: Ref<string>) {

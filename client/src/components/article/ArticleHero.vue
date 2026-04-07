@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ArticleHeroProps } from '@/types'
+import type { ArticleHeroProps } from '@/types/article'
 
 const props = defineProps<ArticleHeroProps>()
 

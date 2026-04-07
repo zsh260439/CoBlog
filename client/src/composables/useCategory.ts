@@ -1,7 +1,8 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import { categoryOptions } from '@/config/site'
 import { getArticlesByCategory } from '@/servers/article'
-import type { Article } from '@/types'
+import type { Article } from '@/types/article'
+import { createSlugFromText } from '@/utils'
 
 export function useCategory(slug: Ref<string>) {
   const articles = ref<Article[]>([])
@@ -9,7 +10,26 @@ export function useCategory(slug: Ref<string>) {
   const error = ref<string | null>(null)
 
   const currentCategory = computed(() => {
-    return categoryOptions.find((item) => item.slug === slug.value) ?? null
+    const matchedCategory = categoryOptions.find((item) => item.slug === slug.value)
+    if (matchedCategory) {
+      return matchedCategory
+    }
+
+    if (articles.value[0]) {
+      return {
+        label: articles.value[0].category,
+        slug: articles.value[0].categorySlug,
+      }
+    }
+
+    if (!slug.value) {
+      return null
+    }
+
+    return {
+      label: slug.value,
+      slug: createSlugFromText(slug.value, 32),
+    }
   })
 
   const loadCategoryArticles = async (categorySlug: string) => {

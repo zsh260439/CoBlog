@@ -80,6 +80,7 @@ watch(
         >
           {{ item.label }}
         </router-link>
+
       </nav>
     </Transition>
   </header>
@@ -270,6 +271,7 @@ watch(
 .nav-mobile-link.active {
   color: var(--accent-cyan);
 }
+
 
 .slide-enter-active,
 .slide-leave-active {

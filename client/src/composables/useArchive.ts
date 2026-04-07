@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { getArticlesByArchive } from '@/servers/article'
-import type { Article } from '@/types'
+import type { Article } from '@/types/article'
 import type { ArchiveGroup } from '@/types/article'
 
 export function useArchive() {

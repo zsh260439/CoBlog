@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { getArticleList } from '@/servers/article'
-import type { Article } from '@/types'
+import type { Article } from '@/types/article'
 
 export function useArticles(immediate = true) {
   const articles = ref<Article[]>([])

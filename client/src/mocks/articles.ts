@@ -1,4 +1,5 @@
-import type { Article, ArticleSeed, CoverPalette } from '@/types'
+import type { Article } from '@/types/article'
+import type { ArticleSeed, CoverPalette } from '@/types/mock'
 
 const SHARED_COVER_IMAGE = '/images/about-hero.png'
 

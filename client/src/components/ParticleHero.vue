@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
 import { siteConfig } from '@/config/site'
-import type { Particle } from '@/types'
+import type { Particle } from '@/types/ui'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const context = ref<CanvasRenderingContext2D | null>(null)

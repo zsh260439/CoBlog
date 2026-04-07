@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import ParticleHero from '@/components/ParticleHero.vue'
 import ScrollNarrative from '@/components/ScrollNarrative.vue'
 import { siteConfig } from '@/config/site'
-import type { NarrativeSection } from '@/types'
+import type { NarrativeSection } from '@/types/content'
 
 const sections = computed<NarrativeSection[]>(() => [
   {

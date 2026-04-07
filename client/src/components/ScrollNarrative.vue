@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { ScrollNarrativeProps } from '@/types'
+import type { ScrollNarrativeProps } from '@/types/ui'
 
 const props = defineProps<ScrollNarrativeProps>()
 
