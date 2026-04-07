@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useEventListener } from '@vueuse/core'
 import type { ProfileSidebarCardProps } from '@/types'
-import { summarizeCategories } from '@/utils'
+import { summarizeCategories, summarizeTags } from '@/utils'
 
 const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
   actionLabels: () => ['GitHub', '邮箱', 'RSS']
@@ -16,6 +16,7 @@ const modalRef = ref<HTMLElement | null>(null)
 const articleCount = computed(() => props.articles.length)
 const categoryItems = computed(() => summarizeCategories(props.articles))
 const categoryCount = computed(() => categoryItems.value.length)
+const tagCount = computed(() => summarizeTags(props.articles).length)
 const avatarStyle = computed(() => {
   if (!props.imageUrl) {
     return undefined
@@ -64,6 +65,11 @@ useEventListener(window, 'keydown', (event) => {
         <strong>{{ categoryCount }}</strong>
         <span>分类</span>
       </button>
+
+      <div class="profile-card__stat">
+        <strong>{{ tagCount }}</strong>
+        <span>标签</span>
+      </div>
     </div>
 
     <div class="profile-card__actions">
@@ -139,7 +145,7 @@ useEventListener(window, 'keydown', (event) => {
 
 .profile-card__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin-top: 1.1rem;
   padding-top: 1rem;

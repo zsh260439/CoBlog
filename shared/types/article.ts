@@ -4,6 +4,7 @@ export interface Article {
   content: string;
   excerpt: string;
   category: string;
+  tags: string[];
   coverImage: string;
   createdAt: string;
   updatedAt: string;

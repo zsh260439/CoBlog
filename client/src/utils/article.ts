@@ -8,6 +8,23 @@ export function estimateReadTime(content: string): string {
   return `${minutes} 分钟阅读`
 }
 
+export function summarizeTags(articles: Article[], limit = 30) {
+  const tagCount = new Map<string, number>()
+
+  articles.forEach((article) => {
+    const tags = article.tags ?? []
+
+    tags.forEach((tag) => {
+      tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1)
+    })
+  })
+
+  return [...tagCount.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, limit)
+    .map(([label, count]) => ({ label, count }))
+}
+
 export function summarizeCategories(articles: Article[]) {
   const categoryCount = new Map<string, { label: string; slug: string; count: number }>()
 
