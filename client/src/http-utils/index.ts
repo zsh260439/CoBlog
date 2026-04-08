@@ -1,10 +1,11 @@
 import axios from 'axios'
 import type { AxiosInstance, Method } from 'axios'
 import type { ApiResult, SubmitData } from '@/types/http'
+import { API_BASE_URL } from '@/config/http'
 
 // 创建 axios 实例
 const httpInstance = axios.create({
-  baseURL: 'http://localhost:3000/',
+  baseURL: `${API_BASE_URL}/`,
   timeout: 10000
 })
 

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { ElInput, ElMessage } from 'element-plus'
-import { ArrowLeft, Picture, Promotion } from '@element-plus/icons-vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
+import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { categoryOptions } from '@/config/site'
+import { API_BASE_URL } from '@/config/http'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createArticle, getArticleById, updateArticle } from '@/servers/article'
+import { uploadImage } from '@/servers/upload'
 import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
@@ -17,6 +21,7 @@ const router = useRouter()
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
 
+// 创建文章表单的默认值
 const createDefaultForm = (): AdminArticleForm => ({
   title: '',
   slug: '',
@@ -36,11 +41,8 @@ const submitError = ref('')
 const draftMode = ref(false)
 const pageLoading = ref(false)
 const slugTouched = ref(false)
-const imageDialogVisible = ref(false)
-const imageUrl = ref('')
-const imageAlt = ref('')
-const contentInputRef = ref<InstanceType<typeof ElInput> | null>(null)
 
+// 合并“后台分类”和“本地默认分类”得到当前可选分类列表
 const resolvedCategories = computed<ArticleCategory[]>(() => {
   if (categories.value.length) {
     return categories.value
@@ -56,19 +58,24 @@ const resolvedCategories = computed<ArticleCategory[]>(() => {
   }))
 })
 
+// 根据当前已选分类，拿到完整分类对象
 const selectedCategory = computed(() => {
   return resolvedCategories.value.find((item) => item.label === form.category) ?? null
 })
 
+// 判断当前页面是否处于编辑文章模式
 const isEditMode = computed(() => typeof route.params.id === 'string' && route.params.id.length > 0)
 
+// 截取一部分标签作为后台快速选择列表
 const suggestedTags = computed(() => tags.value.slice(0, 16))
 
+// 在切换分类时同步更新 categorySlug
 const syncCategory = () => {
   const currentCategory = resolvedCategories.value.find((item) => item.label === form.category)
   form.categorySlug = currentCategory?.slug ?? createSlugFromText(form.category, 32)
 }
 
+// 向文章表单里添加一个标签
 const addTag = (tag: string) => {
   const normalized = tag.trim()
   if (!normalized || form.tags.includes(normalized)) {
@@ -78,10 +85,12 @@ const addTag = (tag: string) => {
   form.tags.push(normalized)
 }
 
+// 从文章表单里移除一个标签
 const removeTag = (tag: string) => {
   form.tags = form.tags.filter((item) => item !== tag)
 }
 
+// 点击标签按钮时，在“添加/移除”之间切换
 const toggleTag = (tag: string) => {
   if (form.tags.includes(tag)) {
     removeTag(tag)
@@ -91,46 +100,41 @@ const toggleTag = (tag: string) => {
   addTag(tag)
 }
 
-const insertSnippetAtCursor = async (snippet: string, caretOffset = snippet.length) => {
-  const textarea = contentInputRef.value?.textarea
-  if (!textarea) {
-    form.content += snippet
-    return
+// 把后端返回的图片路径补成可直接访问的完整地址
+const resolveUploadUrl = (url: string) => {
+  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`
+}
+
+// 上传单张图片，并转换成编辑器需要的图片结构
+const uploadSingleImage = async (file: File) => {
+  const result = await uploadImage(file)
+  const url = result.data?.url
+
+  if (!url) {
+    throw new Error('图片上传失败')
   }
 
-  const start = textarea.selectionStart ?? form.content.length
-  const end = textarea.selectionEnd ?? form.content.length
-
-  form.content = `${form.content.slice(0, start)}${snippet}${form.content.slice(end)}`
-
-  await nextTick()
-  const nextPosition = start + caretOffset
-  textarea.focus()
-  textarea.setSelectionRange(nextPosition, nextPosition)
-}
-
-const insertCodeBlock = async () => {
-  await insertSnippetAtCursor('\n```js\n\n```\n', 7)
-}
-
-const openImageDialog = () => {
-  imageUrl.value = ''
-  imageAlt.value = ''
-  imageDialogVisible.value = true
-}
-
-const insertImageMarkdown = async () => {
-  const normalizedUrl = imageUrl.value.trim()
-  if (!normalizedUrl) {
-    ElMessage.warning('请先输入图片地址')
-    return
+  return {
+    url: resolveUploadUrl(url),
+    alt: file.name,
+    title: file.name,
   }
-
-  const snippet = `\n![${imageAlt.value.trim() || '图片描述'}](${normalizedUrl})\n`
-  imageDialogVisible.value = false
-  await insertSnippetAtCursor(snippet)
 }
 
+// 供 md-editor-v3 调用的批量图片上传入口
+const handleUploadImages = async (
+  files: File[],
+  callback: (urls: Array<{ url: string; alt: string; title: string }>) => void
+) => {
+  try {
+    callback(await Promise.all(files.map(uploadSingleImage)))
+    ElMessage.success('图片上传成功')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '图片上传失败')
+  }
+}
+
+// 把当前表单内容保存到会话级草稿 store
 const saveDraft = () => {
   saveArticleDraft({
     ...form,
@@ -141,6 +145,7 @@ const saveDraft = () => {
   ElMessage.success('草稿已保存到当前会话')
 }
 
+// 提交前检查发文必填项是否完整
 const validateForm = () => {
   if (!form.title.trim()) return '请输入文章标题'
   if (!form.excerpt.trim()) return '请输入文章摘要'
@@ -149,6 +154,7 @@ const validateForm = () => {
   return ''
 }
 
+// 执行文章发布或更新请求
 const publishArticle = async () => {
   syncCategory()
   submitError.value = ''
@@ -189,6 +195,7 @@ const publishArticle = async () => {
   }
 }
 
+// 处理“主操作按钮”点击：草稿模式保存，否则发布/更新
 const handlePrimaryAction = async () => {
   if (draftMode.value) {
     saveDraft()
@@ -198,6 +205,7 @@ const handlePrimaryAction = async () => {
   await publishArticle()
 }
 
+// 在用户未手动修改 slug 时，根据标题自动生成路径
 watch(
   () => form.title,
   (value) => {
@@ -207,6 +215,7 @@ watch(
   }
 )
 
+// 当分类列表可用后，自动回填默认分类
 watch(
   resolvedCategories,
   (value) => {
@@ -218,6 +227,7 @@ watch(
   { immediate: true }
 )
 
+// 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {
   await loadTaxonomies(true)
 
@@ -270,7 +280,7 @@ onMounted(async () => {
       <button class="article-create-page__back" type="button" @click="router.push('/admin/articles')">
         <el-icon><ArrowLeft /></el-icon>
       </button>
-      <strong>新建文章</strong>
+      <strong>{{ isEditMode ? '编辑文章' : '新建文章' }}</strong>
     </div>
 
     <el-alert
@@ -295,23 +305,18 @@ onMounted(async () => {
         </div>
 
         <div class="form-field">
-          <div class="form-field__header">
-            <label>正文内容 (Markdown)</label>
+          <label>正文内容 (Markdown)</label>
 
-            <div class="editor-tools">
-              <el-button size="small" @click="insertCodeBlock">插入代码块</el-button>
-              <el-button size="small" :icon="Picture" @click="openImageDialog">插入图片</el-button>
-            </div>
-          </div>
-
-          <el-input
-            ref="contentInputRef"
+          <MdEditor
             v-model="form.content"
-            type="textarea"
-            :rows="14"
-            resize="vertical"
+            class="article-create-page__editor"
+            theme="light"
+            preview-theme="github"
+            code-theme="atom"
+            language="zh-CN"
             placeholder="请输入 Markdown 格式的文章内容..."
-            class="article-create-page__content"
+            :toolbars-exclude="['save', 'github', 'catalog']"
+            :on-upload-img="handleUploadImages"
           />
         </div>
       </section>
@@ -332,7 +337,7 @@ onMounted(async () => {
             <el-button class="publish-actions__ghost" @click="saveDraft">保存草稿</el-button>
             <el-button type="primary" class="publish-actions__primary" :loading="submitLoading" @click="handlePrimaryAction">
               <el-icon><Promotion /></el-icon>
-              {{ draftMode ? '保存草稿' : '发布' }}
+              {{ draftMode ? '保存草稿' : isEditMode ? '更新文章' : '发布' }}
             </el-button>
           </div>
 
@@ -377,23 +382,6 @@ onMounted(async () => {
         </section>
       </aside>
     </div>
-
-    <el-dialog v-model="imageDialogVisible" title="插入图片" width="420px">
-      <div class="dialog-field">
-        <label>图片地址</label>
-        <el-input v-model="imageUrl" placeholder="https://example.com/demo.png" />
-      </div>
-
-      <div class="dialog-field">
-        <label>图片描述</label>
-        <el-input v-model="imageAlt" placeholder="可选，默认图片描述" />
-      </div>
-
-      <template #footer>
-        <el-button @click="imageDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="insertImageMarkdown">插入</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -452,8 +440,7 @@ onMounted(async () => {
 }
 
 .article-create-card h3,
-.form-field label,
-.dialog-field label {
+.form-field label {
   color: #111111;
 }
 
@@ -463,14 +450,12 @@ onMounted(async () => {
   font-weight: 700;
 }
 
-.form-field,
-.dialog-field {
+.form-field {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.form-field__header,
 .card-title-row {
   display: flex;
   align-items: center;
@@ -478,21 +463,32 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.form-field label,
-.dialog-field label {
+.form-field label {
   font-size: 14px;
   font-weight: 600;
 }
 
-.editor-tools {
-  display: flex;
-  gap: 8px;
+.article-create-page__editor {
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+  border-radius: 12px;
 }
 
-.article-create-page__content :deep(textarea) {
-  min-height: 320px;
+.article-create-page__editor :deep(.md-editor) {
+  border: none;
+}
+
+.article-create-page__editor :deep(.md-editor-toolbar-wrapper) {
+  background: #fafafa;
+}
+
+.article-create-page__editor :deep(.md-editor-content) {
   font-family: var(--font-mono);
-  line-height: 1.8;
+}
+
+.article-create-page__editor :deep(.md-editor-input)::placeholder,
+.article-create-page__editor :deep(textarea::placeholder) {
+  color: #d7dde6 !important;
 }
 
 .publish-row {
@@ -562,10 +558,16 @@ onMounted(async () => {
   -webkit-text-fill-color: #303133 !important;
 }
 
-.article-create-page :deep(.el-input__inner::placeholder),
-.article-create-page :deep(.el-textarea__inner::placeholder) {
-  color: #a8abb2 !important;
+
+.article-create-page :deep(input::-webkit-input-placeholder),
+.article-create-page :deep(textarea::-webkit-input-placeholder),
+.article-create-page :deep(.el-input__inner::-webkit-input-placeholder),
+.article-create-page :deep(.el-textarea__inner::-webkit-input-placeholder) {
+  color: #d7dde6 !important;
+  -webkit-text-fill-color: #d7dde6 !important;
 }
+
+
 
 .article-create-page__full {
   width: 100%;
@@ -599,10 +601,6 @@ onMounted(async () => {
   color: #ffffff;
 }
 
-.tag-custom {
-  margin-top: 14px;
-}
-
 @media (max-width: 1100px) {
   .article-create-page__layout {
     grid-template-columns: 1fr;
@@ -619,7 +617,6 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
-  .form-field__header,
   .card-title-row {
     flex-direction: column;
     align-items: flex-start;

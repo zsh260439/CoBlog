@@ -1,136 +1,250 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
-import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
-import PageHero from '@/components/ui/PageHero.vue'
-import { aboutSections, siteConfig } from '@/config/site'
-import { useArticles } from '@/composables/useArticles'
-
-const { articles } = useArticles()
-
-const introSection = computed(() => aboutSections[0] ?? null)
-const detailSections = computed(() => aboutSections.slice(1))
+import AboutTechHero from '@/components/about/AboutTechHero.vue'
+import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
 </script>
 
 <template>
   <div class="about-view">
-    <PageHero title="关于" description="关于我和这个博客" :image="siteConfig.aboutHeroImage" />
-
-    <section class="about-shell page-content-reveal">
-      <div class="about-main">
-        <article v-if="introSection" class="about-card about-card--lead">
-          <div class="about-card__marker"></div>
-
-          <div class="about-card__content">
-            <h2>{{ introSection.title }}</h2>
-            <p v-for="paragraph in introSection.paragraphs" :key="paragraph">{{ paragraph }}</p>
-          </div>
-        </article>
-
-        <article v-for="section in detailSections" :key="section.title" class="about-card">
-          <h2>{{ section.title }}</h2>
-          <p v-for="paragraph in section.paragraphs" :key="paragraph">{{ paragraph }}</p>
-        </article>
+    <section class="about-hero-stage">
+      <div class="about-view__background">
+        <AboutTechHero
+          title=""
+          description=""
+          :items="aboutTechItems"
+          :paused="false"
+          :display-copy="false"
+        />
       </div>
 
-      <aside class="about-side">
-        <ProfileSidebarCard
-          :articles="articles"
-          :image-url="siteConfig.aboutHeroImage"
-          :owner-name="siteConfig.ownerName"
-          :owner-role="siteConfig.ownerRole"
-          :owner-location="siteConfig.ownerLocation"
-        />
+      <div class="about-hero-stage__content">
+        <article class="about-intro-card">
+          <section class="about-intro-card__section">
+            <h2>关于我</h2>
+            <p>你好，我是 {{ siteConfig.ownerName }}，一名持续打磨界面体验、内容表达和工程细节的前端开发者。</p>
+            <p>我更喜欢克制、清晰、可持续演化的界面，也喜欢让页面在第一眼就建立起自己的气质。</p>
+          </section>
 
-        <SiteStatsCard />
-      </aside>
+          <section class="about-intro-card__section">
+            <h2>关于博客</h2>
+            <p>这个博客对我而言，不只是一个技术笔记本。这里会持续沉淀前端开发、内容记录与工具现代化相关的实践。</p>
+            <p>它也是一个不断生长的实验场，我会把新的交互、布局和工程方案慢慢长在这里，而不是一次性堆满。</p>
+          </section>
+
+          <section class="about-intro-card__section about-intro-card__section--meta">
+            <h2>联系我</h2>
+
+            <div class="about-intro-card__meta-row">
+              <span>位置</span>
+              <strong>{{ siteConfig.ownerLocation }}</strong>
+            </div>
+
+            <div class="about-intro-card__meta-row">
+              <span>邮箱</span>
+              <strong>{{ aboutProfileCard.email }}</strong>
+            </div>
+
+            <div class="about-intro-card__meta-row">
+              <span>电话</span>
+              <strong>{{ aboutProfileCard.phone }}</strong>
+            </div>
+          </section>
+        </article>
+
+        <article class="about-profile-card">
+          <div class="about-profile-card__avatar-wrap">
+            <img :src="aboutProfileCard.avatar" :alt="siteConfig.ownerName" class="about-profile-card__avatar" />
+          </div>
+
+          <strong>{{ siteConfig.ownerName }}</strong>
+          <p class="about-profile-card__role">{{ siteConfig.ownerRole }}</p>
+
+          <div class="about-profile-card__info">
+            <span>{{ siteConfig.ownerLocation }}</span>
+            <span>{{ aboutProfileCard.email }}</span>
+            <span>{{ aboutProfileCard.phone }}</span>
+          </div>
+
+          <div class="about-profile-card__socials">
+            <span v-for="item in aboutProfileCard.socials" :key="item">{{ item }}</span>
+          </div>
+        </article>
+      </div>
     </section>
   </div>
 </template>
 
 <style scoped>
 .about-view {
-  background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
+  background: linear-gradient(180deg, #f9fbff 0%, #eef4fa 34%, #ffffff 100%);
 }
 
-.about-shell {
+.about-hero-stage {
   position: relative;
-  z-index: 2;
-  width: min(100%, 1120px);
-  margin: -62px auto 0;
-  padding: 0 2rem 5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1.58fr) 260px;
-  gap: 1.5rem;
+  min-height: 100vh;
 }
 
-.about-main,
-.about-side {
+.about-view__background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.about-hero-stage__content {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 100vh;
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 6rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 2.8rem;
+  align-items: center;
+}
+
+.about-intro-card {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(4px);
+  padding: 0;
+  color: #243241;
+}
+
+.about-intro-card__section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
+  padding: 1.65rem 1.8rem;
 }
 
-.about-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-  padding: 1.15rem;
+.about-intro-card__section + .about-intro-card__section {
+  border-top: 1px solid rgba(31, 41, 55, 0.08);
 }
 
-.about-card--lead {
-  display: grid;
-  grid-template-columns: 3px minmax(0, 1fr);
-  gap: 1rem;
-}
-
-.about-card__marker {
-  border-radius: 999px;
-  background: linear-gradient(180deg, var(--accent-cyan), rgba(0, 119, 204, 0.2));
-}
-
-.about-card__content {
-  min-width: 0;
-}
-
-.about-card h2 {
-  margin: 0 0 0.9rem;
-  font-size: 1.28rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
-}
-
-.about-card p {
+.about-intro-card__section h2 {
   margin: 0;
-  color: var(--text-secondary);
+  font-size: 1.28rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.about-intro-card__section p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.9;
+}
+
+.about-intro-card__section--meta {
+  gap: 0.8rem;
+}
+
+.about-intro-card__meta-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.about-intro-card__meta-row span {
+  color: #6b7280;
   font-size: 0.92rem;
-  line-height: 1.8;
 }
 
-.about-card p + p {
-  margin-top: 0.9rem;
+.about-intro-card__meta-row strong {
+  color: #1f2937;
+  font-weight: 500;
 }
 
-@media (max-width: 1024px) {
-  .about-shell {
+.about-profile-card {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 24px 50px rgba(3, 8, 16, 0.2);
+  backdrop-filter: blur(18px);
+  padding: 2rem 1.8rem;
+  text-align: center;
+  justify-self: end;
+  width: min(100%, 100%);
+}
+
+.about-profile-card__avatar-wrap {
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(203, 212, 225, 0.8));
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.about-profile-card__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.about-profile-card strong {
+  display: block;
+  font-size: 2rem;
+  color: #202733;
+}
+
+.about-profile-card__role {
+  margin: 0.7rem 0 0;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.about-profile-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(32, 39, 51, 0.08);
+  color: #6b7280;
+}
+
+.about-profile-card__socials {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.about-profile-card__socials span {
+  border: 1px solid rgba(32, 39, 51, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.48rem 0.78rem;
+  font-size: 0.74rem;
+  color: #6b7280;
+}
+
+@media (max-width: 960px) {
+  .about-hero-stage__content {
     grid-template-columns: 1fr;
+    align-items: end;
+  }
+
+  .about-profile-card {
+    justify-self: stretch;
   }
 }
 
 @media (max-width: 767px) {
-  .about-shell {
-    padding: 0 1.25rem 4rem;
+  .about-hero-stage__content {
+    padding: 4.5rem 1.25rem 3rem;
   }
 
-  .about-card--lead {
-    grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-
-  .about-card__marker {
-    height: 3px;
+  .about-intro-card,
+  .about-profile-card {
+    border-radius: 20px;
   }
 }
 </style>
