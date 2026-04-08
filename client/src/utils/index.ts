@@ -7,6 +7,6 @@ export {
   summarizeCategories,
   summarizeTags,
 } from './article'
-export { formatDate, formatRelativeTime } from './formatDate'
+export { formatDate } from './formatDate'
 export { createSlugFromText } from './slug'
 export { extractHeadings, renderMarkdown } from './markdown'

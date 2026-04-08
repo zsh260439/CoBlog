@@ -10,15 +10,3 @@ export interface SiteCategory {
   label: string // 分类名称
   slug: string // 分类路由别名
 }
-
-// 站点内容分区结构
-export interface SiteSection {
-  title: string // 页面分组标题
-  paragraphs: string[] // 分组下的正文段落数组
-}
-
-// 站点链接结构
-export interface SiteLink {
-  label: string // 链接名称
-  description: string // 链接说明文字
-}

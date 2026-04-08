@@ -1,4 +1,5 @@
-import type { SiteCategory, SiteLink, SiteNavItem, SiteSection } from '@/types/site'
+import type { SiteCategory, SiteNavItem } from '@/types/site'
+import type { AboutTechItem } from '@/types/ui'
 
 export const siteConfig = {
   name: 'CoBlog',
@@ -32,58 +33,96 @@ export const categoryOptions: SiteCategory[] = [
   { label: '技术', slug: 'technology' }
 ]
 
-export const aboutSections: SiteSection[] = [
-  {
-    title: '关于我',
-    paragraphs: [
-      '这里是一个围绕前端开发、界面设计和内容表达展开的个人空间。它不追求喧闹，而是更在意信息是否清楚、节奏是否顺手、页面是否耐看。',
-      '我更喜欢让页面在第一眼就建立氛围，然后在持续浏览时慢慢交付内容和细节，让设计真正服务于阅读。'
-    ]
-  },
-  {
-    title: '关于博客',
-    paragraphs: [
-      '这个博客承载的是长期积累：开发中的记录、布局上的尝试、组件拆分的思考，以及把想法整理成可阅读内容的过程。',
-      '它既是作品集，也是实验场。每次改动都尽量沿着现有结构续写，而不是推倒重来。'
-    ]
-  },
-  {
-    title: '写作方式',
-    paragraphs: [
-      '文章会优先保证结构明确，先给上下文，再交付过程，最后给出结论和可复用的方法。',
-      '界面上则保持克制：用清晰的层次、稳定的留白和适量的强调，避免视觉元素抢走内容本身的注意力。'
-    ]
-  }
-]
+export const aboutProfileCard = {
+  avatar: '/images/about-hero.png',
+  email: 'contact@example.com',
+  phone: '+86 138 0000 0000',
+  socials: ['GitHub', 'Twitter', 'LinkedIn']
+}
 
-export const messageSections: SiteSection[] = [
+export const aboutTechItems: AboutTechItem[] = [
   {
-    title: '留言说明',
-    paragraphs: [
-      '当前页面先预留了留言区的视觉结构，方便你后续直接接入后端接口和数据库模型。',
-      '在正式留言功能接入前，这里更适合作为联系说明、合作意向和页面反馈的汇总入口。'
-    ]
+    name: 'JavaScript',
+    short: 'JS',
+    description: '事件循环 / 原型链 / 浏览器执行上下文',
+    icon: 'https://cdn.simpleicons.org/javascript/F7DF1E',
+    accent: '#f7df1e'
   },
   {
-    title: '偏好内容',
-    paragraphs: [
-      '如果你在意的是页面布局、交互体验、组件拆分、可维护性或者工程化实践，这里会是比较适合交流的方向。',
-      '后续上线真实留言功能后，可以在这个页面延续当前卡片布局，直接补充表单和消息列表。'
-    ]
-  }
-]
-
-export const contactLinks: SiteLink[] = [
-  {
-    label: 'GitHub',
-    description: '代码仓库与项目沉淀，后续可以替换成真实地址。'
+    name: 'Vue',
+    short: 'VUE',
+    description: '响应式视图层 / 组件抽象 / 组合式逻辑',
+    icon: 'https://cdn.simpleicons.org/vuedotjs/42b883',
+    accent: '#42b883'
   },
   {
-    label: '邮箱',
-    description: '适合正式沟通、合作联系或较长内容的反馈。'
+    name: 'Nuxt',
+    short: 'NXT',
+    description: '同构渲染 / 内容驱动 / 站点级工程方案',
+    icon: 'https://cdn.simpleicons.org/nuxt/00dc82',
+    accent: '#00dc82'
   },
   {
-    label: '站内留言',
-    description: '前端布局已预留，后端留言功能可在下一阶段接入。'
+    name: 'NestJS',
+    short: 'NST',
+    description: '模块化后端 / 装饰器风格 / 服务边界清晰',
+    icon: 'https://cdn.simpleicons.org/nestjs/e0234e',
+    accent: '#e0234e'
+  },
+  {
+    name: 'Node.js',
+    short: 'NOD',
+    description: '运行时生态 / 脚本自动化 / 服务编排基础',
+    icon: 'https://cdn.simpleicons.org/nodedotjs/5fa04e',
+    accent: '#5fa04e'
+  },
+  {
+    name: 'TypeScript',
+    short: 'TS',
+    description: '类型约束 / 接口协作 / 工程可维护性',
+    icon: 'https://cdn.simpleicons.org/typescript/3178c6',
+    accent: '#3178c6'
+  },
+  {
+    name: 'Express',
+    short: 'EXP',
+    description: '轻量服务层 / 中间件生态 / 接口原型搭建',
+    icon: 'https://cdn.simpleicons.org/express/3a3f46',
+    accent: '#3a3f46'
+  },
+  {
+    name: 'MongoDB',
+    short: 'MDB',
+    description: '文档数据建模 / 内容存储 / 灵活扩展结构',
+    icon: 'https://cdn.simpleicons.org/mongodb/47a248',
+    accent: '#47a248'
+  },
+  {
+    name: 'Element Plus',
+    short: 'EL+',
+    description: '后台交互组件 / 表单体系 / 管理端效率',
+    icon: 'https://cdn.simpleicons.org/element/409eff',
+    accent: '#409eff'
+  },
+  {
+    name: 'ECharts',
+    short: 'ECH',
+    description: '图表表达 / 数据面板 / 后台可视化能力',
+    icon: 'https://cdn.simpleicons.org/apacheecharts/aa344d',
+    accent: '#aa344d'
+  },
+  {
+    name: 'Markdown',
+    short: 'MD',
+    description: '结构化写作 / 内容沉淀 / 长期维护友好',
+    icon: 'https://cdn.simpleicons.org/markdown/000000',
+    accent: '#6b7280'
+  },
+  {
+    name: 'Vite',
+    short: 'VIT',
+    description: '开发期极速反馈 / 构建链简洁 / 工具现代化',
+    icon: 'https://cdn.simpleicons.org/vite/646cff',
+    accent: '#646cff'
   }
 ]

@@ -537,56 +537,13 @@ Nginx 的 server 块需要明确转发路径、超时时间和静态资源规则
   }
 ]
 
-export const mockArticles = articleSeeds
+const mockArticles = articleSeeds
   .map(createArticle)
   .sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
 
 export const archiveHeroImage = mockArticles.find((article) => article.slug === 'new-start-new-motivation')?.coverImage ?? ''
 
-export function getMockArticles() {
-  return mockArticles.map((article) => ({ ...article }))
-}
-
-export function findArticleBySlug(slug: string) {
-  return mockArticles.find((article) => article.slug === slug) ?? null
-}
-
 export function findArticleById(id: string) {
   return mockArticles.find((article) => article._id === id) ?? null
 }
 
-export function getAdjacentArticles(slug: string) {
-  const currentIndex = mockArticles.findIndex((article) => article.slug === slug)
-
-  if (currentIndex === -1) {
-    return {
-      previous: null,
-      next: null
-    }
-  }
-
-  return {
-    previous: mockArticles[currentIndex - 1] ?? null,
-    next: mockArticles[currentIndex + 1] ?? null
-  }
-}
-
-export function getRelatedArticles(slug: string, limit = 5) {
-  const currentArticle = findArticleBySlug(slug)
-
-  if (!currentArticle) {
-    return []
-  }
-
-  return mockArticles
-    .filter((article) => article.slug !== slug)
-    .map((article) => {
-      const sharedTags = article.tags.filter((tag) => currentArticle.tags.includes(tag)).length
-      const score = (article.category === currentArticle.category ? 3 : 0) + sharedTags
-
-      return { article, score }
-    })
-    .sort((left, right) => right.score - left.score || +new Date(right.article.createdAt) - +new Date(left.article.createdAt))
-    .slice(0, limit)
-    .map((item) => item.article)
-}

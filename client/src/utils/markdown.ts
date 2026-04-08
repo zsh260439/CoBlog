@@ -1,7 +1,9 @@
 import markdownIt from 'markdown-it'
 import highlightjs from 'markdown-it-highlightjs'
+import { API_BASE_URL } from '@/config/http'
 import type { MarkdownHeading } from '@/types/content'
 
+// 为标题生成稳定的锚点 id
 function createSlug(text: string, usedIds: Map<string, number>) {
   const baseSlug = text
     .toLowerCase()
@@ -15,6 +17,7 @@ function createSlug(text: string, usedIds: Map<string, number>) {
   return currentCount === 0 ? baseSlug : `${baseSlug}-${currentCount + 1}`
 }
 
+// 创建 markdown 解析器，并按需给标题注入 id
 function createMarkdownParser(withHeadingIds: boolean) {
   const usedIds = new Map<string, number>()
   const parser = markdownIt({
@@ -43,10 +46,14 @@ function createMarkdownParser(withHeadingIds: boolean) {
   return parser
 }
 
+// 渲染 markdown，并把相对上传图片路径补成完整后端地址
 export function renderMarkdown(content: string) {
-  return createMarkdownParser(true).render(content)
+  return createMarkdownParser(true)
+    .render(content)
+    .replace(/src="\/uploads\//g, `src="${API_BASE_URL}/uploads/`)
 }
 
+// 从 markdown 文本里提取目录标题结构
 export function extractHeadings(content: string): MarkdownHeading[] {
   const parser = createMarkdownParser(false)
   const tokens = parser.parse(content, {})
