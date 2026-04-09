@@ -11,6 +11,7 @@ import { summarizeCategories } from '@/utils'
 const { articles, isLoading, error } = useArticles()
 
 const categoryCount = computed(() => summarizeCategories(articles.value).length)
+
 </script>
 
 <template>

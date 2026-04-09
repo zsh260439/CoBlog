@@ -109,7 +109,7 @@ const distributionData = computed(() => {
     <div class="chart-row chart-row--main">
       <div class="chart-card">
         <div class="chart-header">
-          <span class="chart-title">内容趋势（最近7天）</span>
+          <span class="chart-title">内容趋势（最近几天）</span>
         </div>
 
         <LineTrendChart :items="trendData" />

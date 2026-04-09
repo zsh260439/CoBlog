@@ -10,18 +10,13 @@ import type {
 const categories = ref<ArticleCategory[]>([])
 const tags = ref<ArticleTag[]>([])
 const isLoading = ref(false)
-const hasLoaded = ref(false)
 const error = ref<string | null>(null)
 
 export function useTaxonomies() {
   const categoryOptions = computed(() => categories.value)
   const tagOptions = computed(() => tags.value)
 
-  const loadTaxonomies = async (force = false) => {
-    if (hasLoaded.value && !force) {
-      return
-    }
-
+  const loadTaxonomies = async () => {
     isLoading.value = true
     error.value = null
 
@@ -29,7 +24,6 @@ export function useTaxonomies() {
       const [categoryResult, tagResult] = await Promise.all([getCategoryList(), getTagList()])
       categories.value = categoryResult.data ?? []
       tags.value = tagResult.data ?? []
-      hasLoaded.value = true
     } catch (currentError) {
       console.error(currentError)
       error.value = '分类或标签加载失败'
@@ -59,7 +53,6 @@ export function useTaxonomies() {
     categories: categoryOptions,
     tags: tagOptions,
     isLoading,
-    hasLoaded,
     error,
     loadTaxonomies,
     createCategoryItem,

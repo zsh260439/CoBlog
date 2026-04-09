@@ -1,67 +1,61 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { DonutDistributionChartProps } from '@/types/admin'
+import * as echarts from 'echarts'
+import { useArticles } from '@/composables/useArticles'
+import { onBeforeUnmount, ref, watch } from 'vue'
+const { articles } = useArticles()
+const chartRef = ref<HTMLElement | null>(null)
+let chart: echarts.ECharts | null = null
 
-const props = defineProps<DonutDistributionChartProps>()
-
-const palette = ['#2f2f32', '#616161', '#8b8b8b', '#b2b2b2', '#d0d0d0', '#ececec']
-
-const total = computed(() => props.items.reduce((sum, item) => sum + item.value, 0))
-
-const normalizedItems = computed(() => {
-  if (!total.value) {
-    return []
+const ensureChart = () => {
+  if (!chartRef.value) {
+    return null
   }
 
-  return props.items.map((item, index) => ({
-    ...item,
-    color: palette[index % palette.length],
-    percentage: Math.round((item.value / total.value) * 100),
-  }))
-})
+  chart = echarts.getInstanceByDom(chartRef.value) ?? echarts.init(chartRef.value)
+  return chart
+}
 
-const gradient = computed(() => {
-  if (!normalizedItems.value.length) {
-    return 'conic-gradient(#ececec 0deg, #ececec 360deg)'
+const updateChart = () => {
+  const currentChart = ensureChart()
+  if (!currentChart) {
+    return
   }
 
-  let start = 0
-  const segments = normalizedItems.value.map((item) => {
-    const sweep = (item.value / total.value) * 360
-    const end = start + sweep
-    const segment = `${item.color} ${start}deg ${end}deg`
-    start = end
-    return segment
+  const categoryMap = new Map<string, number>()
+  articles.value.forEach((article) => {
+    const name = article.category
+    categoryMap.set(name, (categoryMap.get(name) || 0) + 1)
   })
 
-  return `conic-gradient(${segments.join(', ')})`
+  const data = Array.from(categoryMap.entries()).map(([name, count]) => ({
+    value: count,
+    name
+  }))
+
+  currentChart.setOption({
+    series: [
+      {
+        type: 'pie',
+        data
+      }
+    ]
+  })
+}
+
+watch(articles, () => {
+  updateChart()
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (chart) {
+    chart.dispose()
+    chart = null
+  }
 })
 </script>
 
 <template>
-  <div class="donut-chart">
-    <div class="donut-chart__visual">
-      <div class="donut-chart__ring" :style="{ background: gradient }">
-        <div class="donut-chart__center">
-          <strong>{{ total }}</strong>
-          <span>总量</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="donut-chart__legend">
-      <div v-for="item in normalizedItems" :key="item.label" class="donut-chart__legend-item">
-        <div class="donut-chart__legend-left">
-          <span class="donut-chart__dot" :style="{ background: item.color }"></span>
-          <span>{{ item.label }}</span>
-        </div>
-
-        <div class="donut-chart__legend-right">
-          <span>{{ item.value }}</span>
-          <small>{{ item.percentage }}%</small>
-        </div>
-      </div>
-    </div>
+  <div ref="chartRef" style="width: 100%; height: 390px;">
   </div>
 </template>
 

@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useEventListener } from '@vueuse/core'
+import { useTaxonomies } from '@/composables/useTaxonomies'
 import type { ProfileSidebarCardProps } from '@/types/ui'
-import { summarizeCategories, summarizeTags } from '@/utils'
 
 const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
   actionLabels: () => ['GitHub', '邮箱', 'RSS']
 })
 
 const router = useRouter()
+const { categories, tags, loadTaxonomies } = useTaxonomies()
 const showCategoryModal = ref(false)
 const showTagModal = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
 const articleCount = computed(() => props.articles.length)
-const categoryItems = computed(() => summarizeCategories(props.articles))
+const categoryItems = computed(() => categories.value)
 const categoryCount = computed(() => categoryItems.value.length)
-const tagItems = computed(() => summarizeTags(props.articles))
+const tagItems = computed(() => tags.value)
 const tagCount = computed(() => tagItems.value.length)
 const avatarStyle = computed(() => {
   if (!props.imageUrl) {
@@ -62,6 +63,10 @@ useEventListener(window, 'keydown', (event) => {
   if (event.key === 'Escape') {
     closeModals()
   }
+})
+
+onMounted(() => {
+  void loadTaxonomies()
 })
 </script>
 

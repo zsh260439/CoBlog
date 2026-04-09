@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { findArticleById } from '@/mocks/articles'
 import HomeView from '@/views/HomeView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/admin',
-    component: () => import('@/layouts/AdminLayout.vue'),
+    component: () => import('@/views/admin/layouts/AdminLayout.vue'),
     meta: {
       appShell: 'admin'
     },
@@ -130,20 +129,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/post/:id',
-    redirect: (to) => {
-      const article = findArticleById(String(to.params.id ?? ''))
-
-      if (!article) {
-        return { name: 'blog' }
-      }
-
-      return {
-        name: 'article',
-        params: {
-          slug: article.slug
-        }
-      }
-    }
+    redirect: { name: 'blog' }
   }
 ]
 
