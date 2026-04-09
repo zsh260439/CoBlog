@@ -6,6 +6,7 @@ import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { categoryOptions } from '@/config/site'
+import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createArticle, getArticleById, updateArticle } from '@/servers/article'
@@ -20,6 +21,7 @@ const router = useRouter()
 
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
+const { articles, loadArticles, setArticles } = useArticles(false)
 
 // 创建文章表单的默认值
 const createDefaultForm = (): AdminArticleForm => ({
@@ -176,10 +178,20 @@ const publishArticle = async () => {
     }
 
     if (isEditMode.value) {
-      await updateArticle(String(route.params.id), payload)
+      const result = await updateArticle(String(route.params.id), payload)
+      if (result.data) {
+        setArticles(
+          articles.value.map((item) => (item._id === result.data?._id ? result.data : item))
+        )
+      }
+      await loadTaxonomies()
       ElMessage.success('文章更新成功')
     } else {
-      await createArticle(payload)
+      const result = await createArticle(payload)
+      if (result.data) {
+        setArticles([result.data, ...articles.value])
+      }
+      await loadTaxonomies()
       clearArticleDraft()
       Object.assign(form, createDefaultForm())
       draftMode.value = false
@@ -229,7 +241,7 @@ watch(
 
 // 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {
-  await loadTaxonomies(true)
+  await Promise.all([loadTaxonomies(), loadArticles()])
 
   if (isEditMode.value) {
     pageLoading.value = true

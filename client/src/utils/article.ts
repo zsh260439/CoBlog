@@ -115,7 +115,7 @@ export function summarizeTags(articles: Article[], limit = 30) {
     .slice(0, limit)
     .map(([label, count]) => ({ label, count }))
 }
-
+// 对文章分类进行汇总统计
 export function summarizeCategories(articles: Article[]) {
   const categoryCount = new Map<string, CategorySummaryItem>()
 
@@ -133,7 +133,7 @@ export function summarizeCategories(articles: Article[]) {
       count: 1
     })
   })
-
+// 合并配置分类和额外分类
   const configuredItems = categoryOptions
     .map((item) => categoryCount.get(item.slug))
     .filter((item): item is CategorySummaryItem => Boolean(item))

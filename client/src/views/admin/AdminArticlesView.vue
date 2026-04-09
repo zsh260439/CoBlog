@@ -3,11 +3,13 @@ import { computed, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, Search, Plus } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { useTaxonomies } from '@/composables/useTaxonomies'
 import { deleteArticle } from '@/servers/article'
 import { useArticles } from '@/composables/useArticles'
 
 const router = useRouter()
-const { articles, isLoading, error, loadArticles } = useArticles()
+const { articles, isLoading, error, loadArticles, setArticles } = useArticles()
+const { loadTaxonomies } = useTaxonomies()
 
 const keyword = ref('')
 const currentPage = ref(1)
@@ -54,9 +56,6 @@ const handlePageChange = (page: number) => {
   currentPage.value = page
 }
 
-const handlePendingAction = (label: string) => {
-  ElMessage.info(`${label} 后续再接真实管理能力`)
-}
 
 const handleEdit = (id: string) => {
   router.push(`/admin/article/${id}/edit`)
@@ -71,8 +70,9 @@ const handleDelete = async (id: string, title: string) => {
     })
 
     await deleteArticle(id)
+    setArticles(articles.value.filter((item) => item._id !== id))
+    await loadTaxonomies()
     ElMessage.success('文章删除成功')
-    await loadArticles()
   } catch (error: any) {
     if (error === 'cancel') {
       return

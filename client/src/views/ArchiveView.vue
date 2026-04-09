@@ -4,7 +4,6 @@ import { RouterLink } from 'vue-router'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
-import { archiveHeroImage } from '@/mocks/articles'
 import { siteConfig } from '@/config/site'
 import { useArchive } from '@/composables/useArchive'
 import { useArticles } from '@/composables/useArticles'
@@ -22,7 +21,7 @@ onMounted(() => {
     <PageHero
       title="归档"
       description="时光轴上的足迹"
-      :image="archiveHeroImage || siteConfig.aboutHeroImage"
+      :image="siteConfig.aboutHeroImage"
     />
 
     <section class="archive-shell page-content-reveal">
@@ -59,7 +58,7 @@ onMounted(() => {
       <aside class="archive-side">
         <ProfileSidebarCard
           :articles="articles"
-          :image-url="archiveHeroImage || siteConfig.aboutHeroImage"
+          :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"
           :owner-location="siteConfig.ownerLocation"

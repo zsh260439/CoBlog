@@ -2,11 +2,16 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'
+import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createSlugFromText } from '@/utils'
 import type { AdminTaxonomyForm } from '@/types/admin'
-
+import { deleteCategory } from '@/servers/taxonomy'
+import { ElMessageBox } from 'element-plus'
+import type { ArticleCategory } from '@/types/article'
+import { updateCategory,deleteTag,updateTag } from '@/servers/taxonomy'
 const { categories, tags, isLoading, loadTaxonomies, createCategoryItem, createTagItem } = useTaxonomies()
+const { loadArticles } = useArticles(false)
 
 const categoryDialogVisible = ref(false)
 const tagDialogVisible = ref(false)
@@ -14,7 +19,8 @@ const submittingCategory = ref(false)
 const submittingTag = ref(false)
 const tagSlugEdited = ref(false)
 const categorySlugEdited = ref(false)
-
+const preCategorySlug = ref('')
+const preTagSlug = ref('')
 const categoryForm = reactive<AdminTaxonomyForm>({
   label: '',
   slug: '',
@@ -26,54 +32,72 @@ const tagForm = reactive<AdminTaxonomyForm>({
 })
 
 const resetCategoryForm = () => {
+  preCategorySlug.value = ''
   categoryForm.label = ''
   categoryForm.slug = ''
   categorySlugEdited.value = false
 }
 
 const resetTagForm = () => {
+  preTagSlug.value = ''
   tagForm.label = ''
   tagForm.slug = ''
   tagSlugEdited.value = false
 }
 
 const syncCategorySlug = () => {
-  //如果用户没有编辑 slug，自动生成
-  if (!categorySlugEdited.value) {
     categoryForm.slug = createSlugFromText(categoryForm.label, 32)
-  }
 }
-
 const syncTagSlug = () => {
-  if (!tagSlugEdited.value) {
     tagForm.slug = createSlugFromText(tagForm.label, 32)
-  }
 }
 
-const submitCategory = async () => {
-  if (!categoryForm.label.trim() || !categoryForm.slug.trim()) {
+const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
+   if (!categoryForm.label.trim() || !categoryForm.slug.trim()) {
     ElMessage.warning('请先填写完整的分类名称和 slug')
     return
   }
-
   submittingCategory.value = true
-
-  try {
-    await createCategoryItem({
-      label: categoryForm.label.trim(),
-      slug: categoryForm.slug.trim(),
-    })
-    ElMessage.success('分类新增成功')
-    categoryDialogVisible.value = false
-    resetCategoryForm()
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '分类新增失败')
-  } finally {
-    submittingCategory.value = false
+  //如果是编辑模式 走这里
+  if (isEdit) {
+    try {
+      await updateCategory(preCategorySlug.trim(),{
+        label: categoryForm.label.trim(),
+        slug: categoryForm.slug.trim(),
+      })
+      ElMessage.success('分类编辑成功')
+      //关闭弹窗
+      categoryDialogVisible.value = false
+      //重置form表单
+      resetCategoryForm()
+    } catch (error: any) {
+      ElMessage.error(error?.response?.data?.message || '分类编辑失败')
+    } finally {
+      //无论是否成功 都需要将 slugEdited 重置为 false
+      categorySlugEdited.value = false
+      //更新页面
+      await Promise.all([loadTaxonomies(), loadArticles()])
+    }
+  }else{
+    try {
+      await createCategoryItem({
+        label: categoryForm.label.trim(),
+        slug: categoryForm.slug.trim(),
+      })
+      ElMessage.success('分类新增成功')
+      categoryDialogVisible.value = false
+      resetCategoryForm()
+    } catch (error: any) {
+      ElMessage.error(error?.response?.data?.message || '分类新增失败')
+    } finally {
+      submittingCategory.value = false
+      //更新页面
+      await Promise.all([loadTaxonomies(), loadArticles()])
+    }
   }
 }
 
-const submitTag = async () => {
+const submitTag = async (isEdit: boolean,preTagSlug:string) => {
   if (!tagForm.label.trim() || !tagForm.slug.trim()) {
     ElMessage.warning('请先填写完整的标签名称和 slug')
     return
@@ -82,26 +106,82 @@ const submitTag = async () => {
   submittingTag.value = true
 
   try {
-    await createTagItem({
-      label: tagForm.label.trim(),
-      slug: tagForm.slug.trim(),
-    })
-    ElMessage.success('标签新增成功')
-    tagDialogVisible.value = false
-    resetTagForm()
+    if (isEdit) {
+      await updateTag(preTagSlug.trim(),{
+        label: tagForm.label.trim(),
+        slug: tagForm.slug.trim(),
+      })
+      ElMessage.success('标签编辑成功')
+      tagDialogVisible.value = false
+      resetTagForm()
+    }else{
+      await createTagItem({
+        label: tagForm.label.trim(),
+        slug: tagForm.slug.trim(),
+      })
+      ElMessage.success('标签新增成功')
+      tagDialogVisible.value = false
+      resetTagForm()
+    }
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || '标签新增失败')
   } finally {
     submittingTag.value = false
+    //无论是否成功 都需要将 tagSlugEdited 重置为 false
+    tagSlugEdited.value = false
+    //更新页面
+    await Promise.all([loadTaxonomies(), loadArticles()])
+  } 
+}
+//编辑标签 首先回填原有数据 但是这个时候因为共用一个弹窗 所以需要判断是否是编辑操作 如果是编辑操作 则需要将弹窗标题改为编辑标签
+const handleEditTag = async (row: ArticleCategory) => {
+   preTagSlug.value = row.slug
+   //回填
+   tagForm.label = row.label
+   tagForm.slug = row.slug
+   tagDialogVisible.value = true
+}
+//编辑分类 首先回填原有数据 但是这个时候因为共用一个弹窗 所以需要判断是否是编辑操作 如果是编辑操作 则需要将弹窗标题改为编辑分类
+const handleEditCategory = async (row: ArticleCategory) => {
+   preCategorySlug.value = row.slug
+   //回填
+   categoryForm.label = row.label
+   categoryForm.slug = row.slug
+   categorySlugEdited.value = true
+}
+//删除分类
+const handleDeleteCategory = async (slug: string) => {
+  //当我点击进来 必须要询问确认删除 因为删除分类包含全部文章
+  try {
+    await ElMessageBox.confirm('确认删除分类吗？这会删除该分类下的所有文章!', '删除分类', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await deleteCategory(slug)
+    ElMessage.success('分类删除成功')
+    await Promise.all([loadTaxonomies(), loadArticles()])
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || '分类删除失败')
   }
 }
-
-const handlePendingAction = (label: string) => {
-  ElMessage.info(`${label} 后续再接真实管理能力`)
+//删除标签
+const handleDeleteTag = async (slug: string) => {
+  try {
+    await ElMessageBox.confirm('确认删除这类标签吗？', '删除标签', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await deleteTag(slug)
+    ElMessage.success('标签删除成功')
+    await Promise.all([loadTaxonomies(), loadArticles()])
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || '标签删除失败')
+  }
 }
-
 onMounted(() => {
-  void loadTaxonomies(true)
+  void loadTaxonomies()
 })
 </script>
 
@@ -122,8 +202,8 @@ onMounted(() => {
         <el-table-column label="操作" width="110" align="center">
           <template #default="{ row }">
             <div class="taxonomy-card__actions">
-              <el-button link :icon="Edit" @click="handlePendingAction(`编辑分类 ${row.label}`)" />
-              <el-button link :icon="Delete" @click="handlePendingAction(`删除分类 ${row.label}`)" />
+              <el-button link :icon="Edit" @click="()=>{categoryDialogVisible = true,handleEditCategory(row)}" />
+              <el-button link :icon="Delete" @click="handleDeleteCategory(row.slug)" />
             </div>
           </template>
         </el-table-column>
@@ -145,15 +225,15 @@ onMounted(() => {
         <el-table-column label="操作" width="110" align="center">
           <template #default="{ row }">
             <div class="taxonomy-card__actions">
-              <el-button link :icon="Edit" @click="handlePendingAction(`编辑标签 ${row.label}`)" />
-              <el-button link :icon="Delete" @click="handlePendingAction(`删除标签 ${row.label}`)" />
+              <el-button link :icon="Edit" @click="()=>{tagSlugEdited = true,handleEditTag(row)}" />
+              <el-button link :icon="Delete" @click="handleDeleteTag(row.slug)" />
             </div>
           </template>
         </el-table-column>
       </el-table>
     </section>
 
-    <el-dialog v-model="categoryDialogVisible" title="新增分类" width="420px" @closed="resetCategoryForm">
+    <el-dialog v-model="categoryDialogVisible" :title="categorySlugEdited ? '编辑分类' : '新增分类'" width="420px" @closed="resetCategoryForm">
       <div class="taxonomy-dialog__field">
         <label>名称</label>
         <el-input v-model="categoryForm.label" placeholder="例如：技术复盘" @input="syncCategorySlug" />
@@ -166,11 +246,11 @@ onMounted(() => {
 
       <template #footer>
         <el-button @click="categoryDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submittingCategory" @click="submitCategory">保存</el-button>
+        <el-button type="primary" :loading="submittingCategory" @click="submitCategory(categorySlugEdited,preCategorySlug)">保存</el-button>
       </template>
     </el-dialog>
-
-    <el-dialog v-model="tagDialogVisible" title="新增标签" width="420px" @closed="resetTagForm">
+    <!-- 标签弹窗 -->
+    <el-dialog v-model="tagDialogVisible" :title="tagSlugEdited ? '编辑标签' : '新增标签'" width="420px" @closed="resetTagForm">
       <div class="taxonomy-dialog__field">
         <label>名称</label>
         <el-input v-model="tagForm.label" placeholder="例如：JavaScript" @input="syncTagSlug" />
@@ -183,7 +263,7 @@ onMounted(() => {
 
       <template #footer>
         <el-button @click="tagDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submittingTag" @click="submitTag">保存</el-button>
+        <el-button type="primary" :loading="submittingTag" @click="submitTag(tagSlugEdited,preTagSlug)">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -249,7 +329,7 @@ onMounted(() => {
   gap: 8px;
 }
 
-.taxonomy-dialog__field + .taxonomy-dialog__field {
+.taxonomy-dialog__field+.taxonomy-dialog__field {
   margin-top: 16px;
 }
 

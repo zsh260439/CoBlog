@@ -1,8 +1,25 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import {
+  Calendar,
+  ChatDotRound,
+  CollectionTag,
+  Document,
+  Reading,
+  View,
+} from '@element-plus/icons-vue'
 import type { ArticleHeroProps } from '@/types/article'
 
 const props = defineProps<ArticleHeroProps>()
+
+const iconMap = {
+  Calendar,
+  View,
+  ChatDotRound,
+  CollectionTag,
+  Document,
+  Reading,
+} as const
 
 const heroStyle = computed(() => {
   if (!props.article.coverImage) {
@@ -25,7 +42,12 @@ const heroStyle = computed(() => {
       <h1 class="article-hero__title">{{ article.title }}</h1>
 
       <div class="article-hero__meta">
-        <span v-for="item in stats" :key="item">{{ item }}</span>
+        <span v-for="item in stats" :key="`${item.icon}-${item.text}`" class="article-hero__meta-item">
+          <el-icon>
+            <component :is="iconMap[item.icon as keyof typeof iconMap]" />
+          </el-icon>
+          <span>{{ item.text }}</span>
+        </span>
       </div>
     </div>
   </section>
@@ -86,11 +108,22 @@ const heroStyle = computed(() => {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.85rem 1rem;
+  gap: 0.7rem 1rem;
   margin-top: 1rem;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.article-hero__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.article-hero__meta-item :deep(.el-icon) {
+  font-size: 0.78rem;
+  opacity: 0.88;
 }
 
 @media (max-width: 767px) {
