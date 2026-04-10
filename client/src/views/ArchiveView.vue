@@ -26,9 +26,9 @@ onMounted(() => {
 
     <section class="archive-shell page-content-reveal">
       <div class="archive-main">
-        <div v-if="isLoading" class="archive-card archive-card--state">正在整理归档...</div>
-        <div v-else-if="error" class="archive-card archive-card--state archive-card--error">{{ error }}</div>
-        <div v-else-if="!archiveGroups.length" class="archive-card archive-card--state">还没有归档内容。</div>
+        <el-card v-if="isLoading" class="archive-card archive-card--state" shadow="never">正在整理归档...</el-card>
+        <el-card v-else-if="error" class="archive-card archive-card--state archive-card--error" shadow="never">{{ error }}</el-card>
+        <el-card v-else-if="!archiveGroups.length" class="archive-card archive-card--state" shadow="never">还没有归档内容。</el-card>
 
         <article v-for="group in archiveGroups" :key="group.year" class="archive-card archive-card--timeline">
           <div class="archive-card__topline">
@@ -100,8 +100,11 @@ onMounted(() => {
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
-.archive-card--state,
 .archive-card--timeline {
+  padding: 1.15rem;
+}
+
+.archive-card--state :deep(.el-card__body) {
   padding: 1.15rem;
 }
 

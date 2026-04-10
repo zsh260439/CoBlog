@@ -31,9 +31,9 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
 
     <section class="blog-shell page-content-reveal">
       <div class="blog-main">
-        <div v-if="isLoading" class="blog-state">正在整理文章列表...</div>
-        <div v-else-if="error" class="blog-state blog-state--error">{{ error }}</div>
-        <div v-else-if="!articles.length" class="blog-state">还没有文章，后续内容会先落在这里。</div>
+        <el-card v-if="isLoading" class="blog-state" shadow="never">正在整理文章列表...</el-card>
+        <el-card v-else-if="error" class="blog-state blog-state--error" shadow="never">{{ error }}</el-card>
+        <el-card v-else-if="!articles.length" class="blog-state" shadow="never">还没有文章，后续内容会先落在这里。</el-card>
 
         <BlogListItem v-for="article in articles" v-else :key="article.slug" :article="article" />
       </div>
@@ -81,6 +81,9 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.blog-state :deep(.el-card__body) {
   padding: 1.15rem;
 }
 

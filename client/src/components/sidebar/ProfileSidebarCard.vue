@@ -71,7 +71,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="profile-card">
+  <el-card class="profile-card" shadow="never">
     <div class="profile-card__avatar" :style="avatarStyle"></div>
     <h3>{{ ownerName }}</h3>
     <p class="profile-card__role">{{ ownerRole }}</p>
@@ -143,7 +143,7 @@ onMounted(() => {
         </div>
       </transition>
     </Teleport>
-  </div>
+  </el-card>
 </template>
 
 <style scoped>
@@ -152,8 +152,11 @@ onMounted(() => {
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-  padding: 1.15rem;
   text-align: center;
+}
+
+.profile-card :deep(.el-card__body) {
+  padding: 1.15rem;
 }
 
 .profile-card__avatar {

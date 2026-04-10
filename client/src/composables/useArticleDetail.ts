@@ -1,25 +1,13 @@
-import { computed, nextTick, ref, watch, type Ref } from 'vue'
-import { useThrottleFn, useWindowScroll } from '@vueuse/core'
+import { computed, ref, watch, type Ref } from 'vue'
 import { getArticleDetail, getArticleList } from '@/servers/article'
 import type { Article } from '@/types/article'
-import { estimateReadTime, extractHeadings, formatDate } from '@/utils'
+import { estimateReadTime, formatDate } from '@/utils'
 
 export function useArticleDetail(slug: Ref<string>) {
-  const { y } = useWindowScroll()
-
   const article = ref<Article | null>(null)
   const articles = ref<Article[]>([])
   const isLoading = ref(true)
   const error = ref<string | null>(null)
-  const activeHeadingId = ref('')
-
-  const tocItems = computed(() => {
-    if (!article.value) {
-      return []
-    }
-
-    return extractHeadings(article.value.content)
-  })
 
   const articleStats = computed(() => {
     if (!article.value) {
@@ -93,30 +81,6 @@ export function useArticleDetail(slug: Ref<string>) {
     }
   })
 
-  const refreshActiveHeading = useThrottleFn(() => {
-    if (!tocItems.value.length) {
-      activeHeadingId.value = ''
-      return
-    }
-
-    const offset = 136
-    let currentId = tocItems.value[0].id
-
-    tocItems.value.forEach((item) => {
-      const element = document.getElementById(item.id)
-
-      if (!element) {
-        return
-      }
-
-      if (element.getBoundingClientRect().top <= offset) {
-        currentId = item.id
-      }
-    })
-
-    activeHeadingId.value = currentId
-  }, 80)
-
   const loadArticleDetail = async (currentSlug: string) => {
     isLoading.value = true
     error.value = null
@@ -129,9 +93,6 @@ export function useArticleDetail(slug: Ref<string>) {
 
       article.value = detailResult.data
       articles.value = listResult.data
-
-      await nextTick()
-      refreshActiveHeading()
     } catch {
       article.value = null
       articles.value = []
@@ -157,17 +118,11 @@ export function useArticleDetail(slug: Ref<string>) {
     { immediate: true }
   )
 
-  watch([y, tocItems], () => {
-    refreshActiveHeading()
-  })
-
   return {
     article,
     articles,
     isLoading,
     error,
-    activeHeadingId,
-    tocItems,
     articleStats,
     relatedArticles,
     adjacentArticles

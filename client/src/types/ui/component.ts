@@ -14,6 +14,7 @@ export interface Particle {
 // Markdown 渲染组件接收的内容参数
 export interface MarkdownViewerProps {
   content: string // Markdown 原始内容
+  editorId?: string // 预览实例 ID，可选
 }
 
 // 首页滚动叙事组件参数

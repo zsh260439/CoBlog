@@ -28,18 +28,18 @@ const { articles: allArticles } = useArticles()
 
     <section class="tag-shell page-content-reveal">
       <div class="tag-main">
-        <div v-if="!currentTag" class="tag-state">
+        <el-card v-if="!currentTag" class="tag-state" shadow="never">
           标签不存在。
-        </div>
-        <div v-else-if="isLoading" class="tag-state">
+        </el-card>
+        <el-card v-else-if="isLoading" class="tag-state" shadow="never">
           正在加载标签文章...
-        </div>
-        <div v-else-if="error" class="tag-state">
+        </el-card>
+        <el-card v-else-if="error" class="tag-state" shadow="never">
           {{ error }}
-        </div>
-        <div v-else-if="!articles.length" class="tag-state">
+        </el-card>
+        <el-card v-else-if="!articles.length" class="tag-state" shadow="never">
           这个标签下暂时还没有文章。
-        </div>
+        </el-card>
 
         <BlogListItem
           v-for="article in articles"
@@ -92,6 +92,9 @@ const { articles: allArticles } = useArticles()
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.tag-state :deep(.el-card__body) {
   padding: 1.15rem;
 }
 
