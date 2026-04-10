@@ -1,24 +1,26 @@
-import type { SiteCategory, SiteNavItem } from '@/types/site'
+import type {  SiteNavItem } from '@/types/site'
 import type { AboutTechItem } from '@/types/ui'
-
+import type { SiteCategory } from '@/types/site'
 export const siteConfig = {
   name: 'CoBlog',
   ownerName: 'Zsint',
-  ownerRole: '前端开发 / 内容记录',
-  ownerLocation: '河南南阳',
-  tagline: '代码与故事的交汇处',
-  description: '记录开发实践、设计思考与持续表达的个人空间。',
+  ownerRole: '前端开发 / 小菜鸡',
+  ownerLocation: '湖北武汉',
+  tagline: '分享自己的学习过程',
+  description: '一个记录学习过程的个人博客网站',
   aboutHeroImage: '/images/about-hero.png',
-  footerVersion: '2026.04.01',
-  footerLicense: 'MIT License',
+  footerVersion: 'Hello World!',
+  footerLicense: '共同学习!',
   siteStatsSnapshot: {
-    onlineUsers: 15,
-    todayViews: 25,
-    totalViews: 5703,
-    totalVisitors: 342
+    onlineUsers: 0,
+    todayViews: 0,
+    totalViews: 0,
+    totalVisitors: 0
   }
 }
 
+export const categoryOptions: SiteCategory[] = [
+]
 export const primaryNav: SiteNavItem[] = [
   { label: '主页', path: '/', routeNames: ['home'] },
   { label: '博客', path: '/blog', routeNames: ['blog', 'article', 'category'] },
@@ -27,17 +29,11 @@ export const primaryNav: SiteNavItem[] = [
   { label: '关于', path: '/about', routeNames: ['about'] }
 ]
 
-export const categoryOptions: SiteCategory[] = [
-  { label: '心得', slug: 'insight' },
-  { label: '日常', slug: 'daily' },
-  { label: '技术', slug: 'technology' }
-]
 
 export const aboutProfileCard = {
   avatar: '/images/about-hero.png',
-  email: 'contact@example.com',
-  phone: '+86 138 0000 0000',
-  socials: ['GitHub', 'Twitter', 'LinkedIn']
+  email: '2604391962@qq.com',
+  socials: ['GitHub', 'QQ', 'Gitee'],
 }
 
 export const aboutTechItems: AboutTechItem[] = [

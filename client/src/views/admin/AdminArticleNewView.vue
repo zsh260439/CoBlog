@@ -5,7 +5,6 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { categoryOptions } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
 import { useTaxonomies } from '@/composables/useTaxonomies'
@@ -15,7 +14,7 @@ import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import type { ArticleCategory } from '@/types/article'
-
+import { categoryOptions } from '@/config/site'
 const route = useRoute()
 const router = useRouter()
 
@@ -29,8 +28,8 @@ const createDefaultForm = (): AdminArticleForm => ({
   slug: '',
   excerpt: '',
   summary: '',
-  category: categoryOptions[0]?.label ?? '',
-  categorySlug: categoryOptions[0]?.slug ?? '',
+  category:'',
+  categorySlug: '',
   tags: [],
   coverImage: '',
   content: ''
@@ -51,7 +50,7 @@ const resolvedCategories = computed<ArticleCategory[]>(() => {
   }
 
   return categoryOptions.map((item) => ({
-    _id: item.slug,
+  _id: item.slug,
     label: item.label,
     slug: item.slug,
     count: 0,
