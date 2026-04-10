@@ -7,7 +7,7 @@ const version = siteConfig.footerVersion
 <template>
   <footer class="footer">
     <div class="footer-inner">
-      <span class="footer-version">v{{ version }}</span>
+      <span class="footer-version">{{ version }}</span>
 
       <nav class="footer-nav">
         <router-link

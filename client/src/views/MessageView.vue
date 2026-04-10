@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { useGuestbook } from '@/composables/useGuestbook'
 import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
+import type { GuestbookEntry, MessageFormData } from '@/types/message'
 import { formatDate } from '@/utils'
 
 const { articles } = useArticles()
@@ -14,15 +17,11 @@ const {
   messages,
   isLoading,
   error,
-  totalMessages,
-  avatarStyle,
   submitMessage,
   submitLoading,
-  submitError,
-  submitSuccess,
 } = useGuestbook()
 
-const form = reactive({
+const createDefaultForm = (): MessageFormData => ({
   author: '',
   content: '',
   email: '',
@@ -32,26 +31,45 @@ const form = reactive({
   useMarkdown: true,
 })
 
-const handleSubmit = async () => {
-  if (!form.author.trim()) {
-    return
-  }
+const formRef = ref<FormInstance>()
+const form = reactive(createDefaultForm())
 
-  if (!form.content.trim()) {
+const formRules: FormRules<MessageFormData> = {
+  author: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+  content: [{ required: true, message: '请输入留言内容', trigger: 'blur' }],
+}
+
+const resetForm = () => {
+  Object.assign(form, createDefaultForm())
+  formRef.value?.clearValidate()
+}
+
+const formatMessageDate = (createdAt: string) =>
+  formatDate(createdAt, 'iso').slice(0, 16).replace('T', ' ')
+
+const messageMeta = (item: GuestbookEntry) => [item.location, item.device, item.browser].filter(Boolean)
+
+const avatarStyle = (index: number) => ({
+  backgroundImage: `url(${siteConfig.aboutHeroImage})`,
+  backgroundPosition: `${20 + index * 18}% ${22 + index * 10}%`,
+})
+
+const handleSubmit = async () => {
+  const valid = formRef.value ? await formRef.value.validate().catch(() => false) : false
+
+  if (!valid) {
     return
   }
 
   const success = await submitMessage(form)
- 
-  if (success) {
-    form.author = ''
-    form.content = ''
-    form.email = ''
-    form.qq = ''
-    form.isPrivate = false
-    form.enableEmailNotice = true
-    form.useMarkdown = true
+
+  if (!success) {
+    ElMessage.error('留言提交失败')
+    return
   }
+
+  resetForm()
+  ElMessage.success('留言提交成功')
 }
 </script>
 
@@ -61,106 +79,104 @@ const handleSubmit = async () => {
 
     <section class="message-shell page-content-reveal">
       <div class="message-main">
-        <section class="message-card composer-card">
-          <h2 class="composer-card__title">写留言</h2>
+        <el-card class="message-card composer-card" shadow="never">
+          <template #header>
+            <div class="composer-card__header">
+              <h2 class="composer-card__title">写留言</h2>
+              <span class="composer-card__hint">留个印记，站长都会看。</span>
+            </div>
+          </template>
 
-          <form class="composer-form" @submit.prevent="handleSubmit">
-            <textarea
-              v-model="form.content"
-              class="composer-form__textarea"
-              placeholder="写点什么..."
-              rows="5"
-            />
+          <el-form ref="formRef" :model="form" :rules="formRules" class="composer-form" @submit.prevent="handleSubmit">
+            <el-form-item prop="content">
+              <el-input
+                v-model="form.content"
+                type="textarea"
+                :rows="5"
+                resize="none"
+                placeholder="写点什么..."
+              />
+            </el-form-item>
 
             <div class="composer-form__row">
-              <input
-                v-model="form.author"
-                class="composer-form__input"
-                type="text"
-                placeholder="昵称 *"
-              />
-              <input
-                v-model="form.email"
-                class="composer-form__input"
-                type="text"
-                placeholder="邮箱"
-              />
-              <input
-                v-model="form.qq"
-                class="composer-form__input"
-                type="text"
-                placeholder="QQ号"
-              />
+              <el-form-item prop="author">
+                <el-input v-model="form.author" clearable placeholder="昵称 *" />
+              </el-form-item>
+              <el-form-item prop="email">
+                <el-input v-model="form.email" clearable placeholder="邮箱" />
+              </el-form-item>
+              <el-form-item prop="qq">
+                <el-input v-model="form.qq" clearable placeholder="QQ号" />
+              </el-form-item>
             </div>
 
-            <div class="composer-form__footer">
-              <label class="composer-form__check">
-                <input v-model="form.isPrivate" type="checkbox" />
-                悄悄话
-              </label>
-
-              <label class="composer-form__check">
-                <input v-model="form.enableEmailNotice" type="checkbox" />
-                邮件提醒
-              </label>
-
-              <label class="composer-form__check">
-                <input v-model="form.useMarkdown" type="checkbox" />
-                Markdown
-              </label>
-
-              <button class="composer-form__button" type="submit" :disabled="submitLoading">
-                {{ submitLoading ? '提交中...' : '留言' }}
-              </button>
-            </div>
-          </form>
-
-          <p v-if="submitError" class="composer-form__message composer-form__message--error">
-            {{ submitError }}
-          </p>
-
-          <p v-if="submitSuccess" class="composer-form__message composer-form__message--success">
-            {{ submitSuccess }}
-          </p>
-        </section>
-
-        <div class="message-count">共 {{ totalMessages }} 条留言</div>
-
-        <div v-if="isLoading" class="message-card message-card--state">
-          正在加载留言...
-        </div>
-
-        <div v-else-if="error" class="message-card message-card--state">
-          {{ error }}
-        </div>
-
-        <div v-else-if="!messages.length" class="message-card message-card--state">
-          还没有留言，来留下第一条吧。
-        </div>
-
-        <article
-          v-for="(item, index) in messages"
-          v-else
-          :key="item.id"
-          class="message-card guestbook-card"
-        >
-          <div class="guestbook-card__avatar" :style="avatarStyle(index)"></div>
-
-          <div class="guestbook-card__body">
-            <div class="guestbook-card__header">
-              <div class="guestbook-card__meta">
-                <strong>{{ item.author }}</strong>
-                <span>{{ item.location }}</span>
-                <span>{{ item.device }}</span>
-                <span>{{ item.browser }}</span>
+            <div class="composer-form__actions">
+              <div class="composer-form__toggles">
+                <el-checkbox v-model="form.isPrivate" label="悄悄话" />
+                <el-checkbox v-model="form.enableEmailNotice" label="邮件提醒" />
+                <el-checkbox v-model="form.useMarkdown" label="Markdown" />
               </div>
 
-              <time>{{ formatDate(item.createdAt, 'iso').slice(0, 16).replace('T', ' ') }}</time>
+              <el-button type="primary" native-type="submit" :loading="submitLoading">
+                {{ submitLoading ? '提交中...' : '留言' }}
+              </el-button>
             </div>
+          </el-form>
 
-            <p class="guestbook-card__content">{{ item.content }}</p>
-          </div>
-        </article>
+        </el-card>
+
+        <div class="message-count">
+          <el-tag effect="plain" round>共 {{ messages.length }} 条留言</el-tag>
+        </div>
+
+        <section v-loading="isLoading" class="guestbook-list">
+          <el-card v-if="error" class="message-card" shadow="never">
+            <el-alert :title="error" type="error" :closable="false" show-icon />
+          </el-card>
+
+          <el-card v-else-if="!messages.length" class="message-card" shadow="never">
+            <el-empty description="还没有留言，来留下第一条吧。" :image-size="88" />
+          </el-card>
+
+          <template v-else>
+            <el-card
+              v-for="(item, index) in messages"
+              :key="item.id"
+              class="message-card guestbook-card"
+              shadow="never"
+            >
+              <div class="guestbook-card__inner">
+                <el-avatar class="guestbook-card__avatar" :size="52" :style="avatarStyle(index)">
+                  {{ item.author.slice(0, 1).toUpperCase() }}
+                </el-avatar>
+
+                <div class="guestbook-card__body">
+                  <div class="guestbook-card__header">
+                    <div class="guestbook-card__meta">
+                      <strong class="guestbook-card__name">{{ item.author }}</strong>
+
+                      <div class="guestbook-card__tags">
+                        <el-tag
+                          v-for="meta in messageMeta(item)"
+                          :key="`${item.id}-${meta}`"
+                          size="small"
+                          effect="plain"
+                          round
+                        >
+                          {{ meta }}
+                        </el-tag>
+                      </div>
+                    </div>
+
+                    <time class="guestbook-card__time">{{ formatMessageDate(item.createdAt) }}</time>
+                  </div>
+
+                  <p class="guestbook-card__content">{{ item.content }}</p>
+                </div>
+              </div>
+            </el-card>
+          </template>
+        </section>
       </div>
 
       <aside class="message-side">
@@ -202,154 +218,138 @@ const handleSubmit = async () => {
 }
 
 .message-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  border-radius: 12px;
 }
 
-.message-card--state {
-  padding: 1rem 1.15rem;
-  color: var(--text-secondary);
-}
-
-.composer-card,
-.guestbook-card {
+.message-card :deep(.el-card__body) {
   padding: 1.15rem;
 }
 
+.composer-card :deep(.el-card__header) {
+  padding: 1.15rem 1.15rem 0;
+  border-bottom: none;
+}
+
+.composer-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
 .composer-card__title {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: 1.28rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
+.composer-card__hint {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
 .composer-form {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
-.composer-form__textarea,
-.composer-form__input {
-  width: 100%;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--text-secondary);
-  font: inherit;
-}
-
-.composer-form__textarea {
-  min-height: 122px;
-  padding: 0.95rem 1rem;
-  resize: vertical;
+.composer-form :deep(.el-form-item) {
+  margin-bottom: 0;
 }
 
 .composer-form__row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: 0.75rem;
 }
 
-.composer-form__input {
-  height: 40px;
-  padding: 0 0.9rem;
-}
-
-.composer-form__footer {
+.composer-form__actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-.composer-form__check {
-  font-size: 0.86rem;
-  color: var(--text-secondary);
+.composer-form__toggles {
+  display: flex;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
 }
 
-.composer-form__button {
-  margin-left: auto;
-  height: 36px;
-  padding: 0 1.2rem;
-  border: none;
-  border-radius: 8px;
-  background: #2d3138;
-  color: #ffffff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.composer-form__button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.composer-form__message {
-  margin: 0.4rem 0 0;
-  font-size: 0.86rem;
-}
-
-.composer-form__message--error {
-  color: #c05656;
-}
-
-.composer-form__message--success {
-  color: #2f855a;
+.composer-form__toggles :deep(.el-checkbox) {
+  margin-right: 0;
 }
 
 .message-count {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  display: flex;
+  justify-content: flex-end;
 }
 
-.guestbook-card {
+.guestbook-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 160px;
+}
+
+.guestbook-card__inner {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 1rem;
 }
 
 .guestbook-card__avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
   background-size: cover;
   background-position: center;
+  font-weight: 600;
+}
+
+.guestbook-card__body {
+  min-width: 0;
 }
 
 .guestbook-card__header {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: baseline;
+  align-items: flex-start;
 }
 
 .guestbook-card__meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
-.guestbook-card__meta strong {
+.guestbook-card__name {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
-.guestbook-card__meta span,
-.guestbook-card__header time {
+.guestbook-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.guestbook-card__time {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .guestbook-card__content {
-  margin: 0.5rem 0 0;
+  margin: 0.75rem 0 0;
   color: var(--text-secondary);
   line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 1024px) {
@@ -367,7 +367,7 @@ const handleSubmit = async () => {
     grid-template-columns: 1fr;
   }
 
-  .guestbook-card {
+  .guestbook-card__inner {
     grid-template-columns: 1fr;
   }
 

@@ -43,10 +43,7 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
               <strong>{{ aboutProfileCard.email }}</strong>
             </div>
 
-            <div class="about-intro-card__meta-row">
-              <span>电话</span>
-              <strong>{{ aboutProfileCard.phone }}</strong>
-            </div>
+        
           </section>
         </article>
 
@@ -61,7 +58,7 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
           <div class="about-profile-card__info">
             <span>{{ siteConfig.ownerLocation }}</span>
             <span>{{ aboutProfileCard.email }}</span>
-            <span>{{ aboutProfileCard.phone }}</span>
+ 
           </div>
 
           <div class="about-profile-card__socials">
