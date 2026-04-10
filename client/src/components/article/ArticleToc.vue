@@ -1,8 +1,58 @@
 <script setup lang="ts">
+import { computed, nextTick, ref, watch } from 'vue'
+import { Document } from '@element-plus/icons-vue'
 import type { ArticleTocProps } from '@/types/article'
 
-withDefaults(defineProps<ArticleTocProps>(), {
+const props = withDefaults(defineProps<ArticleTocProps>(), {
   activeId: ''
+})
+
+const listRef = ref<HTMLElement | null>(null)
+
+const getRootLevel = () => {
+  const levels = props.items.map((item) => item.level)
+
+  if (levels.includes(2)) {
+    return 2
+  }
+
+  return Math.min(...levels)
+}
+
+const normalizedItems = computed(() => {
+  if (!props.items.length) {
+    return []
+  }
+
+  const rootLevel = getRootLevel()
+  let currentRootId = ''
+
+  return props.items.map((item) => {
+    if (item.level === rootLevel) {
+      currentRootId = item.id
+    }
+
+    return {
+      ...item,
+      isRoot: item.level === rootLevel,
+      rootId: currentRootId || item.id,
+    }
+  })
+})
+
+const activeRootId = computed(() => {
+  const activeItem = normalizedItems.value.find((item) => item.id === props.activeId)
+
+  if (activeItem) {
+    return activeItem.rootId
+  }
+
+  return normalizedItems.value.find((item) => item.isRoot)?.id || ''
+})
+
+const visibleItems = computed(() => {
+  const rootId = activeRootId.value
+  return normalizedItems.value.filter((item) => item.isRoot || item.rootId === rootId)
 })
 
 const scrollToHeading = (id: string) => {
@@ -16,24 +66,51 @@ const scrollToHeading = (id: string) => {
   const top = window.scrollY + element.getBoundingClientRect().top - offset
 
   window.scrollTo({ top, behavior: 'smooth' })
+  window.history.replaceState(null, '', `#${id}`)
 }
+
+const syncActiveItemIntoView = () => {
+  const activeItem = listRef.value?.querySelector<HTMLElement>('.article-toc__item.active')
+  activeItem?.scrollIntoView({ block: 'nearest' })
+}
+
+watch(
+  () => [props.activeId, visibleItems.value.length],
+  async () => {
+    await nextTick()
+    syncActiveItemIntoView()
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
   <aside v-if="items.length" class="article-toc">
-    <div class="article-toc__card">
-      <span class="article-toc__eyebrow">目录</span>
-      <a
-        v-for="item in items"
-        :key="item.id"
-        :href="`#${item.id}`"
-        class="article-toc__link"
-        :class="[`article-toc__link--level-${item.level}`, { active: item.id === activeId }]"
-        @click.prevent="scrollToHeading(item.id)"
-      >
-        {{ item.text }}
-      </a>
-    </div>
+    <el-card class="article-toc__card" shadow="never">
+      <div class="article-toc__header">
+        <el-icon class="article-toc__icon"><Document /></el-icon>
+        <span class="article-toc__eyebrow">目录</span>
+      </div>
+
+      <div ref="listRef" class="article-toc__scroll">
+        <TransitionGroup name="toc-slide" tag="ul" class="article-toc__list">
+          <li
+            v-for="item in visibleItems"
+            :key="item.id"
+            class="article-toc__item"
+            :class="{
+              active: activeId === item.id,
+              root: item.isRoot,
+              [`level-${item.level}`]: true,
+            }"
+            :title="item.text"
+            @click="scrollToHeading(item.id)"
+          >
+            {{ item.text }}
+          </li>
+        </TransitionGroup>
+      </div>
+    </el-card>
   </aside>
 </template>
 
@@ -44,70 +121,128 @@ const scrollToHeading = (id: string) => {
 }
 
 .article-toc__card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 1.3rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
+.article-toc__card :deep(.el-card__body) {
+  padding: 1rem;
+}
+
+.article-toc__header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-toc__icon {
+  font-size: 0.92rem;
+  color: #111827;
+}
+
 .article-toc__eyebrow {
-  margin-bottom: 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-.article-toc__link {
-  position: relative;
-  padding: 0.45rem 0.75rem 0.45rem 1rem;
-  border-radius: 8px;
-  color: #687387;
-  text-decoration: none;
-  line-height: 1.7;
-  transition: color 0.25s ease, background 0.25s ease;
+.article-toc__scroll {
+  max-height: min(62vh, 520px);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
 }
 
-.article-toc__link::before {
-  content: '';
-  position: absolute;
-  top: 0.48rem;
-  bottom: 0.48rem;
-  left: 0;
-  width: 3px;
+.article-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-toc__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.article-toc__scroll::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: transparent;
-  transition: background 0.25s ease;
+  background: rgba(129, 140, 158, 0.32);
 }
 
-.article-toc__link--level-1 {
+.article-toc__item {
+  font-size: 0.83rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.32rem 0.55rem;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease,
+    transform 0.2s ease;
+  line-height: 1.55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.article-toc__item:hover {
+  color: #111827;
+  background: #f5f7fa;
+}
+
+.article-toc__item.active {
+  color: #111827;
   font-weight: 500;
-  color: var(--text-primary);
+  border-left-color: #111827;
+  background: #f5f7fa;
 }
 
-.article-toc__link--level-2 {
-  padding-left: 1.2rem;
-  font-size: 0.9rem;
+.article-toc__item.root {
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: #4b5563;
 }
 
-.article-toc__link--level-3 {
-  padding-left: 1.65rem;
-  font-size: 0.84rem;
+.article-toc__item.level-2 {
+  padding-left: 0.5rem;
 }
 
-.article-toc__link:hover,
-.article-toc__link.active {
-  color: var(--text-primary);
-  background: #f4f7fb;
+.article-toc__item.level-3 {
+  padding-left: 1.25rem;
+  font-size: 0.8rem;
 }
 
-.article-toc__link:hover::before,
-.article-toc__link.active::before {
-  background: var(--accent-cyan);
+.article-toc__item.level-4 {
+  padding-left: 2rem;
+  font-size: 0.8rem;
+}
+
+.toc-slide-enter-active,
+.toc-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.22s ease,
+    margin 0.22s ease, padding 0.22s ease;
+}
+
+.toc-slide-enter-from,
+.toc-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.toc-slide-enter-to,
+.toc-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 36px;
+}
+
+.toc-slide-move {
+  transition: transform 0.2s ease;
 }
 </style>

@@ -9,4 +9,3 @@ export {
 } from './article'
 export { formatDate } from './formatDate'
 export { createSlugFromText } from './slug'
-export { extractHeadings, renderMarkdown } from './markdown'

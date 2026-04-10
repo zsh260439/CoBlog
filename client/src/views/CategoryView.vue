@@ -29,10 +29,10 @@ const { articles: allArticles } = useArticles()
 
     <section class="category-shell page-content-reveal">
       <div class="category-main">
-        <div v-if="!currentCategory" class="category-state">分类不存在。</div>
-        <div v-else-if="isLoading" class="category-state">正在加载分类文章...</div>
-        <div v-else-if="error" class="category-state">{{ error }}</div>
-        <div v-else-if="!articles.length" class="category-state">这个分类下暂时还没有文章。</div>
+        <el-card v-if="!currentCategory" class="category-state" shadow="never">分类不存在。</el-card>
+        <el-card v-else-if="isLoading" class="category-state" shadow="never">正在加载分类文章...</el-card>
+        <el-card v-else-if="error" class="category-state" shadow="never">{{ error }}</el-card>
+        <el-card v-else-if="!articles.length" class="category-state" shadow="never">这个分类下暂时还没有文章。</el-card>
 
         <BlogListItem
           v-for="article in articles"
@@ -56,3 +56,15 @@ const { articles: allArticles } = useArticles()
     </section>
   </div>
 </template>
+
+<style scoped>
+.category-state {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.category-state :deep(.el-card__body) {
+  padding: 0;
+}
+</style>

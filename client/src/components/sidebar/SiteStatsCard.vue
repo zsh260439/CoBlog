@@ -22,7 +22,7 @@ const resolvedItems = computed(() => {
 </script>
 
 <template>
-  <div class="stats-card">
+  <el-card class="stats-card" shadow="never">
     <span class="stats-card__eyebrow">站点统计</span>
 
     <div class="stats-card__list">
@@ -31,7 +31,7 @@ const resolvedItems = computed(() => {
         <strong>{{ item.value }}</strong>
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <style scoped>
@@ -40,6 +40,9 @@ const resolvedItems = computed(() => {
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.stats-card :deep(.el-card__body) {
   padding: 1.15rem;
 }
 

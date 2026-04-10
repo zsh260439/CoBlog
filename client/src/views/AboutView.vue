@@ -49,7 +49,7 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
 
         <article class="about-profile-card">
           <div class="about-profile-card__avatar-wrap">
-            <img :src="aboutProfileCard.avatar" :alt="siteConfig.ownerName" class="about-profile-card__avatar" />
+            <el-avatar :src="aboutProfileCard.avatar" :alt="siteConfig.ownerName" class="about-profile-card__avatar" />
           </div>
 
           <strong>{{ siteConfig.ownerName }}</strong>
@@ -181,6 +181,9 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
   width: 100%;
   height: 100%;
   border-radius: 50%;
+}
+
+.about-profile-card__avatar :deep(img) {
   object-fit: cover;
 }
 

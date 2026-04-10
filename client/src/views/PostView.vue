@@ -1,25 +1,63 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useThrottleFn, useWindowScroll } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import ArticleHero from '@/components/article/ArticleHero.vue'
 import ArticleToc from '@/components/article/ArticleToc.vue'
 import MarkdownViewer from '@/components/MarkdownViewer.vue'
 import { useArticleDetail } from '@/composables/useArticleDetail'
+import type { MarkdownHeading } from '@/types/content'
 
 const route = useRoute()
 const router = useRouter()
+const { y } = useWindowScroll()
 const currentSlug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
+const previewId = computed(() => `article-preview-${currentSlug.value || 'detail'}`)
+const tocItems = ref<MarkdownHeading[]>([])
+const activeHeadingId = ref('')
 
 const {
   article,
   isLoading,
   error,
-  activeHeadingId,
-  tocItems,
   articleStats,
   relatedArticles,
   adjacentArticles
 } = useArticleDetail(currentSlug)
+
+const refreshActiveHeading = useThrottleFn(() => {
+  if (!tocItems.value.length) {
+    activeHeadingId.value = ''
+    return
+  }
+
+  const offset = 136
+  let currentId = tocItems.value[0].id
+
+  tocItems.value.forEach((item) => {
+    const element = document.getElementById(item.id)
+
+    if (!element) {
+      return
+    }
+
+    if (element.getBoundingClientRect().top <= offset) {
+      currentId = item.id
+    }
+  })
+
+  activeHeadingId.value = currentId
+}, 80)
+
+const handleCatalogChange = async (items: MarkdownHeading[]) => {
+  tocItems.value = items
+  await nextTick()
+  refreshActiveHeading()
+}
+
+watch([y, tocItems], () => {
+  refreshActiveHeading()
+})
 </script>
 
 <template>
@@ -49,7 +87,11 @@ const {
             </div>
 
             <div class="article-body">
-              <MarkdownViewer :content="article.content" />
+              <MarkdownViewer
+                :content="article.content"
+                :editor-id="previewId"
+                @catalog-change="handleCatalogChange"
+              />
             </div>
           </article>
 
