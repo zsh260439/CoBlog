@@ -12,15 +12,6 @@ export class MessageService {
     }
     //创建消息
     async create(createMessageDto:CreateMessageDto){
-      const message = await this.messageModel.create({
-          ...createMessageDto,
-      location: createMessageDto.location ?? '',
-      device: createMessageDto.device ?? '',
-      browser: createMessageDto.browser ?? '',
-      isPrivate: createMessageDto.isPrivate ?? false,
-      enableEmailNotice: createMessageDto.enableEmailNotice ?? false,
-      useMarkdown: createMessageDto.useMarkdown ?? true,
-      })
-      return message
+      return this.messageModel.create(createMessageDto)
     }
 }
