@@ -6,14 +6,21 @@ import { NestExpressApplication } from '@nestjs/platform-express'
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors({
-    origin:'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin || /^http:\/\/localhost:(5173|5174|5175|4173)$/.test(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`), false)
+    },
     credentials:true
   });
   app.useGlobalPipes(
     new ValidationPipe({
-     whitelist: true,         // 只允许 DTO 里定义的字段
-    forbidNonWhitelisted: true, // 多传字段直接报错！
-    transform: true          // 自动类型转换
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     })
   )
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

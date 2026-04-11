@@ -36,7 +36,6 @@ export class UpdateArticleDto {
   tags?: string[]
 
   @IsOptional()
-  //数据清洗
   @Transform(({ value }) => {
     if (typeof value !== 'string') {
       return value

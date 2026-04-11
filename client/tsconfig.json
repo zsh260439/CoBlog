@@ -13,10 +13,9 @@
     "baseUrl": ".",
     "types": ["node"],
     "paths": {
-      "@/*": ["src/*"],
-      "@shared/*": ["../shared/*"]
+      "@/*": ["src/*"]
     },
     "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts", "../shared/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts"]
 }

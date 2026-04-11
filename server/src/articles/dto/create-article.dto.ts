@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer'
 import { IsArray, IsNotEmpty, IsOptional, IsString, IsUrl, IsNumber } from 'class-validator'
+
 export class CreateArticleDto {
   @IsString()
   @IsNotEmpty()

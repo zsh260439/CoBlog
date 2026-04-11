@@ -8,10 +8,11 @@ import { UploadsModule } from './uploads/uploads.module';
 @Module({
    imports:[
      ConfigModule.forRoot({
-      isGlobal:true
+      isGlobal:true,
+      envFilePath: ['../.env', '.env']
      }),
-     MongooseModule.forRoot(process.env.MONGODB_URI as string),
-     ArticlesModule,
+      MongooseModule.forRoot(process.env.MONGODB_URI as string),
+      ArticlesModule,
      MessageModule,
      TaxonomyModule,
      UploadsModule,

@@ -13,52 +13,23 @@ export class ArticlesService {
     return content.replace(/[`#>*_\-[\]()!]/g, '').replace(/\s+/g, '')
   }
 
-  private buildExcerpt(content: string) {
-    return content
-      .replace(/[`#>*_\-[\]()!]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 140)
-  }
-
-  private normalizeArticle(article: any) {
-    const content = typeof article?.content === 'string' ? article.content : ''
-    const excerpt = typeof article?.excerpt === 'string' && article.excerpt.trim()
-      ? article.excerpt.trim()
-      : this.buildExcerpt(content as string)
-    const summary = typeof article?.summary === 'string' && article.summary.trim()
-      ? article.summary.trim()
-      : excerpt
+  private serializeArticle(article: any) {
+    if (!article) {
+      return article
+    }
 
     return {
       ...article,
-      _id: article?._id?.toString?.() ?? article?._id,
-      title: typeof article?.title === 'string' ? article.title.trim() : '未命名文章',
-      slug: typeof article?.slug === 'string' ? article.slug.trim() : '',
-      content,
-      excerpt,
-      summary,
-      category: typeof article?.category === 'string' ? article.category.trim() : '未分类',
-      categorySlug: typeof article?.categorySlug === 'string' ? article.categorySlug.trim() : '',
-      tags: Array.isArray(article?.tags)
-        ? article.tags.filter((item: unknown) => typeof item === 'string' && item.trim().length > 0)
-        : [],
-      coverImage: typeof article?.coverImage === 'string' && article.coverImage.trim() ? article.coverImage.trim() : undefined,
-      views: typeof article?.views === 'number' ? article.views : 0,
-      comments: typeof article?.comments === 'number' ? article.comments : 0,
-      likes: typeof article?.likes === 'number' ? article.likes : 0,
-      wordCount:
-        typeof article?.wordCount === 'number' && article.wordCount > 0
-          ? article.wordCount
-          : this.stripMarkdown(content as string).length,
-      createdAt: article?.createdAt ? new Date(article.createdAt as string | number | Date).toISOString() : new Date().toISOString(),
-      updatedAt: article?.updatedAt ? new Date(article.updatedAt as string | number | Date).toISOString() : new Date().toISOString(),
+      _id: article._id?.toString?.() ?? article._id,
+      tags: Array.isArray(article.tags) ? article.tags : [],
+      createdAt: article.createdAt?.toISOString?.() ?? article.createdAt,
+      updatedAt: article.updatedAt?.toISOString?.() ?? article.updatedAt,
     }
   }
 
   async findAll() {
     const articles = await this.articleModel.find().sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.normalizeArticle(article))
+    return articles.map((article) => this.serializeArticle(article))
   }
 
   async findBySlug(slug: string) {
@@ -68,7 +39,7 @@ export class ArticlesService {
       throw new NotFoundException('文章不存在')
     }
 
-    return this.normalizeArticle(article)
+    return this.serializeArticle(article)
   }
 
   async findById(id: string) {
@@ -78,17 +49,17 @@ export class ArticlesService {
       throw new NotFoundException('文章不存在')
     }
 
-    return this.normalizeArticle(article)
+    return this.serializeArticle(article)
   }
 
   async findByCategory(categorySlug: string) {
     const articles = await this.articleModel.find({ categorySlug }).sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.normalizeArticle(article))
+    return articles.map((article) => this.serializeArticle(article))
   }
 
   async findByTag(tag: string) {
     const articles = await this.articleModel.find({ tags: tag }).sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.normalizeArticle(article))
+    return articles.map((article) => this.serializeArticle(article))
   }
 
   async findArchiveList() {
@@ -104,50 +75,23 @@ export class ArticlesService {
 
     return [...groupMap.entries()].map(([year, items]) => ({
       year,
-      articles: items.map((article) => this.normalizeArticle(article)),
+      articles: items.map((article) => this.serializeArticle(article)),
     }))
   }
 
   async create(createArticleDto: CreateArticleDto) {
     const article = await this.articleModel.create({
       ...createArticleDto,
-      title: createArticleDto.title.trim(),
-      slug: createArticleDto.slug.trim(),
-      content: createArticleDto.content.trim(),
-      excerpt: createArticleDto.excerpt.trim(),
-      summary: createArticleDto.summary.trim(),
-      category: createArticleDto.category.trim(),
-      categorySlug: createArticleDto.categorySlug.trim(),
-      tags: (createArticleDto.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
-      coverImage: createArticleDto.coverImage?.trim() || undefined,
-      views: createArticleDto.views ?? 0,
-      comments: createArticleDto.comments ?? 0,
-      likes: createArticleDto.likes ?? 0,
-      wordCount: createArticleDto.wordCount ?? this.stripMarkdown(createArticleDto.content).length,
+      wordCount: createArticleDto.wordCount ?? this.stripMarkdown(createArticleDto.content ?? '').length,
     })
 
-    return this.normalizeArticle(article.toObject())
+    return this.serializeArticle(article.toObject())
   }
 
   async update(id: string, updateArticleDto: UpdateArticleDto) {
-    const updatePayload: Record<string, unknown> = {}
+    const updatePayload: Record<string, unknown> = { ...updateArticleDto }
 
-    if (typeof updateArticleDto.title === 'string') updatePayload.title = updateArticleDto.title.trim()
-    if (typeof updateArticleDto.slug === 'string') updatePayload.slug = updateArticleDto.slug.trim()
-    if (typeof updateArticleDto.content === 'string') updatePayload.content = updateArticleDto.content.trim()
-    if (typeof updateArticleDto.excerpt === 'string') updatePayload.excerpt = updateArticleDto.excerpt.trim()
-    if (typeof updateArticleDto.summary === 'string') updatePayload.summary = updateArticleDto.summary.trim()
-    if (typeof updateArticleDto.category === 'string') updatePayload.category = updateArticleDto.category.trim()
-    if (typeof updateArticleDto.categorySlug === 'string') updatePayload.categorySlug = updateArticleDto.categorySlug.trim()
-    if (Array.isArray(updateArticleDto.tags)) updatePayload.tags = updateArticleDto.tags.map((tag) => tag.trim()).filter(Boolean)
-    if (typeof updateArticleDto.coverImage === 'string') updatePayload.coverImage = updateArticleDto.coverImage.trim() || undefined
-    if (typeof updateArticleDto.views === 'number') updatePayload.views = updateArticleDto.views
-    if (typeof updateArticleDto.comments === 'number') updatePayload.comments = updateArticleDto.comments
-    if (typeof updateArticleDto.likes === 'number') updatePayload.likes = updateArticleDto.likes
-
-    if (typeof updateArticleDto.wordCount === 'number') {
-      updatePayload.wordCount = updateArticleDto.wordCount
-    } else if (typeof updatePayload.content === 'string') {
+    if (typeof updatePayload.content === 'string' && typeof updatePayload.wordCount !== 'number') {
       updatePayload.wordCount = this.stripMarkdown(updatePayload.content).length
     }
 
@@ -157,7 +101,7 @@ export class ArticlesService {
       throw new NotFoundException('文章不存在')
     }
 
-    return this.normalizeArticle(article)
+    return this.serializeArticle(article)
   }
 
   async remove(id: string) {
@@ -167,6 +111,6 @@ export class ArticlesService {
       throw new NotFoundException('文章不存在')
     }
 
-    return this.normalizeArticle(article)
+    return this.serializeArticle(article)
   }
 }
