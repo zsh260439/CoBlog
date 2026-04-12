@@ -6,7 +6,7 @@ import { useTaxonomies } from '@/composables/useTaxonomies'
 import type { ProfileSidebarCardProps } from '@/types/ui'
 
 const props = withDefaults(defineProps<ProfileSidebarCardProps>(), {
-  actionLabels: () => ['GitHub', '邮箱', 'RSS']
+  actionLabels: () => ['GitHub', '邮箱']
 })
 
 const router = useRouter()
@@ -15,11 +15,14 @@ const showCategoryModal = ref(false)
 const showTagModal = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
+// 卡片顶部的统计值都从文章和分类标签数据里即时计算。
 const articleCount = computed(() => props.articles.length)
 const categoryItems = computed(() => categories.value)
 const categoryCount = computed(() => categoryItems.value.length)
 const tagItems = computed(() => tags.value)
 const tagCount = computed(() => tagItems.value.length)
+
+// 有头像地址时生成背景图样式，没有则走占位表现。
 const avatarStyle = computed(() => {
   if (!props.imageUrl) {
     return undefined
@@ -30,10 +33,12 @@ const avatarStyle = computed(() => {
   }
 })
 
+// “文章”统计点击后直接跳到归档页，作为内容总入口。
 const handleArticleClick = () => {
   router.push('/archive')
 }
 
+// 分类和标签弹窗互斥打开，避免两个浮层同时出现。
 const openCategories = () => {
   showTagModal.value = false
   showCategoryModal.value = true
@@ -57,6 +62,7 @@ const closeModals = () => {
   closeTags()
 }
 
+// 点击弹窗外部或按下 Escape 时统一关闭浮层。
 onClickOutside(modalRef, closeModals)
 
 useEventListener(window, 'keydown', (event) => {
@@ -66,6 +72,7 @@ useEventListener(window, 'keydown', (event) => {
 })
 
 onMounted(() => {
+  // 组件挂载后再拉取分类和标签，保证侧栏统计是最新数据。
   void loadTaxonomies()
 })
 </script>

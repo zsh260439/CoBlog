@@ -15,6 +15,7 @@ const emit = defineEmits<{
   catalogChange: [items: MarkdownHeading[]]
 }>()
 
+// 目录标题的锚点 id 统一在这里生成，保证预览区和目录区使用同一套规则。
 const createHeadingId = (text: string, index: number) => {
   const base = text
     .toLowerCase()
@@ -27,12 +28,14 @@ const createHeadingId = (text: string, index: number) => {
 
 const resolveHeadingId: MdHeadingId = ({ text, index }) => createHeadingId(text, index)
 
+// 把 Markdown 里的相对上传资源路径补成完整后端地址，避免预览区图片失效。
 const resolvedContent = computed(() => {
   return props.content
     .replace(/\]\((\/uploads\/[^)]+)\)/g, (_, path: string) => `](${API_BASE_URL}${path})`)
     .replace(/src=(['"])\/uploads\//g, (_, quote: string) => `src=${quote}${API_BASE_URL}/uploads/`)
 })
 
+// 编辑器回传目录后，转换成项目内部统一使用的目录结构再抛给父组件。
 const handleCatalogChange = (items: HeadList[]) => {
   emit('catalogChange', items.map((item, index) => ({
     id: createHeadingId(item.text, index + 1),

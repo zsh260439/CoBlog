@@ -9,6 +9,7 @@ const sectionRefs = ref<HTMLElement[]>([])
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
+  // 监听左侧叙事段落进入视口的时机，并把对应章节设为当前激活态。
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -23,12 +24,14 @@ onMounted(() => {
     { threshold: 0.4 }
   )
 
+  // 组件挂载后把每一个叙事区块注册到观察器里。
   sectionRefs.value.forEach(el => {
     if (el) observer?.observe(el)
   })
 })
 
 onUnmounted(() => {
+  // 离开页面时断开观察器，避免继续监听已经销毁的节点。
   observer?.disconnect()
 })
 </script>

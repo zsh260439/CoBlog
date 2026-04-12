@@ -11,12 +11,14 @@ const props = withDefaults(defineProps<AboutTechHeroProps>(), {
   displayCopy: true,
 })
 
+// 按列数把技术卡片拆成多条纵向车道，供跑马灯逐列渲染。
 const laneItems = computed(() => {
   return Array.from({ length: props.lanes }, (_, laneIndex) => {
     return props.items.filter((_, itemIndex) => itemIndex % props.lanes === laneIndex)
   }).filter((lane) => lane.length > 0)
 })
 
+// 每条车道按 repeat 扩展数据，保证滚动时内容足够连续。
 const expandedLaneItems = computed(() => {
   return laneItems.value.map((lane) => {
     return Array.from({ length: props.repeat }, (_, repeatIndex) => {
@@ -28,6 +30,7 @@ const expandedLaneItems = computed(() => {
   })
 })
 
+// 相邻车道使用不同速度，避免整个背景运动节奏过于单调。
 const buildMarqueeDuration = (laneIndex: number) => {
   return laneIndex % 2 === 0 ? 36 : 42
 }

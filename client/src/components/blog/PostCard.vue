@@ -7,6 +7,7 @@ const props = withDefaults(defineProps<ArticleCardProps>(), {
   featured: false
 })
 
+// 有封面图时拼出卡片背景，没有则让样式层走占位渐变。
 const coverStyle = computed(() => {
   if (!props.article.coverImage) {
     return undefined
@@ -17,6 +18,7 @@ const coverStyle = computed(() => {
   }
 })
 
+// 展示层需要的摘要、日期和阅读时长都在这里预处理。
 const excerpt = computed(() => props.article.excerpt || props.article.content.slice(0, 140))
 const publishedAt = computed(() => formatDate(props.article.createdAt, 'long'))
 const readTime = computed(() => estimateReadTime(props.article.content))

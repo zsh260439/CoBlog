@@ -9,6 +9,7 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
 
 const listRef = ref<HTMLElement | null>(null)
 
+// 目录优先把 h2 视为根节点；如果文章没有 h2，就退回到最小标题层级。
 const getRootLevel = () => {
   const levels = props.items.map((item) => item.level)
 
@@ -19,6 +20,7 @@ const getRootLevel = () => {
   return Math.min(...levels)
 }
 
+// 给每个目录项补充所属根节点，后面就能做“根标题 + 当前分组子标题”的裁剪展示。
 const normalizedItems = computed(() => {
   if (!props.items.length) {
     return []
@@ -40,6 +42,7 @@ const normalizedItems = computed(() => {
   })
 })
 
+// 当前激活标题属于哪个根分组，右侧目录就聚焦显示这个分组。
 const activeRootId = computed(() => {
   const activeItem = normalizedItems.value.find((item) => item.id === props.activeId)
 
@@ -50,11 +53,13 @@ const activeRootId = computed(() => {
   return normalizedItems.value.find((item) => item.isRoot)?.id || ''
 })
 
+// 目录始终保留所有根标题，同时展示当前根标题下面的子标题。
 const visibleItems = computed(() => {
   const rootId = activeRootId.value
   return normalizedItems.value.filter((item) => item.isRoot || item.rootId === rootId)
 })
 
+// 点击目录项时滚动到正文标题，并同步更新地址栏 hash。
 const scrollToHeading = (id: string) => {
   const element = document.getElementById(id)
 
@@ -69,6 +74,7 @@ const scrollToHeading = (id: string) => {
   window.history.replaceState(null, '', `#${id}`)
 }
 
+// 激活项变化后，把右侧目录滚动到可视区域内。
 const syncActiveItemIntoView = () => {
   const activeItem = listRef.value?.querySelector<HTMLElement>('.article-toc__item.active')
   activeItem?.scrollIntoView({ block: 'nearest' })
@@ -77,6 +83,7 @@ const syncActiveItemIntoView = () => {
 watch(
   () => [props.activeId, visibleItems.value.length],
   async () => {
+    // 先等 DOM 根据新的目录项渲染完成，再滚动到高亮项。
     await nextTick()
     syncActiveItemIntoView()
   },

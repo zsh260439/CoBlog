@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<PageHeroProps>(), {
   mistHeight: 148
 })
 
+// 只有传入背景图时才生成叠加渐变的背景样式。
 const heroStyle = computed(() => {
   if (!props.image) {
     return undefined
@@ -21,10 +22,12 @@ const heroStyle = computed(() => {
   }
 })
 
+// 白雾层高度交给外部控制，便于不同页面复用同一 Hero。
 const mistStyle = computed(() => ({
   height: `${props.mistHeight}px`
 }))
 
+// 根据尺寸、对齐和是否有图片生成模板要用的 class。
 const innerClass = computed(() => ({
   'page-hero__inner--medium': props.height === 'medium',
   'page-hero__inner--large': props.height === 'large'

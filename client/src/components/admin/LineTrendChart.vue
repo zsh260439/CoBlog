@@ -6,6 +6,7 @@ const { articles } = useArticles()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
+// 图表实例只在真实挂载节点上创建，并尽量复用已有实例。
 const ensureChart = () => {
   if (!chartRef.value) {
     return null
@@ -15,6 +16,7 @@ const ensureChart = () => {
   return chart
 }
 
+// 把文章按创建日期汇总成折线图需要的 x/y 轴数据。
 const updateChart = () => {
   const currentChart = ensureChart()
   if (!currentChart) {
@@ -56,11 +58,13 @@ const updateChart = () => {
   })
 }
 
+// 文章列表变化时立即重绘一次，保证面板和内容数据同步。
 watch(articles, () => {
   updateChart()
 }, { immediate: true })
 
 onBeforeUnmount(() => {
+  // 组件销毁前释放 ECharts 实例，避免重复进入页面时泄漏。
   if (chart) {
     chart.dispose()
     chart = null

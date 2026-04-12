@@ -12,6 +12,7 @@ import type { ArticleHeroProps } from '@/types/article'
 
 const props = defineProps<ArticleHeroProps>()
 
+// 后端或组合逻辑只传 icon 名称，这里统一映射成实际图标组件。
 const iconMap = {
   Calendar,
   View,
@@ -21,6 +22,7 @@ const iconMap = {
   Reading,
 } as const
 
+// 文章有封面时生成头图背景；没有时使用默认渐变底图。
 const heroStyle = computed(() => {
   if (!props.article.coverImage) {
     return undefined
