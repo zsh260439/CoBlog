@@ -14,6 +14,7 @@ const preferredReducedMotion = usePreferredReducedMotion()
 const PARTICLE_COUNT = 40
 const CONNECTION_DISTANCE = 100
 
+// 首页 Hero 的动作入口配置，模板会按是否外链分成两种跳转方式。
 const heroActions = [
   {
     label: '进入博客',
@@ -35,6 +36,7 @@ const heroActions = [
   }
 ] as const
 
+// 创建单个粒子的初始位置、速度和视觉参数。
 const createParticle = (canvasWidth: number, canvasHeight: number): Particle => ({
   x: Math.random() * canvasWidth,
   y: Math.random() * canvasHeight,
@@ -44,6 +46,7 @@ const createParticle = (canvasWidth: number, canvasHeight: number): Particle => 
   opacity: Math.random() * 0.2 + 0.08
 })
 
+// 粒子碰到画布边界时反弹，形成缓慢漂浮效果。
 const updateParticle = (particle: Particle, canvasWidth: number, canvasHeight: number) => {
   particle.x += particle.vx
   particle.y += particle.vy
@@ -57,6 +60,7 @@ const updateParticle = (particle: Particle, canvasWidth: number, canvasHeight: n
   }
 }
 
+// 绘制单个粒子。
 const drawParticle = (ctx: CanvasRenderingContext2D, particle: Particle) => {
   ctx.fillStyle = `rgba(100, 160, 193, ${particle.opacity})`
   ctx.beginPath()
@@ -64,6 +68,7 @@ const drawParticle = (ctx: CanvasRenderingContext2D, particle: Particle) => {
   ctx.fill()
 }
 
+// 距离足够近的粒子之间补一条细线，形成连线网络质感。
 const drawConnections = (ctx: CanvasRenderingContext2D, items: Particle[]) => {
   ctx.strokeStyle = 'rgba(100, 160, 193, 0.025)'
   ctx.lineWidth = 0.5
@@ -84,6 +89,7 @@ const drawConnections = (ctx: CanvasRenderingContext2D, items: Particle[]) => {
   }
 }
 
+// 画布尺寸始终跟随窗口，避免全屏 Hero 缩放后失真。
 const syncCanvas = () => {
   const canvas = canvasRef.value
 
@@ -96,10 +102,12 @@ const syncCanvas = () => {
   canvas.height = height.value
 }
 
+// 在当前窗口尺寸下重新生成一组粒子。
 const resetParticles = () => {
   particles.value = Array.from({ length: PARTICLE_COUNT }, () => createParticle(width.value, height.value))
 }
 
+// 每一帧先清空画布，再绘制连线和粒子本身。
 const drawScene = () => {
   const ctx = context.value
 
@@ -117,6 +125,7 @@ const drawScene = () => {
 }
 
 const { pause, resume } = useRafFn(() => {
+  // 用户偏好减少动画时直接停掉整套帧循环。
   if (preferredReducedMotion.value === 'reduce') {
     return
   }
@@ -124,11 +133,13 @@ const { pause, resume } = useRafFn(() => {
   drawScene()
 }, { immediate: false })
 
+// 视口变化时同步画布尺寸，并基于新尺寸重建粒子。
 watch([width, height], () => {
   syncCanvas()
   resetParticles()
 }, { immediate: true })
 
+// 根据系统无障碍偏好动态暂停或恢复动画。
 watch(preferredReducedMotion, (value) => {
   if (value === 'reduce') {
     pause()
@@ -138,6 +149,7 @@ watch(preferredReducedMotion, (value) => {
   resume()
 }, { immediate: true })
 
+// canvas 真正挂载后再初始化动画，节点卸载时停止渲染。
 watch(canvasRef, (canvas) => {
   if (!canvas) {
     pause()

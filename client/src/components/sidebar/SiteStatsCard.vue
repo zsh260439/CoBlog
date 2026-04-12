@@ -5,6 +5,7 @@ import type { SiteStatsCardProps } from '@/types/ui'
 
 const props = defineProps<SiteStatsCardProps>()
 
+// 外部传了统计数据就优先使用，否则回退到站点配置里的快照数据。
 const resolvedItems = computed(() => {
   if (props.items?.length) {
     return props.items

@@ -10,14 +10,17 @@ const { y } = useWindowScroll()
 
 const navItems = primaryNav
 
+// 把站点名称拆成三段，方便品牌字母做不同样式强调。
 const brandLeading = computed(() => siteConfig.name.slice(0, 1))
 const brandAccent = computed(() => siteConfig.name.slice(1, 2))
 const brandTrailing = computed(() => siteConfig.name.slice(2))
 
+// 首页头图区域滚动较浅时使用 overlay 样式，菜单打开后恢复普通头部。
 const isOverlayHeader = computed(
   () => route.meta.headerStyle === 'overlay' && y.value < 36 && !isMenuOpen.value
 )
 
+// 既支持路径精确匹配，也支持按路由名高亮一组关联页面。
 const isNavItemActive = (path: string, routeNames: string[]) => {
   if (route.path === path) {
     return true
@@ -26,10 +29,12 @@ const isNavItemActive = (path: string, routeNames: string[]) => {
   return routeNames.includes(String(route.name ?? ''))
 }
 
+// 移动端菜单只切换一个布尔状态，模板里据此控制过渡和图标动画。
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
 }
 
+// 切路由后自动收起移动端菜单，避免旧状态残留到新页面。
 watch(
   () => route.fullPath,
   () => {

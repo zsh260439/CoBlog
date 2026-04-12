@@ -6,6 +6,7 @@ const { articles } = useArticles()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
+// 图表实例只在真实挂载节点上创建，并尽量复用已有实例。
 const ensureChart = () => {
   if (!chartRef.value) {
     return null
@@ -15,6 +16,7 @@ const ensureChart = () => {
   return chart
 }
 
+// 把文章按分类聚合成饼图数据，展示当前内容分布。
 const updateChart = () => {
   const currentChart = ensureChart()
   if (!currentChart) {
@@ -42,11 +44,13 @@ const updateChart = () => {
   })
 }
 
+// 文章数据变动后立即刷新图表。
 watch(articles, () => {
   updateChart()
 }, { immediate: true })
 
 onBeforeUnmount(() => {
+  // 页面离开时销毁图表实例，避免残留监听和内存占用。
   if (chart) {
     chart.dispose()
     chart = null

@@ -4,6 +4,7 @@ import { useWindowScroll } from '@vueuse/core'
 
 const { y: scrollY } = useWindowScroll()
 
+// 用当前滚动距离除以页面可滚动总高度，得到顶部阅读进度条百分比。
 const progress = computed(() => {
   const scrollTop = scrollY.value
   const docHeight = document.documentElement.scrollHeight - window.innerHeight

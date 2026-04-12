@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { primaryNav, siteConfig } from '@/config/site'
 
+// 页脚版本文案直接复用站点配置，避免模板里反复取值。
 const version = siteConfig.footerVersion
 </script>
 
