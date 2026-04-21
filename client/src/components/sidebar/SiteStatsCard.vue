@@ -38,9 +38,9 @@ const resolvedItems = computed(() => {
 <style scoped>
 .stats-card {
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
+  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.05);
 }
 
 .stats-card :deep(.el-card__body) {

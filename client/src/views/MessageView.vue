@@ -196,7 +196,7 @@ const handleSubmit = async () => {
 
 <style scoped>
 .message-view {
-  background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
+  background: linear-gradient(180deg, #f7f7f7 0%, #ffffff 34%, #ffffff 100%);
 }
 
 .message-shell {
@@ -219,6 +219,15 @@ const handleSubmit = async () => {
 
 .message-card {
   border-radius: 12px;
+}
+
+.message-card :deep(.el-card) {
+  border-color: rgba(17, 17, 17, 0.08);
+}
+
+.message-card :deep(.el-card__body),
+.message-card :deep(.el-card__header) {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .message-card :deep(.el-card__body) {
@@ -256,6 +265,49 @@ const handleSubmit = async () => {
   gap: 1rem;
 }
 
+.composer-form :deep(.el-input__wrapper),
+.composer-form :deep(.el-textarea__inner) {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.08) inset;
+}
+
+.composer-form :deep(.el-input__wrapper.is-focus),
+.composer-form :deep(.el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.18) inset;
+}
+
+.composer-form :deep(.el-checkbox__label) {
+  color: var(--text-secondary);
+}
+
+.composer-form :deep(.el-checkbox__input.is-checked .el-checkbox__inner),
+.composer-form :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  border-color: #111111;
+  background: #111111;
+}
+
+.composer-form :deep(.el-checkbox__inner:hover),
+.composer-form :deep(.el-checkbox__input.is-focus .el-checkbox__inner) {
+  border-color: rgba(17, 17, 17, 0.36);
+}
+
+.composer-form :deep(.el-button--primary) {
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
+}
+
+.composer-form :deep(.el-button--primary:hover),
+.composer-form :deep(.el-button--primary:focus-visible) {
+  border-color: #2b2b2b;
+  background: #2b2b2b;
+}
+
+.composer-form :deep(.el-button--primary:active) {
+  border-color: #000000;
+  background: #000000;
+}
+
 .composer-form :deep(.el-form-item) {
   margin-bottom: 0;
 }
@@ -287,6 +339,13 @@ const handleSubmit = async () => {
 .message-count {
   display: flex;
   justify-content: flex-end;
+}
+
+.message-count :deep(.el-tag),
+.guestbook-card__tags :deep(.el-tag) {
+  border-color: rgba(17, 17, 17, 0.1);
+  background: rgba(17, 17, 17, 0.04);
+  color: var(--text-secondary);
 }
 
 .guestbook-list {
@@ -350,6 +409,14 @@ const handleSubmit = async () => {
   line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.guestbook-list :deep(.el-loading-spinner .path) {
+  stroke: #111111;
+}
+
+.guestbook-list :deep(.el-loading-spinner .el-loading-text) {
+  color: var(--text-secondary);
 }
 
 @media (max-width: 1024px) {

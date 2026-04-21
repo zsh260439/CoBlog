@@ -72,7 +72,7 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
 
 <style scoped>
 .about-view {
-  background: linear-gradient(180deg, #f9fbff 0%, #eef4fa 34%, #ffffff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 34%, #ffffff 100%);
 }
 
 .about-hero-stage {
