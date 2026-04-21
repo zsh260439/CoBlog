@@ -4,6 +4,11 @@ import HomeView from '@/views/HomeView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
+    path:'/login',
+    name:'login',
+    component:() => import('@/views/Login.vue'),
+  },
+  {
     path: '/admin',
     component: () => import('@/views/admin/layouts/AdminLayout.vue'),
     meta: {
@@ -141,4 +146,11 @@ const router = createRouter({
   }
 })
 
+router.beforeEach((to)=>{
+   const token = localStorage.getItem('local-token')
+   const isAdminRoute = to.path.startsWith('/admin')
+   const isLoginRoute = to.path === '/login'
+   if(isAdminRoute && !token) return '/login'
+   if(isLoginRoute && token) return '/admin'
+})
 export default router
