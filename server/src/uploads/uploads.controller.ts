@@ -4,10 +4,13 @@ import { UploadsService } from "./uploads.service";
 import { diskStorage } from "multer";
 import { ApiResponse } from "src/common/utils/api-response";
 import { extname } from "path";
+import { UseGuards } from "@nestjs/common";
+import { AuthGuard } from "src/auth/auth.guard";
 @Controller('uploads')
 export class UploadsController {
     constructor(private readonly uploadsService:UploadsService){}
 
+   @UseGuards(AuthGuard)
    @Post('image')
    @UseInterceptors(
     FileInterceptor('file',{

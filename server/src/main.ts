@@ -3,17 +3,13 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path'
 import { NestExpressApplication } from '@nestjs/platform-express'
+import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use(cookieParser())
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || /^http:\/\/localhost:(5173|5174|5175|4173)$/.test(origin)) {
-        callback(null, true)
-        return
-      }
-
-      callback(new Error(`CORS blocked for origin: ${origin}`), false)
-    },
+    origin:true,
+    //允许携带cookie
     credentials:true
   });
   app.useGlobalPipes(
