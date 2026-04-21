@@ -156,9 +156,9 @@ onMounted(() => {
 <style scoped>
 .profile-card {
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
+  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.05);
   text-align: center;
 }
 
@@ -241,7 +241,7 @@ onMounted(() => {
 
 .profile-card__actions span {
   padding: 0.42rem 0.6rem;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid var(--border-light);
   background: transparent;
   font-family: var(--font-mono);

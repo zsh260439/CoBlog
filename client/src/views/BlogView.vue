@@ -55,7 +55,7 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
 
 <style scoped>
 .blog-view {
-  background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
+  background: linear-gradient(180deg, #f6f6f6 0%, #ffffff 30%, #ffffff 100%);
 }
 
 .blog-shell {
@@ -78,9 +78,9 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
 
 .blog-state {
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 10px;
+  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.05);
 }
 
 .blog-state :deep(.el-card__body) {

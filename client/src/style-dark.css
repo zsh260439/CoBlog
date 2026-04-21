@@ -20,30 +20,30 @@
 }
 
 :root {
-  /* Primary backgrounds - pure white */
+  /* Primary backgrounds - white */
   --primary: #ffffff;
-  --secondary: #f8f9fa;
-  --tertiary: #f1f3f5;
+  --secondary: #fafafa;
+  --tertiary: #f3f3f3;
 
   /* Accent colors */
-  --accent-muted: #7c8ea3;
-  --accent-cyan: #0077cc;
-  --accent-teal: #00a399;
+  --accent-muted: #8b8b8b;
+  --accent-cyan: #171512;
+  --accent-teal: #5f5f5f;
 
-  /* Background shades - clean white */
+  /* Background shades - white */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
+  --bg-secondary: #fafafa;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f3f5;
+  --bg-elevated: #f4f4f4;
 
-  /* Text colors - dark for contrast */
-  --text-primary: #2b3340;
-  --text-secondary: #5f6978;
-  --text-muted: #98a3b3;
+  /* Text colors - charcoal */
+  --text-primary: #171512;
+  --text-secondary: #5f5f5f;
+  --text-muted: #9a9a9a;
 
   /* Borders - subtle */
-  --border-light: rgba(0, 0, 0, 0.06);
-  --border-medium: rgba(0, 0, 0, 0.12);
+  --border-light: rgba(23, 21, 18, 0.08);
+  --border-medium: rgba(23, 21, 18, 0.14);
 
   /* Typography */
   --font-primary: 'Outfit', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -54,8 +54,8 @@
   --content-width: 1200px;
 
   /* Shadows */
-  --shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.05);
-  --shadow-strong: 0 14px 30px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 8px 24px rgba(17, 17, 17, 0.05);
+  --shadow-strong: 0 14px 30px rgba(17, 17, 17, 0.08);
 }
 
 * {

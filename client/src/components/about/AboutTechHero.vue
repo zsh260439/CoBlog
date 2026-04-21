@@ -104,17 +104,17 @@ const buildMarqueeDuration = (laneIndex: number) => {
   overflow: hidden;
   color: #1f2937;
   background:
-    radial-gradient(circle at 20% 20%, rgba(0, 119, 204, 0.08), transparent 28%),
-    radial-gradient(circle at 80% 22%, rgba(0, 163, 153, 0.07), transparent 26%),
-    linear-gradient(180deg, #f9fbff 0%, #eef5fb 48%, #ffffff 100%);
+    radial-gradient(circle at 20% 20%, rgba(17, 24, 39, 0.035), transparent 28%),
+    radial-gradient(circle at 80% 22%, rgba(17, 24, 39, 0.03), transparent 26%),
+    linear-gradient(180deg, #ffffff 0%, #f7f7f7 48%, #ffffff 100%);
 }
 
 .about-tech-hero--background {
   min-height: 100%;
   background:
-    radial-gradient(circle at 20% 20%, rgba(0, 119, 204, 0.09), transparent 28%),
-    radial-gradient(circle at 80% 22%, rgba(0, 163, 153, 0.08), transparent 26%),
-    linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(240, 246, 251, 0.98) 48%, rgba(255, 255, 255, 0.99) 100%);
+    radial-gradient(circle at 20% 20%, rgba(17, 24, 39, 0.04), transparent 28%),
+    radial-gradient(circle at 80% 22%, rgba(17, 24, 39, 0.035), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 247, 247, 0.98) 48%, rgba(255, 255, 255, 0.99) 100%);
 }
 
 .about-tech-hero__ambient,
@@ -135,8 +135,8 @@ const buildMarqueeDuration = (laneIndex: number) => {
 .about-tech-hero__ambient {
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.7), transparent 32%),
-    radial-gradient(circle at 18% 72%, rgba(64, 158, 255, 0.08), transparent 24%),
-    radial-gradient(circle at 78% 66%, rgba(0, 163, 153, 0.08), transparent 22%);
+    radial-gradient(circle at 18% 72%, rgba(17, 24, 39, 0.04), transparent 24%),
+    radial-gradient(circle at 78% 66%, rgba(17, 24, 39, 0.04), transparent 22%);
 }
 
 .about-tech-hero__grid {
@@ -285,19 +285,19 @@ const buildMarqueeDuration = (laneIndex: number) => {
 .about-tech-hero__veil {
   background:
     radial-gradient(circle at center, transparent 30%, rgba(255, 255, 255, 0.06) 70%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(237, 244, 250, 0.48));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(245, 245, 245, 0.48));
 }
 
 .about-tech-hero--background .about-tech-hero__veil {
   background:
     radial-gradient(circle at center, transparent 26%, rgba(255, 255, 255, 0.08) 68%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(237, 244, 250, 0.42));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(245, 245, 245, 0.42));
 }
 
 .about-tech-hero__mist {
   inset: auto 0 0;
   height: 190px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(244, 248, 253, 0.74) 58%, #ffffff 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(247, 247, 247, 0.74) 58%, #ffffff 100%);
 }
 
 .about-tech-hero__inner {
