@@ -33,6 +33,8 @@ const refreshActiveHeading = useThrottleFn(() => {
 
   const offset = 136
   let currentId = tocItems.value[0].id
+  const viewportBottom = window.scrollY + window.innerHeight
+  const documentHeight = document.documentElement.scrollHeight
 
   tocItems.value.forEach((item) => {
     const element = document.getElementById(item.id)
@@ -45,6 +47,12 @@ const refreshActiveHeading = useThrottleFn(() => {
       currentId = item.id
     }
   })
+
+  // 最后一个标题靠近页面底部时，可能永远到不了 offset 位置。
+  // 当视口已经接近整篇文章底部时，直接把目录高亮切到最后一个标题。
+  if (viewportBottom >= documentHeight - 12) {
+    currentId = tocItems.value[tocItems.value.length - 1]?.id || currentId
+  }
 
   activeHeadingId.value = currentId
 }, 80)

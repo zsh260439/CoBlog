@@ -76,8 +76,31 @@ const scrollToHeading = (id: string) => {
 
 // 激活项变化后，把右侧目录滚动到可视区域内。
 const syncActiveItemIntoView = () => {
-  const activeItem = listRef.value?.querySelector<HTMLElement>('.article-toc__item.active')
-  activeItem?.scrollIntoView({ block: 'nearest' })
+  const container = listRef.value
+  const activeItem = container?.querySelector<HTMLElement>('.article-toc__item.active')
+
+  if (!container || !activeItem) {
+    return
+  }
+
+  // 只同步目录容器自身的滚动位置，避免在小屏时把整页强制拉到目录区域。
+  const itemTop = activeItem.offsetTop
+  const itemBottom = itemTop + activeItem.offsetHeight
+  const visibleTop = container.scrollTop
+  const visibleBottom = visibleTop + container.clientHeight
+  const padding = 8
+
+  if (itemTop < visibleTop + padding) {
+    container.scrollTo({ top: Math.max(itemTop - padding, 0), behavior: 'smooth' })
+    return
+  }
+
+  if (itemBottom > visibleBottom - padding) {
+    container.scrollTo({
+      top: itemBottom - container.clientHeight + padding,
+      behavior: 'smooth'
+    })
+  }
 }
 
 watch(
