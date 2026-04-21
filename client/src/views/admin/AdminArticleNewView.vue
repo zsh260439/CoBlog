@@ -7,6 +7,7 @@ import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
+import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createArticle, getArticleById, updateArticle } from '@/servers/article'
 import { uploadImage } from '@/servers/upload'
@@ -15,6 +16,9 @@ import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import type { ArticleCategory } from '@/types/article'
 import { categoryOptions } from '@/config/site'
+
+ensureMarkdownConfigured()
+
 const route = useRoute()
 const router = useRouter()
 
@@ -135,14 +139,17 @@ const handleUploadImages = async (
   }
 }
 
-// 把当前表单内容保存到会话级草稿 store
-const saveDraft = () => {
+// 把当前表单内容保存到会话级草稿 store。
+// 模板点击事件会自动传入 MouseEvent，这里只接受真正的布尔值，避免把事件对象误当成草稿状态。
+const saveDraft = (nextDraftMode?: boolean) => {
+  const resolvedDraftMode = typeof nextDraftMode === 'boolean' ? nextDraftMode : draftMode.value
+
   saveArticleDraft({
     ...form,
     tags: [...form.tags],
-    draftMode: true,
+    draftMode: resolvedDraftMode,
   })
-  draftMode.value = true
+  draftMode.value = resolvedDraftMode
   ElMessage.success('草稿已保存到当前会话')
 }
 
@@ -209,7 +216,7 @@ const publishArticle = async () => {
 // 处理“主操作按钮”点击：草稿模式保存，否则发布/更新
 const handlePrimaryAction = async () => {
   if (draftMode.value) {
-    saveDraft()
+    saveDraft(true)
     return
   }
 
@@ -280,7 +287,8 @@ onMounted(async () => {
     ...cachedDraft,
     tags: Array.isArray(cachedDraft.tags) ? cachedDraft.tags : [],
   })
-  draftMode.value = Boolean(cachedDraft.draftMode)
+  // 旧草稿里如果混入了事件对象等非布尔值，这里统一回退成 false，避免主按钮卡在“保存草稿”。
+  draftMode.value = typeof cachedDraft.draftMode === 'boolean' ? cachedDraft.draftMode : false
   slugTouched.value = Boolean(cachedDraft.slug)
 })
 </script>
@@ -345,7 +353,7 @@ onMounted(async () => {
           </div>
 
           <div class="publish-actions">
-            <el-button class="publish-actions__ghost" @click="saveDraft">保存草稿</el-button>
+            <el-button class="publish-actions__ghost" @click="saveDraft()">保存草稿</el-button>
             <el-button type="primary" class="publish-actions__primary" :loading="submitLoading" @click="handlePrimaryAction">
               <el-icon><Promotion /></el-icon>
               {{ draftMode ? '保存草稿' : isEditMode ? '更新文章' : '发布' }}
