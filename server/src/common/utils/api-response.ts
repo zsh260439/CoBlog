@@ -15,7 +15,7 @@ export class ApiResponse<T> {
     return new ApiResponse(0,message,data)
   }
   // 错误返回
-  static error<T>(message='操作失败',data?:T):ApiResponse<T>{
+  static error<T>(data?:T,message='操作失败'):ApiResponse<T>{
     return new ApiResponse(1,message,data)
   }
 }
