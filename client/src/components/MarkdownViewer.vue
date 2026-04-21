@@ -4,8 +4,11 @@ import { MdPreview } from 'md-editor-v3'
 import type { HeadList, MdHeadingId } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
 import { API_BASE_URL } from '@/config/http'
+import { ensureMarkdownConfigured } from '@/config/markdown'
 import type { MarkdownHeading } from '@/types/content'
 import type { MarkdownViewerProps } from '@/types/ui'
+
+ensureMarkdownConfigured()
 
 const props = withDefaults(defineProps<MarkdownViewerProps>(), {
   editorId: 'article-preview'
