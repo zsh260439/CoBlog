@@ -4,7 +4,7 @@ import type { SiteCategory } from '@/types/site'
 export const siteConfig = {
   name: 'CoBlog',
   ownerName: 'Zsint',
-  ownerRole: '前端开发 / 小菜鸡',
+  ownerRole: '前端开发',
   ownerLocation: '湖北武汉',
   tagline: '分享自己的学习过程',
   description: '一个记录学习过程的个人博客网站',
