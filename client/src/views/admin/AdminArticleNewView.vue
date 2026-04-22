@@ -5,6 +5,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
+import { chatWithArticleAi, generateArticleSummaryWithAi, optimizeArticleWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
 import { ensureMarkdownConfigured } from '@/config/markdown'
@@ -14,6 +15,7 @@ import { uploadImage } from '@/servers/upload'
 import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
+import type { AiChatMessage } from '@/types/admin/ai'
 import type { ArticleCategory } from '@/types/article'
 import { categoryOptions } from '@/config/site'
 
@@ -46,6 +48,21 @@ const submitError = ref('')
 const draftMode = ref(false)
 const pageLoading = ref(false)
 const slugTouched = ref(false)
+const aiInstruction = ref('')
+const aiLoading = ref<'optimize' | 'summary' | ''>('')
+const aiChatLoading = ref(false)
+const aiChatInput = ref('')
+const aiDrawerVisible = ref(false)
+const aiMessages = ref<AiChatMessage[]>([
+  {
+    role: 'assistant',
+    content: '你好，我可以帮你把零散笔记整理成 Markdown 正文，也可以直接回答技术问题。你可以直接说：请根据当前内容生成一篇结构完整的文章。',
+  },
+])
+
+const latestAssistantMessage = computed(() => {
+  return [...aiMessages.value].reverse().find((item) => item.role === 'assistant')?.content || ''
+})
 
 // 合并“后台分类”和“本地默认分类”得到当前可选分类列表
 const resolvedCategories = computed<ArticleCategory[]>(() => {
@@ -160,6 +177,138 @@ const validateForm = () => {
   if (!form.content.trim()) return '请输入 Markdown 正文'
   if (!form.category.trim()) return '请选择文章分类'
   return ''
+}
+
+// AI 优化正文时只回填 Markdown 内容，避免覆盖用户自己调整过的其他字段。
+const handleOptimizeContent = async () => {
+  if (!form.content.trim()) {
+    ElMessage.warning('请先输入正文内容再进行优化')
+    return
+  }
+
+  aiLoading.value = 'optimize'
+
+  try {
+    const result = await optimizeArticleWithAi({
+      title: form.title.trim(),
+      content: form.content,
+      instruction: aiInstruction.value.trim(),
+    })
+
+    const optimizedContent = result.data?.content?.trim()
+
+    if (!optimizedContent) {
+      throw new Error('AI 未返回优化后的正文')
+    }
+
+    form.content = optimizedContent
+    ElMessage.success('AI 已优化正文，可继续手动微调')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 优化失败')
+  } finally {
+    aiLoading.value = ''
+  }
+}
+
+// 摘要生成结果同时写入 excerpt 和 summary，方便列表展示和后续发布提交。
+const handleGenerateSummary = async () => {
+  if (!form.content.trim()) {
+    ElMessage.warning('请先输入正文内容再生成概括')
+    return
+  }
+
+  aiLoading.value = 'summary'
+
+  try {
+    const result = await generateArticleSummaryWithAi({
+      title: form.title.trim(),
+      content: form.content,
+      instruction: aiInstruction.value.trim(),
+      excerptLength: 120,
+    })
+
+    const excerpt = result.data?.excerpt?.trim()
+    const summary = result.data?.summary?.trim()
+
+    if (!excerpt && !summary) {
+      throw new Error('AI 未返回摘要内容')
+    }
+
+    form.excerpt = excerpt || summary || form.excerpt
+    form.summary = summary || excerpt || form.summary
+    ElMessage.success('AI 已生成概括，可继续手动修改')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 概括生成失败')
+  } finally {
+    aiLoading.value = ''
+  }
+}
+
+// 对话式 AI 助手会携带当前标题、正文和历史消息，尽量返回可直接复用的 Markdown 内容。
+const handleSendAiMessage = async () => {
+  if (!aiChatInput.value.trim()) {
+    ElMessage.warning('请输入你想让 AI 帮你完成的内容')
+    return
+  }
+
+  const nextMessages: AiChatMessage[] = [
+    ...aiMessages.value,
+    {
+      role: 'user',
+      content: aiChatInput.value.trim(),
+    },
+  ]
+
+  aiMessages.value = nextMessages
+  aiChatLoading.value = true
+  const currentQuestion = aiChatInput.value.trim()
+  aiChatInput.value = ''
+
+  try {
+    const result = await chatWithArticleAi({
+      title: form.title.trim(),
+      content: form.content,
+      instruction: aiInstruction.value.trim(),
+      messages: nextMessages.filter((item) => item.role === 'user' || item.role === 'assistant'),
+    })
+
+    const answer = result.data?.content?.trim()
+
+    if (!answer) {
+      throw new Error('AI 未返回有效回复')
+    }
+
+    aiMessages.value = [
+      ...nextMessages,
+      {
+        role: 'assistant',
+        content: answer,
+      },
+    ]
+  } catch (error: any) {
+    aiMessages.value = [
+      ...nextMessages,
+      {
+        role: 'assistant',
+        content: `AI 请求失败：${error?.response?.data?.message || error?.message || '请稍后重试'}`,
+      },
+    ]
+    aiChatInput.value = currentQuestion
+  } finally {
+    aiChatLoading.value = false
+  }
+}
+
+const applyAiAnswerToContent = (mode: 'replace' | 'append') => {
+  const answer = latestAssistantMessage.value.trim()
+
+  if (!answer) {
+    ElMessage.warning('当前没有可应用到正文的 AI 回复')
+    return
+  }
+
+  form.content = mode === 'replace' ? answer : `${form.content.trim()}\n\n${answer}`.trim()
+  ElMessage.success(mode === 'replace' ? '已用 AI 回复替换正文' : '已追加到正文末尾')
 }
 
 // 执行文章发布或更新请求
@@ -367,6 +516,34 @@ onMounted(async () => {
         </section>
 
         <section class="article-create-card">
+          <h3>AI 助写</h3>
+
+          <div class="form-field form-field--compact">
+            <label>补充要求</label>
+            <el-input
+              v-model="aiInstruction"
+              type="textarea"
+              :rows="4"
+              placeholder="例如：保留我的学习口吻，但帮我把 Markdown 标题、列表和总结整理得更规范"
+            />
+          </div>
+
+          <div class="publish-actions publish-actions--stack">
+            <el-button :loading="aiLoading === 'optimize'" @click="handleOptimizeContent">
+              AI 优化正文
+            </el-button>
+            <el-button :loading="aiLoading === 'summary'" @click="handleGenerateSummary">
+              AI 生成概括
+            </el-button>
+            <el-button @click="aiDrawerVisible = true">
+              AI 对话助手
+            </el-button>
+          </div>
+
+          <p class="taxonomy-hint">AI 只会基于当前标题和正文生成内容，发布前建议再自己校对一遍。</p>
+        </section>
+
+        <section class="article-create-card">
           <div class="card-title-row">
             <h3>分类</h3>
           </div>
@@ -401,6 +578,40 @@ onMounted(async () => {
         </section>
       </aside>
     </div>
+
+    <el-drawer v-model="aiDrawerVisible" title="AI 写作助手" size="520px" destroy-on-close>
+      <div class="ai-drawer">
+        <div class="ai-drawer__messages">
+          <article
+            v-for="(message, index) in aiMessages"
+            :key="`${message.role}-${index}`"
+            class="ai-message"
+            :class="message.role === 'assistant' ? 'ai-message--assistant' : 'ai-message--user'"
+          >
+            <span class="ai-message__role">{{ message.role === 'assistant' ? 'AI' : '你' }}</span>
+            <pre class="ai-message__content">{{ message.content }}</pre>
+          </article>
+        </div>
+
+        <div class="ai-drawer__actions">
+          <el-button @click="applyAiAnswerToContent('replace')">替换正文</el-button>
+          <el-button @click="applyAiAnswerToContent('append')">追加到正文</el-button>
+        </div>
+
+        <div class="form-field ai-drawer__input">
+          <label>继续提问</label>
+          <el-input
+            v-model="aiChatInput"
+            type="textarea"
+            :rows="5"
+            placeholder="例如：请把当前内容整理成一篇适合学习笔记发布的 Markdown 文章，保留代码示例并补充一个总结"
+          />
+          <el-button type="primary" :loading="aiChatLoading" @click="handleSendAiMessage">
+            发送给 AI
+          </el-button>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -533,6 +744,10 @@ onMounted(async () => {
   margin-top: 18px;
 }
 
+.publish-actions--stack {
+  grid-template-columns: 1fr;
+}
+
 .publish-actions__ghost,
 .publish-actions__primary {
   width: 100%;
@@ -618,6 +833,59 @@ onMounted(async () => {
   border-color: #111111;
   background: #111111;
   color: #ffffff;
+}
+
+.ai-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.ai-drawer__messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-message {
+  border: 1px solid #e4e7ed;
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.ai-message--assistant {
+  background: #fafafa;
+}
+
+.ai-message__role {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #909399;
+}
+
+.ai-message__content {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  line-height: 1.7;
+}
+
+.ai-drawer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ai-drawer__input {
+  margin-top: auto;
 }
 
 @media (max-width: 1100px) {
