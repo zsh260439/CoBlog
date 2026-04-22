@@ -35,13 +35,13 @@ const handleSubmit = async () => {
       password: form.password
     })
 
-    const token = result.data?.token
+    // 后端登录接口返回的是 accessToken，refreshToken 已经放进 cookie
+    const token = result.data?.accessToken
 
     if (!token) {
       throw new Error('未获取到 token')
     }
-
-    localStorage.setItem('local-token', token)
+    localStorage.setItem('local-token',token)
     ElMessage.success('登录成功')
     router.push('/admin')
   } catch (error: any) {
@@ -64,13 +64,14 @@ const handleSubmit = async () => {
         <p class="login-card__desc">登录后进入内容管理后台</p>
       </div>
 
-      <div class="login-form">
+      <form class="login-form" @submit.prevent="handleSubmit">
         <div class="login-form__field">
           <label>账号</label>
           <el-input
             v-model="form.username"
             size="large"
             placeholder="请输入账号"
+            autocomplete="username"
           />
         </div>
 
@@ -82,7 +83,7 @@ const handleSubmit = async () => {
             size="large"
             show-password
             placeholder="请输入密码"
-            @keyup.enter="handleSubmit"
+            autocomplete="current-password"
           />
         </div>
 
@@ -92,12 +93,12 @@ const handleSubmit = async () => {
           type="primary"
           size="large"
           class="login-form__submit"
+          native-type="submit"
           :loading="loading"
-          @click="handleSubmit"
         >
           登录
         </el-button>
-      </div>
+      </form>
     </div>
   </div>
 </template>

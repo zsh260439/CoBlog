@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AiModule } from './ai/ai.module';
 import { ArticlesModule } from './articles/article.module';
 import { MessageModule } from './message/message.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
@@ -13,6 +14,7 @@ import { UploadsModule } from './uploads/uploads.module';
       envFilePath: ['../.env', '.env']
      }),
       MongooseModule.forRoot(process.env.MONGODB_URI as string),
+      AiModule,
       ArticlesModule,
      MessageModule,
      TaxonomyModule,

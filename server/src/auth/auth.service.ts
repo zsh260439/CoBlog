@@ -35,12 +35,12 @@ private readonly jwtService:JwtService
      //生成访问令牌 请求接口时携带
      const accessToken = await this.jwtService.signAsync(payload,{
          secret:process.env.JWT_SECRET,
-         expiresIn:'15m'
+         expiresIn:'10s'
      })
      //生成刷新令牌 处理过期的accessToken
      const refreshToken = await this.jwtService.signAsync(payload,{
          secret:process.env.JWT_REFRESH_SECRET,
-         expiresIn:'7d'
+         expiresIn:'30s'
      })
      //返回两个token给前端
      return {

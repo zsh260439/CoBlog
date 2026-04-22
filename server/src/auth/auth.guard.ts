@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate {
     async canActivate(context:ExecutionContext) {
         //1:获取前端发来的请求对象
         const request = context.switchToHttp().getRequest()
-        //2:从请求头中获取token
+        //2:从请求头中获取accesstoken
         const authorization = request.headers.authorization
         if(!authorization) throw new UnauthorizedException('未登录!')
         //3:拆分token格式 Bearer token
@@ -26,7 +26,7 @@ export class AuthGuard implements CanActivate {
         if(type !== 'Bearer' || !token) throw new UnauthorizedException('Token无效!')
         //5:验证token是否合法
        try {
-        //用密钥验证token
+        //用密钥验证token 同时解码成对象
         const payload = await this.jwtService.verifyAsync(token as string,{
             secret:process.env.JWT_SECRET
         })

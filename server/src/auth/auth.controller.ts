@@ -17,7 +17,7 @@ export class AuthController {
     @Body() loginDto:LoginDto,
     @Res({passthrough:true}) response:Response
     ) {
-        //1:拿到用户信息
+        //1:创建用户信息
         const data = await this.authService.login(loginDto)
         //2:登陆成功后存入cookie
         response.cookie('refresh_token',data.refreshToken,{
@@ -58,8 +58,7 @@ export class AuthController {
        return ApiResponse.success({
            //返回给前端一个短期令牌
           accessToken:data.accessToken
-       }),
-       '刷新成功'
+       }, '刷新成功')
     }
     //登出
     @UseGuards(AuthGuard)
@@ -70,6 +69,6 @@ export class AuthController {
     ){
        await this.authService.logout(request.user.userId as string)
        response.clearCookie('refresh_token')
-       return ApiResponse.success('退出成功')
+       return ApiResponse.success(null,'退出成功')
     }
 }

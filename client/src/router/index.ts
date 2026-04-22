@@ -1,7 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-
+import { ElMessage } from 'element-plus'
+import { jwtDecode } from 'jwt-decode'
+import { JwtPayload } from 'jwt-decode'
+import { useAuth } from '@/composables/useAuth'
+import { authRequest } from '@/http-utils'
 const routes: RouteRecordRaw[] = [
   {
     path:'/login',
@@ -145,12 +149,43 @@ const router = createRouter({
     return { top: 0 }
   }
 })
+//登录路由切换逻辑
+router.beforeEach(async (to) =>{
+  const {isAccessTokenExpired} = useAuth()
+    //首先检查token是否存在
+    const token = localStorage.getItem('local-token')
+    const isAdminRoute = to.path.startsWith('/admin')
+    const isLoginRoute = to.path === '/login'
+    //首先放行公开页面
+    if(!isAdminRoute) {
+      //如果去登录页 token还有效 回后台
+      if(isLoginRoute && token &&!isAccessTokenExpired(token))
+        {
+         return '/admin'
+      }
+      return true
+   }
+   //如果在后台 没token
+   if(!token) {
+    return '/login'
+   }
 
-router.beforeEach((to)=>{
-   const token = localStorage.getItem('local-token')
-   const isAdminRoute = to.path.startsWith('/admin')
-   const isLoginRoute = to.path === '/login'
-   if(isAdminRoute && !token) return '/login'
-   if(isLoginRoute && token) return '/admin'
-})
+   //token没过期 放行
+    if(!isAccessTokenExpired(token)){
+       return true
+    } 
+    //token过期 尝试refresh
+         try {
+          const result = await authRequest<{accessToken:string}>('/auth/refresh','POST')
+          const newToken = result.data?.accessToken
+          if(!newToken) throw new Error('刷新token失败')
+          localStorage.setItem('local-token',newToken)
+        return true
+         } catch {
+           localStorage.removeItem('local-token')
+           ElMessage.warning('登录状态过期,请重新登录!')
+           return '/login'
+         }
+      }
+  )
 export default router
