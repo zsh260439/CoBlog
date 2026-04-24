@@ -10,7 +10,6 @@ const route = useRoute()
 
 const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
 const isAdminShell = computed(() => route.meta.appShell === 'admin')
-const routeViewKey = computed(() => JSON.stringify({ path: route.path, query: route.query }))
 </script>
 
 <template>
@@ -19,7 +18,7 @@ const routeViewKey = computed(() => JSON.stringify({ path: route.path, query: ro
     <AppHeader v-if="!isAdminShell" />
     <main class="main" :class="{ 'main--overlay': isOverlayLayout, 'main--plain': isAdminShell }">
       <RouterView v-slot="{ Component }">
-        <component :is="Component" :key="routeViewKey" class="route-page" />
+          <component :is="Component" class="route-page" />
       </RouterView>
     </main>
     <AppFooter v-if="!isAdminShell" />

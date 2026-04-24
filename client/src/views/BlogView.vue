@@ -7,11 +7,11 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { summarizeCategories } from '@/utils'
-
+import { getRandomCoverImage } from '@/servers/article'
 const { articles, isLoading, error } = useArticles()
 
 const categoryCount = computed(() => summarizeCategories(articles.value).length)
-
+const image =await getRandomCoverImage()
 </script>
 
 <template>
@@ -19,9 +19,9 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
     <PageHero
       title="Zsint"
       description="随便坐坐，看看我写的字 —— 一些技术、心得、生活日常和胡思乱想。"
-      :image="siteConfig.aboutHeroImage"
+      :image="image.data"
       height="medium"
-      :mist-height="120"
+      :mist-height="300"
     >
       <template #meta>
         <span>{{ articles.length }} 篇文章</span>

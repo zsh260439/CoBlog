@@ -4,10 +4,13 @@ import { Model } from 'mongoose'
 import { CreateArticleDto } from './dto/create-article.dto'
 import { UpdateArticleDto } from './dto/update-article.dto'
 import { Article, ArticleDocument } from './schema/article.schema'
-
+import  {ImageService}  from 'src/utils/image.service'
 @Injectable()
 export class ArticlesService {
-  constructor(@InjectModel(Article.name) private readonly articleModel: Model<ArticleDocument>) {}
+  constructor(@InjectModel(Article.name)
+   private readonly articleModel: Model<ArticleDocument>,
+   private readonly imageService:ImageService
+  ) {}
 
   private stripMarkdown(content: string) {
     return content.replace(/[`#>*_\-[\]()!]/g, '').replace(/\s+/g, '')
@@ -78,10 +81,15 @@ export class ArticlesService {
       articles: items.map((article) => this.serializeArticle(article)),
     }))
   }
-
+ 
   async create(createArticleDto: CreateArticleDto) {
+     let coverImage = createArticleDto.coverImage?.trim() || ''
+     if(!coverImage) {
+       coverImage = await this.imageService.getRandomCoverImage()
+     }
     const article = await this.articleModel.create({
       ...createArticleDto,
+      coverImage,
       wordCount: createArticleDto.wordCount ?? this.stripMarkdown(createArticleDto.content ?? '').length,
     })
 

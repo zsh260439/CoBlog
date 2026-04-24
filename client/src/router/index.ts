@@ -2,8 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import { ElMessage } from 'element-plus'
-import { jwtDecode } from 'jwt-decode'
-import { JwtPayload } from 'jwt-decode'
 import { useAuth } from '@/composables/useAuth'
 import { authRequest } from '@/http-utils'
 const routes: RouteRecordRaw[] = [
@@ -55,6 +53,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/admin/AdminArticleNewView.vue'),
         meta: {
           appShell: 'admin',
+
           title: '新建文章',
           description: '填写必要字段并发布 Markdown 文章'
         }
