@@ -20,10 +20,11 @@ import type { ArticleCategory } from '@/types/article'
 import { categoryOptions } from '@/config/site'
 
 ensureMarkdownConfigured()
-
 const route = useRoute()
 const router = useRouter()
-
+defineOptions({
+  name: 'AdminArticleNewView'
+})
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
 const { articles, loadArticles, setArticles } = useArticles(false)
@@ -441,7 +442,6 @@ onMounted(async () => {
   slugTouched.value = Boolean(cachedDraft.slug)
 })
 </script>
-
 <template>
   <div class="article-create-page">
     <div class="article-create-page__titlebar">

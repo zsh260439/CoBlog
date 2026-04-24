@@ -4,7 +4,7 @@ export type SubmitData = object | FormData
 // 通用接口响应结构
 export interface ApiResponse<T> {
   code: number // 接口状态码
-  data: T | null // 接口返回的数据主体
+  data?: T // 接口返回的数据主体
   message: string // 接口消息说明
 }
 

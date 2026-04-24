@@ -71,6 +71,8 @@ httpInstance.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 )
+
+
 // 普通响应拦截器
  //刷新锁 标记是否正在刷新token 防止多个401重复调用接口
   let isRefreshing  =  false
@@ -78,7 +80,11 @@ httpInstance.interceptors.request.use(
   let requestQueue:Array<(token:string)=> void > = []
   httpInstance.interceptors.response.use(
   //正常请求不用管
-  (res)=>res.data,
+  (res)=>{
+     // 第一层：取 axios 的 data（得到 ApiResponse）
+       return res.data
+       //还有第二层 这里我们都取.data来获取数据    
+  },
   //失败回调可能有登录401的问题
  async (error)=>{
     const originalRequest = error.config

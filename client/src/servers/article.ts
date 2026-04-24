@@ -1,5 +1,6 @@
 // 文章相关接口
 import { request } from '@/http-utils'
+import axios from 'axios'
 import type { Article } from '@/types/article'
 import type { ArchiveGroup, ArticleFormData } from '@/types/article'
 import {
@@ -93,4 +94,8 @@ export const updateArticle = async (id: string, payload: ArticleFormData) => {
 // 删除文章
 export const deleteArticle = async (id: string) => {
   return request<Article>(`/articles/id/${id}`, 'DELETE')
+}
+//获取图片接口
+export const getRandomCoverImage = async ()=>{
+     return request<string>('/image')
 }

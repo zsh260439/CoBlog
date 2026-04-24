@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+  name: 'AdminLayout'
+})
+
 import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
@@ -40,7 +44,7 @@ const activeMenu = computed(() => {
   return '/admin'
 })
 
-const pageTitle = computed(() => String(route.meta.title ?? '仪表盘'))
+const pageTitle = computed(() => String(route.meta.title ?? 's仪表盘'))
 
 const backToSite = () => {
   router.push('/blog')
@@ -98,9 +102,10 @@ const backToSite = () => {
 
       <main class="page-main">
         <RouterView v-slot="{ Component }">
-          <transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
-          </transition>
+          <keep-alive>
+            <component v-if="route.meta.title === '新建文章'" :is="Component"/>
+          </keep-alive>
+            <component v-if="route.meta.title !== '新建文章'" :is="Component"/>
         </RouterView>
       </main>
     </div>
