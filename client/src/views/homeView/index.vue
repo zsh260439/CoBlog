@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useMouse, usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
-import HomeProjectCard from '@/components/home/HomeProjectCard.vue'
-import HomeSkillCard from '@/components/home/HomeSkillCard.vue'
+import HomeProjectCard from '@/views/homeView/components/HomeProjectCard.vue'
+import HomeSkillCard from '@/views/homeView/components/HomeSkillCard.vue'
 import { siteConfig } from '@/config/site'
 import type { HomeProjectItem, HomeSkillGroup } from '@/types/ui'
 

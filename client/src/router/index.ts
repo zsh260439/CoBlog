@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
+import HomeView from '@/views/homeView/index.vue'
 import { ElMessage } from 'element-plus'
 import { useAuth } from '@/composables/useAuth'
 import { authRequest } from '@/http-utils'
@@ -20,7 +20,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'admin-dashboard',
-        component: () => import('@/views/admin/AdminDashboardView.vue'),
+        component: () => import('@/views/admin/adminDashboardView/index.vue'),
         meta: {
           appShell: 'admin',
           title: '仪表盘',
@@ -121,7 +121,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/about',
     name: 'about',
-    component: () => import('@/views/AboutView.vue'),
+    component: () => import('@/views/aboutView/index.vue'),
     meta: {
       headerStyle: 'overlay'
     }
@@ -129,7 +129,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/article/:slug',
     name: 'article',
-    component: () => import('@/views/PostView.vue'),
+    component: () => import('@/views/postView/index.vue'),
     meta: {
       headerStyle: 'overlay',
       disablePageTransition: true
