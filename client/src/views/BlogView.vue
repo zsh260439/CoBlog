@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import BlogListItem from '@/components/blog/BlogListItem.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
@@ -7,11 +7,9 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { summarizeCategories } from '@/utils'
-import { getRandomCoverImage } from '@/servers/article'
 const { articles, isLoading, error } = useArticles()
-
 const categoryCount = computed(() => summarizeCategories(articles.value).length)
-const image =await getRandomCoverImage()
+
 </script>
 
 <template>
@@ -19,9 +17,9 @@ const image =await getRandomCoverImage()
     <PageHero
       title="Zsint"
       description="随便坐坐，看看我写的字 —— 一些技术、心得、生活日常和胡思乱想。"
-      :image="image.data"
-      height="medium"
-      :mist-height="300"
+      image="/images/BLOG.webp"
+      height="large"
+      :mist-height="100"
     >
       <template #meta>
         <span>{{ articles.length }} 篇文章</span>

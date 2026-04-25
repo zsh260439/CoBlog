@@ -75,7 +75,7 @@ const handleSubmit = async () => {
 
 <template>
   <div class="message-view">
-    <PageHero title="留言板" description="说点什么吧" :image="siteConfig.aboutHeroImage" />
+    <PageHero title="留言板" description="说点什么吧" image="/images/MESSAGE.webp" />
 
     <section class="message-shell page-content-reveal">
       <div class="message-main">

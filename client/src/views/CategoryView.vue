@@ -22,9 +22,9 @@ const { articles: allArticles } = useArticles()
     <PageHero
       :title="currentCategory?.label ?? '分类'"
       :description="currentCategory ? `${currentCategory.label} 下的文章整理` : '未找到对应分类'"
-      :image="siteConfig.aboutHeroImage"
+      image="/images/CATEGORY.webp"
       height="medium"
-      :mist-height="120"
+      :mist-height="100"
     />
 
     <section class="category-shell page-content-reveal">
