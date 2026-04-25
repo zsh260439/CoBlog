@@ -24,8 +24,3 @@ export interface ArticleTocProps {
   items: MarkdownHeading[] // 目录标题数组
   activeId?: string // 当前高亮标题 ID，可选
 }
-
-// 博客列表项组件参数
-export interface BlogListItemProps {
-  article: Article // 列表项对应的文章数据
-}
