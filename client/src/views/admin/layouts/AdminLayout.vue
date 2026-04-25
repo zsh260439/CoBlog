@@ -13,8 +13,11 @@ import {
   EditPen,
   Fold,
   User,
+  SwitchButton,
 } from '@element-plus/icons-vue'
 import { siteConfig } from '@/config/site'
+import { logout } from '@/servers/auth'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,6 +51,17 @@ const pageTitle = computed(() => String(route.meta.title ?? 's仪表盘'))
 
 const backToSite = () => {
   router.push('/blog')
+}
+
+const handleLogout = async () => {
+  try {
+    await logout()
+  } catch {
+    // 忽略 logout API 错误
+  }
+  localStorage.removeItem('local-token')
+  ElMessage.success('已退出登录')
+  router.push('/login')
 }
 </script>
 
@@ -97,6 +111,11 @@ const backToSite = () => {
           </span>
 
           <el-button plain size="small" @click="backToSite">返回前台</el-button>
+
+          <el-button type="danger" plain size="small" @click="handleLogout">
+            <el-icon><SwitchButton /></el-icon>
+            退出登录
+          </el-button>
         </div>
       </header>
 

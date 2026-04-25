@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import BlogListItem from '@/components/blog/BlogListItem.vue'
+import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
@@ -41,7 +41,7 @@ const { articles: allArticles } = useArticles()
           这个标签下暂时还没有文章。
         </el-card>
 
-        <BlogListItem
+        <PostCard
           v-for="article in articles"
           v-else
           :key="article.slug"

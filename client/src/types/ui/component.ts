@@ -1,25 +1,9 @@
-import type { NarrativeSection } from '../content'
 import type { Article } from '../article'
-
-// 首页粒子背景动画中单个粒子的结构
-export interface Particle {
-  x: number // 粒子横坐标
-  y: number // 粒子纵坐标
-  vx: number // 横向速度
-  vy: number // 纵向速度
-  size: number // 粒子大小
-  opacity: number // 粒子透明度
-}
 
 // Markdown 渲染组件接收的内容参数
 export interface MarkdownViewerProps {
   content: string // Markdown 原始内容
   editorId?: string // 预览实例 ID，可选
-}
-
-// 首页滚动叙事组件参数
-export interface ScrollNarrativeProps {
-  sections: NarrativeSection[] // 滚动叙事分区数组
 }
 
 // 通用顶部横幅组件参数

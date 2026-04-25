@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import BlogListItem from '@/components/blog/BlogListItem.vue'
+import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
@@ -33,7 +33,7 @@ const categoryCount = computed(() => summarizeCategories(articles.value).length)
         <el-card v-else-if="error" class="blog-state blog-state--error" shadow="never">{{ error }}</el-card>
         <el-card v-else-if="!articles.length" class="blog-state" shadow="never">还没有文章，后续内容会先落在这里。</el-card>
 
-        <BlogListItem v-for="article in articles" v-else :key="article.slug" :article="article" />
+        <PostCard v-for="article in articles" v-else :key="article.slug" :article="article" />
       </div>
 
       <aside class="blog-side">
