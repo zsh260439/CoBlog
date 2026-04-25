@@ -21,7 +21,7 @@ onMounted(() => {
     <PageHero
       title="归档"
       description="时光轴上的足迹"
-      :image="siteConfig.aboutHeroImage"
+      image="/images/ARCHIVE.webp"
     />
 
     <section class="archive-shell page-content-reveal">

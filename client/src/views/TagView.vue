@@ -21,9 +21,9 @@ const { articles: allArticles } = useArticles()
     <PageHero
       :title="currentTag ? `#${currentTag}` : '标签'"
       :description="currentTag ? `标签「${currentTag}」下的文章整理` : '未找到对应标签'"
-      :image="siteConfig.aboutHeroImage"
+      image="/images/TAG.webp"
       height="medium"
-      :mist-height="120"
+      :mist-height="100"
     />
 
     <section class="tag-shell page-content-reveal">
