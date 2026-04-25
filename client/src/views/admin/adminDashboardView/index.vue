@@ -8,8 +8,8 @@ import {
   Reading,
   Timer,
 } from '@element-plus/icons-vue'
-import DonutDistributionChart from '@/components/admin/DonutDistributionChart.vue'
-import LineTrendChart from '@/components/admin/LineTrendChart.vue'
+import DonutDistributionChart from '@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'
+import LineTrendChart from '@/views/admin/adminDashboardView/components/LineTrendChart.vue'
 import { useArticles } from '@/composables/useArticles'
 import { summarizeCategories } from '@/utils'
 

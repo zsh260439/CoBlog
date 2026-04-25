@@ -2,9 +2,9 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useThrottleFn, useWindowScroll } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
-import ArticleHero from '@/components/article/ArticleHero.vue'
-import ArticleToc from '@/components/article/ArticleToc.vue'
-import MarkdownViewer from '@/components/MarkdownViewer.vue'
+import ArticleHero from '@/views/postView/components/ArticleHero.vue'
+import ArticleToc from '@/views/postView/components/ArticleToc.vue'
+import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 import { useArticleDetail } from '@/composables/useArticleDetail'
 import type { MarkdownHeading } from '@/types/content'
 

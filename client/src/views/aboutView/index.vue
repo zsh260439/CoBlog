@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AboutTechHero from '@/components/about/AboutTechHero.vue'
+import AboutTechHero from '@/views/aboutView/components/AboutTechHero.vue'
 import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
 </script>
 
