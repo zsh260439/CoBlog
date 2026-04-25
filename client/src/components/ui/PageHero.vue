@@ -6,10 +6,9 @@ const props = withDefaults(defineProps<PageHeroProps>(), {
   description: '',
   image: '',
   align: 'center',
-  height: 'large',
-  mistHeight: 300
+  height: 'medium',
+  mistHeight: 120
 })
-
 // 只有传入背景图时才生成叠加渐变的背景样式。
 const heroStyle = computed(() => {
   if (!props.image) {
