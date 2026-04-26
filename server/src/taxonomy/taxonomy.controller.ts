@@ -1,9 +1,8 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common'
 import { ApiResponse } from '../common/utils/api-response'
 import { CreateCategoryDto } from './dto/create-category.dto'
 import { CreateTagDto } from './dto/create-tag.dto'
 import { TaxonomyService } from './taxonomy.service'
-import { Delete, Param, Patch } from '@nestjs/common'
 
 @Controller('taxonomies')
 export class TaxonomyController {

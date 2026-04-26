@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common'
+import { ConflictException, Injectable,NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { Article, ArticleDocument } from '../articles/schema/article.schema'
@@ -6,7 +6,6 @@ import { CreateCategoryDto } from './dto/create-category.dto'
 import { CreateTagDto } from './dto/create-tag.dto'
 import { Category, CategoryDocument } from './schema/category.schema'
 import { Tag, TagDocument } from './schema/tag.schema'
-import { NotFoundException } from '@nestjs/common'
 @Injectable()
 export class TaxonomyService {
   constructor(
@@ -14,6 +13,14 @@ export class TaxonomyService {
     @InjectModel(Tag.name) private readonly tagModel: Model<TagDocument>,
     @InjectModel(Article.name) private readonly articleModel: Model<ArticleDocument>
   ) {}
+
+  private toISO(date: unknown): string {
+    if (!date) {
+      return new Date().toISOString()
+    }
+    const d = new Date(date as string | number | Date)
+    return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
+  }
 // 列表分类
   async listCategories() {
     //并行请求两个数据库，一个是分类表，一个是文章表
@@ -37,11 +44,11 @@ export class TaxonomyService {
         label: category.label,
         slug: category.slug,
         count: countMap.get(category.slug) ?? 0,
-        createdAt: category.createdAt?.toISOString?.() ?? new Date().toISOString(),
-        updatedAt: category.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+        createdAt: this.toISO(category.createdAt),
+        updatedAt: this.toISO(category.updatedAt),
       }])
     )
-//转换为数组
+     //转换为数组
     return [...categoryMap.values()].map((category) => ({
       _id: category._id.toString(),
       label: category.label,
@@ -51,7 +58,7 @@ export class TaxonomyService {
       updatedAt: category.updatedAt,
     }))
   }
-// 创建分类
+    // 创建分类
   async createCategory(createCategoryDto: CreateCategoryDto) {
     const label = createCategoryDto.label.trim()
     const slug = createCategoryDto.slug.trim()
@@ -71,8 +78,8 @@ export class TaxonomyService {
       label: category.label,
       slug: category.slug,
       count: 0,
-      createdAt: category.createdAt?.toISOString?.() ?? new Date().toISOString(),
-      updatedAt: category.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+      createdAt: this.toISO(category.createdAt),
+      updatedAt: this.toISO(category.updatedAt),
     }
   }
 // 列表标签
@@ -92,8 +99,8 @@ export class TaxonomyService {
         label: tag.label,
         slug: tag.slug,
         count: countMap.get(tag.label) ?? 0,
-        createdAt: tag.createdAt?.toISOString?.() ?? new Date().toISOString(),
-        updatedAt: tag.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+        createdAt: this.toISO(tag.createdAt),
+        updatedAt: this.toISO(tag.updatedAt),
       }])
     )
    //转换为数组
@@ -126,8 +133,8 @@ export class TaxonomyService {
       label: tag.label,
       slug: tag.slug,
       count: 0,
-      createdAt: tag.createdAt?.toISOString?.() ?? new Date().toISOString(),
-      updatedAt: tag.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+      createdAt: this.toISO(tag.createdAt),
+      updatedAt: this.toISO(tag.updatedAt),
     }
   }
   //删除分类,如果要删除全部文章，要用到promise
