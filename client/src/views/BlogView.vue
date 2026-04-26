@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
-import { summarizeCategories } from '@/utils'
+import { useTaxonomies } from '@/composables/useTaxonomies'
+
 const { articles, isLoading, error } = useArticles()
-const categoryCount = computed(() => summarizeCategories(articles.value).length)
+const { categories } = useTaxonomies()
+const categoryCount = computed(() => categories.value.length)
 
 </script>
 

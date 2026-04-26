@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import {
-  Calendar,
   CollectionTag,
   Document,
   Files,
@@ -11,9 +10,14 @@ import {
 import DonutDistributionChart from '@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'
 import LineTrendChart from '@/views/admin/adminDashboardView/components/LineTrendChart.vue'
 import { useArticles } from '@/composables/useArticles'
-import { summarizeCategories } from '@/utils'
+import { useTaxonomies } from '@/composables/useTaxonomies'
 
 const { articles, isLoading } = useArticles()
+const { categories, loadTaxonomies } = useTaxonomies()
+
+onMounted(() => {
+  void loadTaxonomies()
+})
 
 const totalWords = computed(() => {
   return articles.value.reduce((sum, article) => sum + (article.wordCount ?? 0), 0)
@@ -42,7 +46,7 @@ const recentWeekArticles = computed(() => {
 
 const statsPrimary = computed(() => [
   { label: '文章总数', value: articles.value.length, icon: Document },
-  { label: '分类总数', value: summarizeCategories(articles.value).length, icon: Files },
+  { label: '分类总数', value: categories.value.length, icon: Files },
   { label: '标签总数', value: new Set(articles.value.flatMap((article) => article.tags)).size, icon: CollectionTag },
   { label: '总字数', value: totalWords.value, icon: Reading },
 ])
@@ -51,7 +55,7 @@ const statsSecondary = computed(() => [
   { label: '今日文章', value: todayArticles.value, badge: '今日' },
   { label: '近 7 天文章', value: recentWeekArticles.value, badge: '近7天' },
   { label: '最近更新', value: articles.value[0]?.createdAt?.slice(5, 10) ?? '--', badge: '最新' },
-  { label: '活跃分类', value: summarizeCategories(articles.value).length, badge: '分类' },
+  { label: '活跃分类', value: categories.value.filter((c) => c.count > 0).length, badge: '分类' },
 ])
 
 const trendData = computed(() => {
@@ -73,7 +77,7 @@ const trendData = computed(() => {
 })
 
 const distributionData = computed(() => {
-  return summarizeCategories(articles.value).map((item) => ({
+  return categories.value.map((item) => ({
     label: item.label,
     value: item.count,
   }))
