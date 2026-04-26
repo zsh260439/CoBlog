@@ -14,7 +14,7 @@ export function useArchive() {
 
     try {
       const result = await getArticlesByArchive()
-      archiveGroups.value = result.data
+      archiveGroups.value = result.data ?? []
     } catch (err) {
       console.error(err)
       archiveGroups.value = []

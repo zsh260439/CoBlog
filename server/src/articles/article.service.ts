@@ -36,13 +36,45 @@ export class ArticlesService {
   }
 
   async findBySlug(slug: string) {
-    const article = await this.articleModel.findOneAndUpdate({ slug }, { $inc: { views: 1 } }, { new: true }).lean()
+    const article = await this.articleModel.findOneAndUpdate({ slug }, { $inc: { views: 1 } }, { returnDocument: 'after' }).lean()
 
     if (!article) {
       throw new NotFoundException('文章不存在')
     }
+    //创建上一篇/下一篇
+    const [prev,next] =await Promise.all([
+         //上一篇
+         this.articleModel.findOne(
+          //条件 查找小于当前事件的文章
+          {createdAt:{$lt:article.createdAt}},
+          {slug:1,title:1}
+         )
+         .sort({createdAt:-1})
+         .lean(),
+        this.articleModel.findOne(
+          //返回的是从最大到小的
+          {createdAt:{$gt:article.createdAt}},
+           {slug:1,title:1}
+        )
+        //找到最近的那一个
+        .sort({createdAt:1})
+        .lean()
+    ])
+    //优先找：同分类,排除当前文章,最新的6篇文章
+    const related = await this.articleModel.find(
+      {categorySlug:article.categorySlug,slug:{$ne:slug}},
+      {slug:1,title:1,coverImage:1,excerpt:1,createdAt:1}
+    )
+    .sort({createdAt:-1})
+    .limit(6)
+    .lean()
 
-    return this.serializeArticle(article)
+    return {
+      ...this.serializeArticle(article),
+      previous:prev?{slug:prev.slug,title:prev.title}:null,
+      next:next?{slug:next.slug,title:next.title}:null,
+      related:related.map((r)=>this.serializeArticle(r as any))
+    }
   }
 
   async findById(id: string) {
@@ -97,14 +129,20 @@ export class ArticlesService {
   }
 
   async update(id: string, updateArticleDto: UpdateArticleDto) {
-    const updatePayload: Record<string, unknown> = { ...updateArticleDto }
-
+    //加上更新的图片
+    let coverImage = updateArticleDto.coverImage?.trim() || ''
+     if(!coverImage) {
+       coverImage = await this.imageService.getRandomCoverImage()
+     }
+    //创建个新对象
+    const updatePayload: Record<string, unknown> = { ...updateArticleDto,coverImage }
+    
     if (typeof updatePayload.content === 'string' && typeof updatePayload.wordCount !== 'number') {
       updatePayload.wordCount = this.stripMarkdown(updatePayload.content).length
     }
 
-    const article = await this.articleModel.findByIdAndUpdate(id, updatePayload, { new: true }).lean()
-
+    const article = await this.articleModel.findByIdAndUpdate(id, updatePayload, { returnDocument: 'after' }).lean()
+     
     if (!article) {
       throw new NotFoundException('文章不存在')
     }

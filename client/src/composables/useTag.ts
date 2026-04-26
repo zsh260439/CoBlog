@@ -21,7 +21,7 @@ export function useTag(tag: Ref<string>) {
 
     try {
       const result = await getArticlesByTag(tagValue)
-      articles.value = result.data
+      articles.value = result.data ?? []
     } catch (err) {
       console.error(err)
       articles.value = []

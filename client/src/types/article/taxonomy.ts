@@ -29,10 +29,3 @@ export interface CreateArticleTagPayload {
   label: string // 提交的标签名称
   slug: string // 提交的标签别名
 }
-
-// 分类汇总项结构
-export interface CategorySummaryItem {
-  label: string // 分类显示名称
-  slug: string // 分类路由别名
-  count: number // 分类对应的文章数量
-}
