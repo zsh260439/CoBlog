@@ -16,4 +16,7 @@ export interface Article {
   comments: number // 评论数
   likes: number // 点赞数
   wordCount: number // 字数统计
+  previous?:{slug:string;title:string} |null
+  next?:{slug:string,title:string} |null
+  related?:Article[]
 }

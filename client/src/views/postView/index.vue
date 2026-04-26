@@ -20,9 +20,7 @@ const {
   article,
   isLoading,
   error,
-  articleStats,
-  relatedArticles,
-  adjacentArticles
+  articleStats
 } = useArticleDetail(currentSlug)
 
 const refreshActiveHeading = useThrottleFn(() => {
@@ -103,33 +101,33 @@ watch([y, tocItems], () => {
             </div>
           </article>
 
-          <section class="article-card article-card--nav" v-if="adjacentArticles.previous || adjacentArticles.next">
+          <section class="article-card article-card--nav" v-if="article.previous || article.next">
             <div class="article-nav-grid">
               <router-link
-                v-if="adjacentArticles.previous"
-                :to="{ name: 'article', params: { slug: adjacentArticles.previous.slug } }"
+                v-if="article.previous"
+                :to="{ name: 'article', params: { slug: article.previous.slug } }"
                 class="article-nav-item"
               >
                 <span class="article-nav-item__label">上一篇</span>
-                <strong>{{ adjacentArticles.previous.title }}</strong>
+                <strong>{{ article.previous.title }}</strong>
               </router-link>
 
               <router-link
-                v-if="adjacentArticles.next"
-                :to="{ name: 'article', params: { slug: adjacentArticles.next.slug } }"
+                v-if="article.next"
+                :to="{ name: 'article', params: { slug: article.next.slug } }"
                 class="article-nav-item"
               >
                 <span class="article-nav-item__label">下一篇</span>
-                <strong>{{ adjacentArticles.next.title }}</strong>
+                <strong>{{ article.next.title }}</strong>
               </router-link>
             </div>
           </section>
 
-          <section class="article-card article-card--related" v-if="relatedArticles.length">
+          <section class="article-card article-card--related" v-if="article.related?.length">
             <h3>相关文章</h3>
 
             <router-link
-              v-for="item in relatedArticles"
+              v-for="item in article.related"
               :key="item.slug"
               :to="{ name: 'article', params: { slug: item.slug } }"
               class="related-link"
