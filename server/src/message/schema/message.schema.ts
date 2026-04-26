@@ -15,9 +15,6 @@ export class Message {
   qq?: string
 
   @Prop({ default: '' })
-  location: string
-
-  @Prop({ default: '' })
   device: string
 
   @Prop({ default: '' })

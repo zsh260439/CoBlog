@@ -23,10 +23,10 @@ export class ArticlesService {
 
     return {
       ...article,
-      _id: article._id?.toString?.() ?? article._id,
-      tags: Array.isArray(article.tags) ? article.tags : [],
-      createdAt: article.createdAt?.toISOString?.() ?? article.createdAt,
-      updatedAt: article.updatedAt?.toISOString?.() ?? article.updatedAt,
+      _id: article._id.toString(),
+      tags: article.tags,
+      createdAt: article.createdAt.toISOString(),
+      updatedAt: article.updatedAt.toISOString(),
     }
   }
 
@@ -122,7 +122,7 @@ export class ArticlesService {
     const article = await this.articleModel.create({
       ...createArticleDto,
       coverImage,
-      wordCount: createArticleDto.wordCount ?? this.stripMarkdown(createArticleDto.content ?? '').length,
+      wordCount: this.stripMarkdown(createArticleDto.content ?? '').length,
     })
 
     return this.serializeArticle(article.toObject())

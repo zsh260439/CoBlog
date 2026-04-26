@@ -61,6 +61,5 @@ export function useCategory(slug: Ref<string>) {
     articles,
     isLoading,
     error,
-    loadCategoryArticles,
   }
 }

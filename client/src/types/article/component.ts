@@ -10,7 +10,6 @@ export interface ArticleMetaStat {
 // 文章卡片组件参数
 export interface ArticleCardProps {
   article: Article // 卡片对应的文章数据
-  featured?: boolean // 是否重点展示，可选
 }
 
 // 文章详情 Hero 组件参数
