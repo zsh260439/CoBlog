@@ -3,6 +3,7 @@ import type { AxiosInstance, Method } from 'axios'
 import type { ApiResult, SubmitData } from '@/types/http'
 import { API_BASE_URL } from '@/config/http'
 import { ElMessage } from 'element-plus'
+import { refreshAccessToken } from '@/utils/auth'
 interface RequestOptions {
   timeout?: number
 }
@@ -106,14 +107,12 @@ httpInstance.interceptors.request.use(
 
 
       //场景2:第一次401 开始刷新token 防止上面的无限循环
-      originalRequest._retry = true
-      //上锁 表示正在请求
-      isRefreshing = true
-      try {
-        //调用刷新接口 如果refreshtoken也失效了 这里的实例没响应拦截器会报错 解决了refreshtoken失效无限递归的错误
-        const result = await authRequest<{accessToken:string}>('/auth/refresh','POST')
-        //调用成功了会从后端返回accesstoken
-        const newToken = result.data?.accessToken
+       originalRequest._retry = true
+       //上锁 表示正在请求
+       isRefreshing = true
+       try {
+         const result = await refreshAccessToken()
+         const newToken = result.data?.accessToken
         //如果没有 抛出错误
         if(!newToken) throw new Error('刷新token失败!')
         localStorage.setItem('local-token',newToken)
