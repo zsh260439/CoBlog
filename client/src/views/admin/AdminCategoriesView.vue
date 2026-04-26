@@ -71,9 +71,8 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
     } catch (error: any) {
       ElMessage.error(error?.response?.data?.message || '分类编辑失败')
     } finally {
-      //无论是否成功 都需要将 slugEdited 重置为 false
+      submittingCategory.value = false
       categorySlugEdited.value = false
-      //更新页面
       await Promise.all([loadTaxonomies(), loadArticles()])
     }
   }else{

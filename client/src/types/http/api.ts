@@ -10,11 +10,3 @@ export interface ApiResponse<T> {
 
 // Axios 请求层使用的接口响应结构
 export type ApiResult<T> = ApiResponse<T>
-
-// 分页接口响应结构
-export interface PaginatedResponse<T> {
-  data: T[] // 当前页数据数组
-  total: number // 总记录数
-  page: number // 当前页码
-  pageSize: number // 每页条数
-}

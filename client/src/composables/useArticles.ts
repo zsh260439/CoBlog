@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { getArticleList } from '@/servers/article'
 import type { Article } from '@/types/article'
 
@@ -26,8 +26,6 @@ export function useArticles(immediate = true) {
     loadArticles()
   }
 
-  const featuredArticle = computed(() => articles.value[0] ?? null)
-
   const setArticles = (nextArticles: Article[]) => {
     articles.value = nextArticles
   }
@@ -36,7 +34,6 @@ export function useArticles(immediate = true) {
     articles,
     isLoading,
     error,
-    featuredArticle,
     loadArticles,
     setArticles
   }

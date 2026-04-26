@@ -31,8 +31,8 @@ export class UploadsService {
       url: uploadFile.url,
       storagePath: uploadFile.storagePath,
       usage: uploadFile.usage,
-      createdAt: uploadFile.createdAt?.toISOString?.() ?? new Date().toISOString(),
-      updatedAt: uploadFile.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+      createdAt: uploadFile.createdAt.toISOString(),
+      updatedAt: uploadFile.updatedAt.toISOString(),
        }
     }
 }

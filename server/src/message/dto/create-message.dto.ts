@@ -19,10 +19,6 @@ export class CreateMessageDto {
 
   @IsOptional()
   @IsString()
-  location?: string
-
-  @IsOptional()
-  @IsString()
   device?: string
 
   @IsOptional()

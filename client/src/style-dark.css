@@ -176,7 +176,3 @@ code, pre {
   border: 1px solid var(--border-light) !important;
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
-
-/* Typography helpers - reserved for future use */
-/* .font-mono { font-family: var(--font-mono); } */
-/* .text-muted { color: var(--text-muted); } */

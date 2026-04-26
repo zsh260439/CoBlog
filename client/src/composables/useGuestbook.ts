@@ -56,7 +56,6 @@ export function useGuestbook(immediate = true) {
     messages,
     isLoading,
     error,
-    loadMessages,
     submitMessage,
     submitLoading,
   }

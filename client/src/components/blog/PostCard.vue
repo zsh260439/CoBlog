@@ -3,9 +3,7 @@ import { computed } from 'vue'
 import type { ArticleCardProps } from '@/types/article'
 import { estimateReadTime, formatDate } from '@/utils'
 
-const props = withDefaults(defineProps<ArticleCardProps>(), {
-  featured: false
-})
+const props = defineProps<ArticleCardProps>()
 const coverStyle = computed(() => {
   if (!props.article.coverImage) {
     return undefined
@@ -26,7 +24,7 @@ const readTime = computed(() => estimateReadTime(props.article.content))
   <router-link
     :to="{ name: 'article', params: { slug: article.slug } }"
     class="post-card"
-    :class="{ 'post-card--featured': featured, 'post-card--plain': !article.coverImage }"
+    :class="{ 'post-card--plain': !article.coverImage }"
   >
     <div v-if="article.coverImage" class="post-card__media" :style="coverStyle"></div>
 
@@ -65,10 +63,6 @@ const readTime = computed(() => estimateReadTime(props.article.content))
   transform: translateY(-2px);
   border-color: rgba(17, 17, 17, 0.14);
   box-shadow: 0 12px 28px rgba(17, 17, 17, 0.06);
-}
-
-.post-card--featured {
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
 }
 
 .post-card--plain {
@@ -133,6 +127,7 @@ const readTime = computed(() => estimateReadTime(props.article.content))
   line-height: 1.8;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -147,8 +142,7 @@ const readTime = computed(() => estimateReadTime(props.article.content))
 }
 
 @media (max-width: 900px) {
-  .post-card,
-  .post-card--featured {
+  .post-card {
     grid-template-columns: 1fr;
   }
 

@@ -134,10 +134,6 @@ const routes: RouteRecordRaw[] = [
       headerStyle: 'overlay',
       disablePageTransition: true
     }
-  },
-  {
-    path: '/post/:id',
-    redirect: { name: 'blog' }
   }
 ]
 
@@ -158,7 +154,7 @@ router.beforeEach(async (to) =>{
     //首先放行公开页面
     if(!isAdminRoute) {
       //如果去登录页 token还有效 回后台
-      if(isLoginRoute && token &&!isAccessTokenExpired(token))
+      if(isLoginRoute && token && !isAccessTokenExpired(token))
         {
          return '/admin'
       }

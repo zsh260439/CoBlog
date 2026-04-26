@@ -1,4 +1,4 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 import { getArticlesByTag } from '@/servers/article'
 import type { Article } from '@/types/article'
 
@@ -6,8 +6,6 @@ export function useTag(tag: Ref<string>) {
   const articles = ref<Article[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-
-  const currentTag = computed(() => tag.value || '')
 
   const loadTagArticles = async (tagValue: string) => {
     if (!tagValue) {
@@ -40,10 +38,8 @@ export function useTag(tag: Ref<string>) {
   )
 
   return {
-    currentTag,
     articles,
     isLoading,
     error,
-    loadTagArticles,
   }
 }

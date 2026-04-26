@@ -70,7 +70,7 @@ const selectedCategory = computed(() => {
 })
 
 // 判断当前页面是否处于编辑文章模式
-const isEditMode = computed(() => typeof route.params.id === 'string' && route.params.id.length > 0)
+const isEditMode = computed(() => String(route.params.id ?? '').length > 0)
 
 // 截取一部分标签作为后台快速选择列表
 const suggestedTags = computed(() => tags.value.slice(0, 16))
@@ -141,7 +141,6 @@ const handleUploadImages = async (
 }
 
 const saveDraft = () => {
-    console.log('saveDraft被调用')
   const rawForm = toRaw(form)
   saveArticleDraft({
     ...rawForm,
@@ -370,11 +369,10 @@ watch(
 )
 //监视草稿 防抖自动保存避免退出
 watch(form,
-()=>{
-debouncedSaveDraft()
-  console.log('防抖执行成功')
-},{
-  deep:true
+() => {
+  debouncedSaveDraft()
+}, {
+  deep: true
 })
 // 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {

@@ -8,7 +8,7 @@ import { deleteArticle } from '@/servers/article'
 import { useArticles } from '@/composables/useArticles'
 
 const router = useRouter()
-const { articles, isLoading, error, loadArticles, setArticles } = useArticles()
+const { articles, isLoading, error, setArticles } = useArticles()
 const { loadTaxonomies } = useTaxonomies()
 
 const keyword = ref('')

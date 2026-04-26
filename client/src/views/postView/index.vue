@@ -11,7 +11,7 @@ import type { MarkdownHeading } from '@/types/content'
 const route = useRoute()
 const router = useRouter()
 const { y } = useWindowScroll()
-const currentSlug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
+const currentSlug = computed(() => String(route.params.slug ?? ''))
 const previewId = computed(() => `article-preview-${currentSlug.value || 'detail'}`)
 const tocItems = ref<MarkdownHeading[]>([])
 const activeHeadingId = ref('')

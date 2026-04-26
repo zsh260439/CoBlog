@@ -11,7 +11,7 @@ export class ArticlesController {
     async findAll(){
         const data = await this.articlesService.findAll()
         if(!data){
-            return ApiResponse.error('查找文章失败')
+            return ApiResponse.error(null, '查找文章失败')
         }
         return ApiResponse.success(data,'查找文章成功')
     }
@@ -24,7 +24,7 @@ export class ArticlesController {
    async findByCategory(@Param('slug') slug:string){
      const data = await this.articlesService.findByCategory(slug)
      if(!data){
-         return ApiResponse.error('查找文章失败')
+         return ApiResponse.error(null, '查找文章失败')
      }
      return ApiResponse.success(data,'查找文章成功')
     }
@@ -32,7 +32,7 @@ export class ArticlesController {
     async findByTag(@Param('tag') tag:string){
       const data = await this.articlesService.findByTag(tag)
       if(!data){
-          return ApiResponse.error('查找文章失败')
+          return ApiResponse.error(null, '查找文章失败')
       }
       return ApiResponse.success(data,'查找文章成功')
     }
@@ -46,7 +46,7 @@ export class ArticlesController {
     async findBySlug(@Param('slug') slug:string){
       const data = await this.articlesService.findBySlug(slug)
       if(!data){
-        return ApiResponse.error('查找文章失败')
+        return ApiResponse.error(null, '查找文章失败')
       }
       return ApiResponse.success(data,'查找文章成功')
    }

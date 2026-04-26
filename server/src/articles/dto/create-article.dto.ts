@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer'
-import { IsArray, IsNotEmpty, IsOptional, IsString, IsUrl, IsNumber } from 'class-validator'
+import { IsArray, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator'
 
 export class CreateArticleDto {
   @IsString()
@@ -46,20 +46,4 @@ export class CreateArticleDto {
   })
   @IsUrl()
   coverImage?: string
-
-  @IsOptional()
-  @IsNumber()
-  views?: number
-
-  @IsOptional()
-  @IsNumber()
-  comments?: number
-
-  @IsOptional()
-  @IsNumber()
-  likes?: number
-
-  @IsOptional()
-  @IsNumber()
-  wordCount?: number
 }

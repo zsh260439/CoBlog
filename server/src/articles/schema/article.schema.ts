@@ -34,12 +34,6 @@ export class Article {
   views: number
 
   @Prop({ default: 0 })
-  comments: number
-
-  @Prop({ default: 0 })
-  likes: number
-
-  @Prop({ default: 0 })
   wordCount: number
   
   createdAt: Date
