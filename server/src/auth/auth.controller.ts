@@ -24,7 +24,7 @@ export class AuthController {
             httpOnly:true,//前端无法读取 防xss攻击
             sameSite:'lax',// 防CSRF跨站攻击
             secure:false,//开发环境先关闭
-            maxAge:7 * 24 * 60 * 60 * 1000
+            maxAge: 24 * 60 * 60 * 1000
         })
         //3:返回给前端 只返回短token
         return ApiResponse.success({

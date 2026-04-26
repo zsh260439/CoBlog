@@ -3,7 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '@/views/homeView/index.vue'
 import { ElMessage } from 'element-plus'
 import { useAuth } from '@/composables/useAuth'
-import { authRequest } from '@/http-utils'
+import { refreshAccessToken } from '@/utils/auth'
 const routes: RouteRecordRaw[] = [
   {
     path:'/login',
@@ -174,9 +174,9 @@ router.beforeEach(async (to) =>{
        return true
     } 
     //token过期 尝试refresh
-         try {
-          const result = await authRequest<{accessToken:string}>('/auth/refresh','POST')
-          const newToken = result.data?.accessToken
+          try {
+           const result = await refreshAccessToken()
+           const newToken = result.data?.accessToken
           if(!newToken) throw new Error('刷新token失败')
           localStorage.setItem('local-token',newToken)
         return true

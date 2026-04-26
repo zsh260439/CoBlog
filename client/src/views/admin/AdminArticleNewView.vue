@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, toRaw, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
@@ -17,8 +17,7 @@ import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import type { AiChatMessage } from '@/types/admin/ai'
 import type { ArticleCategory } from '@/types/article'
-import { categoryOptions } from '@/config/site'
-
+import { useDebounce } from '@/composables/userDebounce'
 ensureMarkdownConfigured()
 const route = useRoute()
 const router = useRouter()
@@ -28,7 +27,6 @@ defineOptions({
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
 const { articles, loadArticles, setArticles } = useArticles(false)
-
 // 创建文章表单的默认值
 const createDefaultForm = (): AdminArticleForm => ({
   title: '',
@@ -46,7 +44,6 @@ const form = reactive<AdminArticleForm>(createDefaultForm())
 
 const submitLoading = ref(false)
 const submitError = ref('')
-const draftMode = ref(false)
 const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
@@ -65,21 +62,7 @@ const latestAssistantMessage = computed(() => {
   return [...aiMessages.value].reverse().find((item) => item.role === 'assistant')?.content || ''
 })
 
-// 合并“后台分类”和“本地默认分类”得到当前可选分类列表
-const resolvedCategories = computed<ArticleCategory[]>(() => {
-  if (categories.value.length) {
-    return categories.value
-  }
-
-  return categoryOptions.map((item) => ({
-  _id: item.slug,
-    label: item.label,
-    slug: item.slug,
-    count: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }))
-})
+const resolvedCategories = computed(() => categories.value)
 
 // 根据当前已选分类，拿到完整分类对象
 const selectedCategory = computed(() => {
@@ -157,20 +140,22 @@ const handleUploadImages = async (
   }
 }
 
-// 把当前表单内容保存到会话级草稿 store。
-// 模板点击事件会自动传入 MouseEvent，这里只接受真正的布尔值，避免把事件对象误当成草稿状态。
-const saveDraft = (nextDraftMode?: boolean) => {
-  const resolvedDraftMode = typeof nextDraftMode === 'boolean' ? nextDraftMode : draftMode.value
-
+const saveDraft = () => {
+    console.log('saveDraft被调用')
+  const rawForm = toRaw(form)
   saveArticleDraft({
-    ...form,
-    tags: [...form.tags],
-    draftMode: resolvedDraftMode,
+    ...rawForm,
+    tags: [...rawForm.tags],
   })
-  draftMode.value = resolvedDraftMode
-  ElMessage.success('草稿已保存到当前会话')
+  ElMessage.success('草稿已保存')
 }
+//创建防抖
+const { debouncedFn: debouncedSaveDraft, cancel: cancelAutoSave } = useDebounce(saveDraft, 5000)
 
+const handleManualSave = () => {
+  cancelAutoSave()
+  saveDraft()
+}
 // 提交前检查发文必填项是否完整
 const validateForm = () => {
   if (!form.title.trim()) return '请输入文章标题'
@@ -350,7 +335,6 @@ const publishArticle = async () => {
       await loadTaxonomies()
       clearArticleDraft()
       Object.assign(form, createDefaultForm())
-      draftMode.value = false
       slugTouched.value = false
       ElMessage.success('文章发布成功')
     }
@@ -361,16 +345,6 @@ const publishArticle = async () => {
   } finally {
     submitLoading.value = false
   }
-}
-
-// 处理“主操作按钮”点击：草稿模式保存，否则发布/更新
-const handlePrimaryAction = async () => {
-  if (draftMode.value) {
-    saveDraft(true)
-    return
-  }
-
-  await publishArticle()
 }
 
 // 在用户未手动修改 slug 时，根据标题自动生成路径
@@ -394,7 +368,14 @@ watch(
   },
   { immediate: true }
 )
-
+//监视草稿 防抖自动保存避免退出
+watch(form,
+()=>{
+debouncedSaveDraft()
+  console.log('防抖执行成功')
+},{
+  deep:true
+})
 // 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {
   await Promise.all([loadTaxonomies(), loadArticles()])
@@ -437,8 +418,6 @@ onMounted(async () => {
     ...cachedDraft,
     tags: Array.isArray(cachedDraft.tags) ? cachedDraft.tags : [],
   })
-  // 旧草稿里如果混入了事件对象等非布尔值，这里统一回退成 false，避免主按钮卡在“保存草稿”。
-  draftMode.value = typeof cachedDraft.draftMode === 'boolean' ? cachedDraft.draftMode : false
   slugTouched.value = Boolean(cachedDraft.slug)
 })
 </script>
@@ -493,19 +472,11 @@ onMounted(async () => {
         <section class="article-create-card">
           <h3>发布设置</h3>
 
-          <div class="publish-row">
-            <span>发布状态</span>
-            <div class="publish-row__switch">
-              <span>草稿</span>
-              <el-switch v-model="draftMode" size="small" inline-prompt active-text="开" inactive-text="关" />
-            </div>
-          </div>
-
           <div class="publish-actions">
-            <el-button class="publish-actions__ghost" @click="saveDraft()">保存草稿</el-button>
-            <el-button type="primary" class="publish-actions__primary" :loading="submitLoading" @click="handlePrimaryAction">
+            <el-button class="publish-actions__ghost" @click="handleManualSave">保存草稿</el-button>
+            <el-button type="primary" class="publish-actions__primary" :loading="submitLoading" @click="publishArticle">
               <el-icon><Promotion /></el-icon>
-              {{ draftMode ? '保存草稿' : isEditMode ? '更新文章' : '发布' }}
+              {{ isEditMode ? '更新文章' : '发布' }}
             </el-button>
           </div>
 
@@ -719,22 +690,6 @@ onMounted(async () => {
 .article-create-page__editor :deep(.md-editor-input)::placeholder,
 .article-create-page__editor :deep(textarea::placeholder) {
   color: #d7dde6 !important;
-}
-
-.publish-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  color: #303133;
-  font-size: 14px;
-}
-
-.publish-row__switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #909399;
 }
 
 .publish-actions {
