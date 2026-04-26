@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createSlugFromText } from '@/utils'
 import type { AdminTaxonomyForm } from '@/types/admin'
-import { deleteCategory } from '@/servers/taxonomy'
-import { ElMessageBox } from 'element-plus'
 import type { ArticleCategory } from '@/types/article'
-import { updateCategory,deleteTag,updateTag } from '@/servers/taxonomy'
+import { deleteCategory, updateCategory, deleteTag, updateTag } from '@/servers/taxonomy'
 const { categories, tags, isLoading, loadTaxonomies, createCategoryItem, createTagItem } = useTaxonomies()
 const { loadArticles } = useArticles(false)
 
