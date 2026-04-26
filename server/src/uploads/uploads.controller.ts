@@ -1,10 +1,9 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Controller, Post, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { UploadsService } from "./uploads.service";
 import { diskStorage } from "multer";
 import { ApiResponse } from "src/common/utils/api-response";
 import { extname } from "path";
-import { UseGuards } from "@nestjs/common";
 import { AuthGuard } from "src/auth/auth.guard";
 @Controller('uploads')
 export class UploadsController {
