@@ -1,6 +1,6 @@
 import type {  SiteNavItem } from '@/types/site'
 import type { AboutTechItem } from '@/types/ui'
-import type { SiteCategory } from '@/types/site'
+
 export const siteConfig = {
   name: 'CoBlog',
   ownerName: 'Zsint',
@@ -19,8 +19,6 @@ export const siteConfig = {
   }
 }
 
-export const categoryOptions: SiteCategory[] = [
-]
 export const primaryNav: SiteNavItem[] = [
   { label: '主页', path: '/', routeNames: ['home'] },
   { label: '博客', path: '/blog', routeNames: ['blog', 'article', 'category'] },
