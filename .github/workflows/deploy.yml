@@ -24,29 +24,81 @@ jobs:
         env:
           NODE_ENV: production
 
-      # 先上传文件
-      - name: Upload files to ECS
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.ECS_HOST }}
-          username: ${{ secrets.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_KEY }}
-          source: "apps/server/dist/,apps/client/dist/"
-          target: "C:/coblog/"
-          strip_components: 2
+      - name: Configure SSH
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 -H "$ECS_HOST" >> ~/.ssh/known_hosts
 
-      # 上传完成后执行部署命令
-      - name: Deploy to Windows ECS
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.ECS_HOST }}
-          username: ${{ secrets.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_KEY }}
-          script: |
-            cd C:\coblog
-            mkdir server\dist 2>nul || echo "exists"
-            mkdir client\dist 2>nul || echo "exists"
-            copy C:\coblog\.env server\.env 2>nul || echo "no env"
-            pm2 stop coblog-api 2>nul || echo "not running"
-            pm2 start server\dist\main.js --name coblog-api
-            pm2 save
+      - name: Verify SSH key
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o PreferredAuthentications=publickey \
+            -o PasswordAuthentication=no \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            Administrator@"$ECS_HOST" \
+            -p 22 \
+            "powershell -NoProfile -Command \"Write-Output ok\""
+
+      - name: Prepare remote directories
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            Administrator@"$ECS_HOST" \
+            -p 22 \
+            "powershell -NoProfile -Command \"New-Item -ItemType Directory -Force -Path 'C:\\coblog\\server', 'C:\\coblog\\client' | Out-Null\""
+
+      - name: Upload server dist
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            -r apps/server/dist \
+            Administrator@"$ECS_HOST":C:/coblog/server/
+
+      - name: Upload client dist
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            -r apps/client/dist \
+            Administrator@"$ECS_HOST":C:/coblog/client/
+
+      - name: Restart app
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            Administrator@"$ECS_HOST" \
+            -p 22 \
+            "powershell -NoProfile -Command \"\$ErrorActionPreference = 'Stop'; if (Test-Path 'C:\\coblog\\.env') { Copy-Item 'C:\\coblog\\.env' 'C:\\coblog\\server\\.env' -Force }; try { pm2 delete coblog-api | Out-Null } catch {}; pm2 start 'C:\\coblog\\server\\dist\\main.js' --name coblog-api; pm2 save\""
