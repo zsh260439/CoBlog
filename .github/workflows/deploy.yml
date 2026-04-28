@@ -27,7 +27,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload server dist
-        uses: easingthemes/ssh-deploy@v5
+        uses: easingthemes/ssh-deploy@v4
         with:
           SSH_PRIVATE_KEY: ${{ secrets.ECS_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.ECS_HOST }}
@@ -36,7 +36,7 @@ jobs:
           TARGET: 'C:/coblog/server/dist/'
 
       - name: Upload client dist
-        uses: easingthemes/ssh-deploy@v5
+        uses: easingthemes/ssh-deploy@v4
         with:
           SSH_PRIVATE_KEY: ${{ secrets.ECS_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.ECS_HOST }}
