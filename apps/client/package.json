@@ -22,7 +22,8 @@
     "pinyin-pro": "^3.28.0",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0",
-    "vue3-marquee": "^4.2.2"
+    "vue3-marquee": "^4.2.2",
+    "@element-plus/icons-vue": "^2.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
