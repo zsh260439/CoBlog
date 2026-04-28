@@ -7,6 +7,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.ECS_HOST }}
+      DEPLOY_USER: ${{ secrets.ECS_USER }}
+      DEPLOY_ROOT: /opt/coblog
 
     steps:
       - uses: actions/checkout@v4
@@ -38,18 +42,15 @@ jobs:
       - name: Configure SSH
         shell: bash
         env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
           ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p 22 -H "$ECS_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p 22 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
       - name: Verify SSH key
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           ssh \
             -o BatchMode=yes \
@@ -58,27 +59,23 @@ jobs:
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_rsa \
-            Administrator@"$ECS_HOST" \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
             -p 22 \
-            "powershell -NoProfile -Command \"Write-Output ok\""
+            "echo ok"
 
       - name: Prepare remote directories
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           ssh \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_rsa \
-            Administrator@"$ECS_HOST" \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
             -p 22 \
-            "powershell -NoProfile -Command \"New-Item -ItemType Directory -Force -Path 'C:\\coblog\\server', 'C:\\coblog\\client' | Out-Null\""
+            "mkdir -p '$DEPLOY_ROOT/server' '$DEPLOY_ROOT/client'"
 
       - name: Upload server package.json
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           scp \
             -o IdentitiesOnly=yes \
@@ -86,12 +83,10 @@ jobs:
             -i ~/.ssh/id_rsa \
             -P 22 \
             .deploy/server-package.json \
-            Administrator@"$ECS_HOST":C:/coblog/server/package.json
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/server/package.json"
 
       - name: Upload server dist
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           scp \
             -o IdentitiesOnly=yes \
@@ -99,12 +94,10 @@ jobs:
             -i ~/.ssh/id_rsa \
             -P 22 \
             -r apps/server/dist \
-            Administrator@"$ECS_HOST":C:/coblog/server/
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/server/"
 
       - name: Upload client dist
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           scp \
             -o IdentitiesOnly=yes \
@@ -112,17 +105,26 @@ jobs:
             -i ~/.ssh/id_rsa \
             -P 22 \
             -r apps/client/dist \
-            Administrator@"$ECS_HOST":C:/coblog/client/
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/client/"
+
+      - name: Upload nginx config
+        shell: bash
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            deploy/nginx/coblog.conf \
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"/etc/nginx/conf.d/coblog.conf"
 
       - name: Restart app
         shell: bash
-        env:
-          ECS_HOST: ${{ secrets.ECS_HOST }}
         run: |
           ssh \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_rsa \
-            Administrator@"$ECS_HOST" \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
             -p 22 \
-            "powershell -NoProfile -Command \"\$ErrorActionPreference = 'Stop'; Set-Location 'C:\\coblog\\server'; if (Test-Path 'C:\\coblog\\.env') { Copy-Item 'C:\\coblog\\.env' '.env' -Force }; npm install --omit=dev; try { pm2 delete coblog-api | Out-Null } catch {}; pm2 start 'C:\\coblog\\server\\dist\\main.js' --name coblog-api; pm2 save\""
+            "set -e; cd '$DEPLOY_ROOT/server'; if [ -f '$DEPLOY_ROOT/.env' ]; then cp '$DEPLOY_ROOT/.env' .env; fi; npm install --omit=dev; if pm2 describe coblog-api >/dev/null 2>&1; then pm2 restart coblog-api --update-env; else pm2 start '$DEPLOY_ROOT/server/dist/main.js' --name coblog-api; fi; pm2 save; nginx -t; systemctl reload nginx"
