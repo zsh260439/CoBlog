@@ -24,33 +24,30 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Upload server dist
-        uses: easingthemes/ssh-deploy@v4
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.ECS_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.ECS_HOST }}
-          REMOTE_USER: ${{ secrets.ECS_USER }}
-          SOURCE: 'apps/server/dist/'
-          TARGET: 'C:/coblog/server/dist/'
-
-      - name: Upload client dist
-        uses: easingthemes/ssh-deploy@v4
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.ECS_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.ECS_HOST }}
-          REMOTE_USER: ${{ secrets.ECS_USER }}
-          SOURCE: 'apps/client/dist/'
-          TARGET: 'C:/coblog/client/dist/'
-
-      - name: Restart
+      # 兼容 Windows 的部署方式
+      - name: Deploy to Windows ECS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           key: ${{ secrets.ECS_SSH_KEY }}
+          # Windows 命令 + 直接上传文件
           script: |
-            cd C:\coblog\server
-            copy C:\coblog\.env .env
+            cd C:\coblog
+            mkdir server\dist || true
+            mkdir client\dist || true
+            copy C:\coblog\.env server\.env
             pm2 stop coblog-api || true
-            pm2 start dist\main.js --name coblog-api
+            pm2 start server\dist\main.js --name coblog-api
             pm2 save
+
+      # 文件上传用 scp
+      - name: Upload files to ECSa
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          source: "apps/server/dist/,apps/client/dist/"
+          target: "C:/coblog/"
+          strip_components: 2
