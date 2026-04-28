@@ -1,5 +1,12 @@
 node_modules/
+**/node_modules/
 dist/
+**/dist/
+**/dist-ts/
+.turbo/
+coverage/
+apps/server/uploads/
+*.tsbuildinfo
 .DS_Store
 *.log
 .env

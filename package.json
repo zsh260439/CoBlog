@@ -1,17 +1,17 @@
 {
   "name": "co-blog",
   "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.18.3",
   "scripts": {
-    "dev": "concurrently -n client,server -c cyan,magenta \"pnpm --filter dev-blog-client dev\" \"pnpm --filter server start:dev\"",
-    "dev:client": "pnpm --filter dev-blog-client dev",
-    "dev:server": "pnpm --filter server start:dev",
-    "build": "pnpm --filter dev-blog-client build && pnpm --filter server build"
+    "dev": "turbo dev",
+    "dev:client": "turbo dev --filter=dev-blog-client",
+    "dev:server": "turbo dev --filter=server",
+    "build": "turbo build",
+    "build:client": "turbo build --filter=dev-blog-client",
+    "build:server": "turbo build --filter=server"
   },
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.10",
-    "concurrently": "^9.2.1"
-  },
-  "dependencies": {
-    "cookie-parser": "^1.4.7"
+    "turbo": "^2.9.6"
   }
 }
