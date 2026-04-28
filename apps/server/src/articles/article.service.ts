@@ -23,16 +23,16 @@ export class ArticlesService {
 
     return {
       ...article,
-      _id: article._id.toString(),
+      _id: article._id?.toString?.() ?? article._id,
       tags: article.tags,
-      createdAt: article.createdAt.toISOString(),
-      updatedAt: article.updatedAt.toISOString(),
+      createdAt: article.createdAt?.toISOString?.() ?? article.createdAt,
+      updatedAt: article.updatedAt?.toISOString?.() ?? article.updatedAt,
     }
   }
 
   async findAll() {
     const articles = await this.articleModel.find().sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.serializeArticle(article))
+    return articles.map((article:Article) => this.serializeArticle(article))
   }
 
   async findBySlug(slug: string) {
@@ -73,7 +73,7 @@ export class ArticlesService {
       ...this.serializeArticle(article),
       previous:prev?{slug:prev.slug,title:prev.title}:null,
       next:next?{slug:next.slug,title:next.title}:null,
-      related:related.map((r)=>this.serializeArticle(r as any))
+      related:related.map((r:Article)=>this.serializeArticle(r))
     }
   }
 
@@ -89,19 +89,19 @@ export class ArticlesService {
 
   async findByCategory(categorySlug: string) {
     const articles = await this.articleModel.find({ categorySlug }).sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.serializeArticle(article))
+    return articles.map((article:Article) => this.serializeArticle(article))
   }
 
   async findByTag(tag: string) {
     const articles = await this.articleModel.find({ tags: tag }).sort({ createdAt: -1 }).lean()
-    return articles.map((article) => this.serializeArticle(article))
+    return articles.map((article:Article) => this.serializeArticle(article))
   }
 
   async findArchiveList() {
     const articles = await this.articleModel.find().sort({ createdAt: -1 }).lean()
-    const groupMap = new Map<string, typeof articles>()
-
-    articles.forEach((article) => {
+    const groupMap = new Map<string, Article[]>()
+    
+    articles.forEach((article:Article) => {
       const year = new Date(article.createdAt).getFullYear().toString()
       const currentGroup = groupMap.get(year) ?? []
       currentGroup.push(article)
