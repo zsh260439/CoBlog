@@ -24,6 +24,17 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Prepare deploy package
+        shell: bash
+        run: |
+          node <<'EOF'
+          const fs = require('fs')
+          const pkg = JSON.parse(fs.readFileSync('apps/server/package.json', 'utf8'))
+          delete pkg.dependencies['@coblog/types']
+          fs.mkdirSync('.deploy', { recursive: true })
+          fs.writeFileSync('.deploy/server-package.json', `${JSON.stringify(pkg, null, 2)}\n`)
+          EOF
+
       - name: Configure SSH
         shell: bash
         env:
@@ -64,6 +75,19 @@ jobs:
             -p 22 \
             "powershell -NoProfile -Command \"New-Item -ItemType Directory -Force -Path 'C:\\coblog\\server', 'C:\\coblog\\client' | Out-Null\""
 
+      - name: Upload server package.json
+        shell: bash
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            .deploy/server-package.json \
+            Administrator@"$ECS_HOST":C:/coblog/server/package.json
+
       - name: Upload server dist
         shell: bash
         env:
@@ -101,4 +125,4 @@ jobs:
             -i ~/.ssh/id_rsa \
             Administrator@"$ECS_HOST" \
             -p 22 \
-            "powershell -NoProfile -Command \"\$ErrorActionPreference = 'Stop'; if (Test-Path 'C:\\coblog\\.env') { Copy-Item 'C:\\coblog\\.env' 'C:\\coblog\\server\\.env' -Force }; try { pm2 delete coblog-api | Out-Null } catch {}; pm2 start 'C:\\coblog\\server\\dist\\main.js' --name coblog-api; pm2 save\""
+            "powershell -NoProfile -Command \"\$ErrorActionPreference = 'Stop'; Set-Location 'C:\\coblog\\server'; if (Test-Path 'C:\\coblog\\.env') { Copy-Item 'C:\\coblog\\.env' '.env' -Force }; npm install --omit=dev; try { pm2 delete coblog-api | Out-Null } catch {}; pm2 start 'C:\\coblog\\server\\dist\\main.js' --name coblog-api; pm2 save\""
