@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+     "@types/node": "^22.0.0",
     "@coblog/types": "workspace:*",
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
