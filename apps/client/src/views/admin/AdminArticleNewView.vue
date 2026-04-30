@@ -370,6 +370,9 @@ watch(
 //监视草稿 防抖自动保存避免退出
 watch(form,
 () => {
+  if(isEditMode.value) {
+    return
+  }
   debouncedSaveDraft()
 }, {
   deep: true

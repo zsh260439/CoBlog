@@ -3,6 +3,7 @@ import type { Article } from '../article'
 // Markdown 渲染组件接收的内容参数
 export interface MarkdownViewerProps {
   content: string // Markdown 原始内容
+  articleTitle?: string // 当前文章标题，用于去掉重复的首个一级标题
   editorId?: string // 预览实例 ID，可选
 }
 

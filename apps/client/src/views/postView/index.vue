@@ -86,15 +86,16 @@ watch([y, tocItems], () => {
 
       <section class="article-shell page-content-reveal">
         <div class="article-main">
-          <article class="article-card">
+          <article class="article-card article-card--content">
             <div class="article-summary">
               <span class="article-summary__icon">▣</span>
-              <p>{{ article.summary }}</p>
+                <p>{{ article.summary }}</p>
             </div>
 
             <div class="article-body">
               <MarkdownViewer
                 :content="article.content"
+                :article-title="article.title"
                 :editor-id="previewId"
                 @catalog-change="handleCatalogChange"
               />
@@ -145,7 +146,7 @@ watch([y, tocItems], () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .article-view {
   background: linear-gradient(180deg, #eff3f9 0%, #ffffff 34%, #ffffff 100%);
 }
@@ -159,14 +160,16 @@ watch([y, tocItems], () => {
 
 .status-card,
 .article-card {
+  width: 100%;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+
 }
 
 .status-card {
-  width: min(100%, 32rem);
+  width: min(100vw, 32rem);
   padding: 2rem;
   text-align: center;
 }
@@ -201,7 +204,7 @@ watch([y, tocItems], () => {
 .article-shell {
   position: relative;
   z-index: 2;
-  width: min(100%, 1120px);
+  width: min(100vw, 1120px);
   margin: -28px auto 0;
   padding: 0 2rem 5rem;
   display: grid;
@@ -212,8 +215,10 @@ watch([y, tocItems], () => {
 .article-main,
 .article-side {
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: 1rem;
+  min-width: 0;
 }
 
 .article-card {
@@ -222,13 +227,14 @@ watch([y, tocItems], () => {
 
 .article-summary {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  gap: 0.85rem;
-  padding: 1rem 1.1rem;
+  grid-template-columns: 8px minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 1rem;
   border-left: 3px solid #313640;
   border-radius: 0 6px 6px 0;
   background: #f8fafc;
   color: var(--text-secondary);
+  margin: 20px;
 }
 
 .article-summary__icon {
@@ -238,11 +244,16 @@ watch([y, tocItems], () => {
 
 .article-summary p {
   margin: 0;
-  line-height: 1.85;
+  min-width: 0;
+  line-height: 1.82;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .article-body {
   margin-top: 1.6rem;
+  margin-right: 20px;
 }
 
 .article-card--nav,
@@ -307,9 +318,94 @@ watch([y, tocItems], () => {
 }
 
 @media (max-width: 767px) {
+  .article-view {
+    background: #ffffff;
+  }
+
   .article-shell {
-    margin-top: -12px;
-    padding: 0 1.25rem 4rem;
+    margin-top: -32px;
+    width: min(100vw, 680px);
+    padding: 0 0.9rem 2.8rem;
+  }
+
+  .article-card {
+    padding: 1.1rem;
+    border-radius: 12px;
+  }
+
+  .article-card--content {
+    width: 100%;
+    padding: 1.1rem;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
+    z-index: 2;
+  }
+
+  .article-summary {
+    margin: 0 8px;
+  }
+  .article-summary__icon {
+    margin-top: 0.14rem;
+    font-size: 0.8rem;
+   }
+
+   .article-summary p {
+     font-size: 0.96rem;
+     min-width: 0;
+      white-space: normal;
+   overflow-wrap: anywhere;
+    word-break: break-word;
+   }
+
+  .article-body {
+    margin-top: 1.4rem;
+    padding: 1rem;
+  }
+
+  .article-body :deep(.md-editor-preview) {
+    font-size: 1rem;
+    line-height: 1.95;
+  }
+
+  .article-body :deep(.md-editor-preview h1) {
+    margin-top: 0;
+    font-size: 2rem;
+    line-height: 1.22;
+  }
+
+  .article-body :deep(.md-editor-preview h2) {
+    font-size: 1.5rem;
+    line-height: 1.28;
+  }
+
+  .article-body :deep(.md-editor-preview h3) {
+    font-size: 1.2rem;
+    line-height: 1.35;
+  }
+
+  .article-body :deep(.md-editor-preview pre) {
+    border-radius: 14px;
+  }
+
+  .article-body :deep(.md-editor-preview img) {
+    border-radius: 14px;
+  }
+
+  .article-side {
+    display: none;
+  }
+
+  .article-card--nav,
+  .article-card--related {
+    padding-top: 1rem;
+    background: #ffffff;
+  }
+
+  .article-card--related h3 {
+    font-size: 1.15rem;
   }
 
   .article-nav-grid {

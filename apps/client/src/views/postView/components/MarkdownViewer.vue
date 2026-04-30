@@ -31,9 +31,21 @@ const createHeadingId = (text: string, index: number) => {
 
 const resolveHeadingId: MdHeadingId = ({ text, index }) => createHeadingId(text, index)
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 // 把 Markdown 里的相对上传资源路径补成完整后端地址，避免预览区图片失效。
 const resolvedContent = computed(() => {
-  return props.content
+  const normalizedTitle = props.articleTitle?.trim()
+  let content = props.content
+
+  if (normalizedTitle) {
+    const titlePattern = escapeRegExp(normalizedTitle)
+    content = content
+      .replace(new RegExp(`^#\\s+${titlePattern}\\s*\\n+`, 'i'), '')
+      .replace(new RegExp(`^<h1[^>]*>${titlePattern}<\\/h1>\\s*`, 'i'), '')
+  }
+
+  return content
     .replace(/\]\((\/uploads\/[^)]+)\)/g, (_, path: string) => `](${API_BASE_URL}${path})`)
     .replace(/src=(['"])\/uploads\//g, (_, quote: string) => `src=${quote}${API_BASE_URL}/uploads/`)
 })

@@ -6,7 +6,7 @@ export const siteConfig = {
   ownerName: 'Zsint',
   ownerRole: '前端开发',
   ownerLocation: '湖北武汉',
-  description: '一个记录学习过程的个人博客网站',
+  description: '一个记录学习过程的博客网站',
   aboutHeroImage: '/images/about-hero.png',
   footerVersion: 'Hello World!',
   footerLicense: '共同学习!',
