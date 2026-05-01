@@ -248,7 +248,7 @@ watch([y, tocItems], () => {
   gap: 0.5rem;
   padding: 1rem 1rem 1.8rem;
   border-left: 3px solid #313640;
-  border-radius: 0 6px 6px 0;
+  border-radius: 6px;
   background: #f8fafc;
   color: var(--text-secondary);
   margin: 20px;
