@@ -3,7 +3,7 @@ import { AuthGuard } from 'src/auth/auth.guard'
 import { ApiResponse } from 'src/common/utils/api-response'
 import { AiService } from './ai.service'
 import { ArticleChatDto } from './dto/article-chat.dto'
-import { GenerateSummaryDto } from './dto/generate-summary.dto'
+import { GenerateExcerptDto } from './dto/generate-excerpt.dto'
 import { OptimizeArticleDto } from './dto/optimize-article.dto'
 
 @UseGuards(AuthGuard)
@@ -17,10 +17,10 @@ export class AiController {
     return ApiResponse.success(data, 'AI 优化完成')
   }
 
-  @Post('summary')
-  async summary(@Body() dto: GenerateSummaryDto) {
-    const data = await this.aiService.generateSummary(dto)
-    return ApiResponse.success(data, 'AI 概括生成成功')
+  @Post('excerpt')
+  async excerpt(@Body() dto: GenerateExcerptDto) {
+    const data = await this.aiService.generateExcerpt(dto)
+    return ApiResponse.success(data, 'AI 摘要生成成功')
   }
 
   @Post('chat')

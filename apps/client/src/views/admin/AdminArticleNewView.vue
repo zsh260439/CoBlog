@@ -5,7 +5,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { chatWithArticleAi, generateArticleSummaryWithAi, optimizeArticleWithAi } from '@/servers/ai'
+import { chatWithArticleAi, generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
 import { ensureMarkdownConfigured } from '@/config/markdown'
@@ -32,7 +32,6 @@ const createDefaultForm = (): AdminArticleForm => ({
   title: '',
   slug: '',
   excerpt: '',
-  summary: '',
   category:'',
   categorySlug: '',
   tags: [],
@@ -47,7 +46,7 @@ const submitError = ref('')
 const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
-const aiLoading = ref<'optimize' | 'summary' | ''>('')
+const aiLoading = ref<'optimize' | 'excerpt' | ''>('')
 const aiChatLoading = ref(false)
 const aiChatInput = ref('')
 const aiDrawerVisible = ref(false)
@@ -107,7 +106,7 @@ const toggleTag = (tag: string) => {
 }
 
 // 把后端返回的图片路径补成可直接访问的完整地址
-const resolveUploadUrl = (url: string) => {
+const  resolveUploadUrl = (url: string) => {
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`
 }
 
@@ -158,7 +157,6 @@ const handleManualSave = () => {
 // 提交前检查发文必填项是否完整
 const validateForm = () => {
   if (!form.title.trim()) return '请输入文章标题'
-  if (!form.excerpt.trim()) return '请输入文章摘要'
   if (!form.content.trim()) return '请输入 Markdown 正文'
   if (!form.category.trim()) return '请选择文章分类'
   return ''
@@ -195,17 +193,16 @@ const handleOptimizeContent = async () => {
   }
 }
 
-// 摘要生成结果同时写入 excerpt 和 summary，方便列表展示和后续发布提交。
-const handleGenerateSummary = async () => {
+const handleGenerateExcerpt = async () => {
   if (!form.content.trim()) {
-    ElMessage.warning('请先输入正文内容再生成概括')
+    ElMessage.warning('正文不存在,无法生成摘要')
     return
   }
 
-  aiLoading.value = 'summary'
+  aiLoading.value = 'excerpt'
 
   try {
-    const result = await generateArticleSummaryWithAi({
+    const result = await generateArticleExcerptWithAi({
       title: form.title.trim(),
       content: form.content,
       instruction: aiInstruction.value.trim(),
@@ -213,17 +210,15 @@ const handleGenerateSummary = async () => {
     })
 
     const excerpt = result.data?.excerpt?.trim()
-    const summary = result.data?.summary?.trim()
 
-    if (!excerpt && !summary) {
-      throw new Error('AI 未返回摘要内容')
+    if (!excerpt) {
+      throw new Error('AI 未返回摘要内容,请检查正文是否为空')
     }
 
-    form.excerpt = excerpt || summary || form.excerpt
-    form.summary = summary || excerpt || form.summary
-    ElMessage.success('AI 已生成概括，可继续手动修改')
+    form.excerpt = excerpt
+    ElMessage.success('AI 摘要已生成')
   } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 概括生成失败')
+    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 摘要生成失败')
   } finally {
     aiLoading.value = ''
   }
@@ -307,18 +302,19 @@ const publishArticle = async () => {
     return
   }
 
+  cancelAutoSave()
   submitLoading.value = true
 
   try {
+    await handleGenerateExcerpt()
     const payload = {
       ...form,
       slug: form.slug.trim(),
-      summary: form.summary.trim() || form.excerpt.trim(),
       tags: form.tags,
     }
-
     if (isEditMode.value) {
       const result = await updateArticle(String(route.params.id), payload)
+      console.log("更新文章结果:", result)
       if (result.data) {
         setArticles(
           articles.value.map((item) => (item._id === result.data?._id ? result.data : item))
@@ -338,6 +334,7 @@ const publishArticle = async () => {
       ElMessage.success('文章发布成功')
     }
 
+    cancelAutoSave()
     router.push('/admin/articles')
   } catch (error: any) {
     submitError.value = error?.response?.data?.message || '文章发布失败，请检查后端服务是否正常'
@@ -350,9 +347,9 @@ const publishArticle = async () => {
 watch(
   () => form.title,
   (value) => {
-    if (!slugTouched.value) {
-      form.slug = createSlugFromText(value, 48)
-    }
+    //标题为空不返回slug 避免‘’回填到slug
+    if (!value.trim()) return
+    form.slug = createSlugFromText(value, 48)
   }
 )
 
@@ -370,6 +367,9 @@ watch(
 //监视草稿 防抖自动保存避免退出
 watch(form,
 () => {
+  if(isEditMode.value) {
+    return
+  }
   debouncedSaveDraft()
 }, {
   deep: true
@@ -388,7 +388,6 @@ onMounted(async () => {
           title: result.data.title,
           slug: result.data.slug,
           excerpt: result.data.excerpt,
-          summary: result.data.summary,
           category: result.data.category,
           categorySlug: result.data.categorySlug,
           tags: [...result.data.tags],
@@ -445,8 +444,8 @@ onMounted(async () => {
         </div>
 
         <div class="form-field">
-          <label>摘要</label>
-          <el-input v-model="form.excerpt" type="textarea" :rows="4" placeholder="请输入文章摘要" />
+          <label>摘要（AI自动生成）：</label>
+          <el-input v-model="form.excerpt" readonly type="textarea" :rows="4" placeholder="AI将会自动生成的摘要,发布前自动补充" />
         </div>
 
         <div class="form-field">
@@ -501,8 +500,8 @@ onMounted(async () => {
             <el-button :loading="aiLoading === 'optimize'" @click="handleOptimizeContent">
               AI 优化正文
             </el-button>
-            <el-button :loading="aiLoading === 'summary'" @click="handleGenerateSummary">
-              AI 生成概括
+            <el-button :loading="aiLoading === 'excerpt'" @click="handleGenerateExcerpt">
+              AI 生成摘要
             </el-button>
             <el-button @click="aiDrawerVisible = true">
               AI 对话助手

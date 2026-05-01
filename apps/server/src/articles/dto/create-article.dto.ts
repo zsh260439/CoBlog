@@ -20,10 +20,6 @@ export class CreateArticleDto {
 
   @IsString()
   @IsNotEmpty()
-  summary: string
-
-  @IsString()
-  @IsNotEmpty()
   category: string
 
   @IsString()

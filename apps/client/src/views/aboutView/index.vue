@@ -19,17 +19,37 @@ import { aboutProfileCard, aboutTechItems, siteConfig } from '@/config/site'
       <div class="about-hero-stage__content">
         <article class="about-intro-card">
           <section class="about-intro-card__section">
-            <h2>关于我</h2>
-            <p>你好，我是 {{ siteConfig.ownerName }}，一名持续打磨界面体验、内容表达和工程细节的前端开发者。</p>
-            <p>我更喜欢克制、清晰、可持续演化的界面，也喜欢让页面在第一眼就建立起自己的气质。</p>
+            <h2>关于作者</h2>
+            <p>我是 {{ siteConfig.ownerName }}，一名喜欢折腾代码的普通计科学生。</p>
+            <p>武汉轻工大学计算机科学与技术 24 级在读，主要兴趣和精力都投在了探索 Web 开发的方方面面。</p>
           </section>
 
           <section class="about-intro-card__section">
             <h2>关于博客</h2>
-            <p>这个博客对我而言，不只是一个技术笔记本。这里会持续沉淀前端开发、内容记录与工具现代化相关的实践。</p>
-            <p>它也是一个不断生长的实验场，我会把新的交互、布局和工程方案慢慢长在这里，而不是一次性堆满。</p>
-          </section>
+          <p>
+            这个博客对我而言，远不止一个技术笔记本。
+          </p>
 
+          <p>
+            如果你仔细看看，会发现这里除了技术分享，还有不少我的日常琐碎和内心所想，记录这些才是我最初建立这里的根本原因。
+          </p>
+
+          <p>
+            我过去没有写日记的习惯，以至于许多重要的时刻和感受，都在时间的流逝中变得模糊不清。这让我觉得有些遗憾。
+          </p>
+
+          <p>
+            于是，我想在这里诚实地留下一些痕迹。记录下解决问题时的思路，也记录下某个黄昏的触动；分享学到的知识，也分享那些不成熟但真实的思考。
+          </p>
+
+          <p>
+            我相信，当未来的某一天回看这些文字，无论是为某个技术难点焦头烂额，还是为生活中一件小事感慨，这些记录都会让那个时刻的我，与现在的我重逢，并会心一笑。
+          </p>
+
+          <p>
+            感谢你的到访。这里没什么特别，只是一个学生记录成长、思考和生活的地方。欢迎常来坐坐。
+          </p>
+</section>
           <section class="about-intro-card__section about-intro-card__section--meta">
             <h2>联系我</h2>
 

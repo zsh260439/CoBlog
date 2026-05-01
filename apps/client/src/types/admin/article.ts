@@ -3,7 +3,6 @@ export interface AdminArticleForm {
   title: string
   slug: string
   excerpt: string
-  summary: string
   category: string
   categorySlug: string
   tags: string[]
@@ -16,7 +15,6 @@ export interface ArticleDraftState {
   title: string
   slug: string
   excerpt: string
-  summary: string
   category: string
   categorySlug: string
   tags: string[]

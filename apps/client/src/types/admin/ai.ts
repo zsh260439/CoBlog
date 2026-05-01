@@ -24,14 +24,13 @@ export interface ArticleAiChatResult {
   content: string
 }
 
-export interface GenerateSummaryPayload {
+export interface GenerateExcerptPayload {
   title?: string
   content: string
   instruction?: string
   excerptLength?: number
 }
 
-export interface GenerateSummaryResult {
+export interface GenerateExcerptResult {
   excerpt: string
-  summary: string
 }

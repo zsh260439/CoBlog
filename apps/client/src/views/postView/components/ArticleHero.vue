@@ -85,6 +85,7 @@ const heroStyle = computed(() => {
 
 .article-hero__mist {
   top: auto;
+  bottom: 0;
   height: 150px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 60%, #ffffff 100%);
 }
@@ -133,7 +134,37 @@ const heroStyle = computed(() => {
     min-height: 360px;
   }
 
+  .article-hero__mist {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 176px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.34) 40%,
+      rgba(255, 255, 255, 0.86) 76%,
+      #ffffff 100%
+    );
+    transform: translateZ(0);
+  }
+
+  .article-hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: #ffffff;
+    z-index: 1;
+    pointer-events: none;
+  }
+
   .article-hero__inner {
+    position: relative;
+    z-index: 2;
     padding: calc(var(--header-height) + 2.2rem) 1.25rem 6rem;
   }
 }

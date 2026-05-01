@@ -13,7 +13,6 @@ export function sanitizeArticleFormPayload(payload: ArticleFormData): ArticleFor
     createSlugFromText(payload.category.trim(), 32)
   const normalizedContent = payload.content.trim()
   const normalizedExcerpt = payload.excerpt.trim()
-  const normalizedSummary = payload.summary?.trim() || normalizedExcerpt
   const normalizedCoverImage = payload.coverImage?.trim()
 
   return {
@@ -21,7 +20,6 @@ export function sanitizeArticleFormPayload(payload: ArticleFormData): ArticleFor
     slug: payload.slug?.trim(),
     content: normalizedContent,
     excerpt: normalizedExcerpt,
-    summary: normalizedSummary,
     category: payload.category.trim(),
     categorySlug: normalizedCategorySlug,
     tags: (payload.tags ?? []).map((tag) => tag.trim()).filter(Boolean),

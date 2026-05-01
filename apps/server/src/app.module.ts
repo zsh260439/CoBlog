@@ -11,7 +11,7 @@ import { UploadsModule } from './uploads/uploads.module';
    imports:[
       ConfigModule.forRoot({
        isGlobal:true,
-       envFilePath: ['../../.env', '.env']
+       envFilePath: ['../../.env.development.local','../../.env', '.env']
       }),
       MongooseModule.forRoot(process.env.MONGODB_URI as string),
       AiModule,

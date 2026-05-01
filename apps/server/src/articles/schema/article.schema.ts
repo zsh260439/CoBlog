@@ -16,9 +16,6 @@ export class Article {
   excerpt: string
 
   @Prop({ required: true })
-  summary: string
-
-  @Prop({ required: true })
   category: string
 
   @Prop({ required: true, index: true })
