@@ -7,6 +7,7 @@ import ArticleToc from '@/views/postView/components/ArticleToc.vue'
 import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 import { useArticleDetail } from '@/composables/useArticleDetail'
 import type { MarkdownHeading } from '@/types/content'
+import { MagicStick } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,7 +31,7 @@ const refreshActiveHeading = useThrottleFn(() => {
   }
 
   const offset = 136
-  let currentId = tocItems.value[0].id
+  let currentId = ''
   const viewportBottom = window.scrollY + window.innerHeight
   const documentHeight = document.documentElement.scrollHeight
 
@@ -46,13 +47,20 @@ const refreshActiveHeading = useThrottleFn(() => {
     }
   })
 
-  // 最后一个标题靠近页面底部时，可能永远到不了 offset 位置。
-  // 当视口已经接近整篇文章底部时，直接把目录高亮切到最后一个标题。
-  if (viewportBottom >= documentHeight - 12) {
-    currentId = tocItems.value[tocItems.value.length - 1]?.id || currentId
+  const lastItem = tocItems.value[tocItems.value.length - 1]
+  const lastEl = lastItem ? document.getElementById(lastItem.id) : null
+
+  if (currentId) {
+    activeHeadingId.value = currentId
+    return
   }
 
-  activeHeadingId.value = currentId
+  if (viewportBottom >= documentHeight - 12 && lastEl && lastEl.getBoundingClientRect().top > offset) {
+    activeHeadingId.value = lastItem.id
+    return
+  }
+
+  activeHeadingId.value = ''
 }, 80)
 
 const handleCatalogChange = async (items: MarkdownHeading[]) => {
@@ -90,8 +98,11 @@ watch([y, tocItems], () => {
             <div class="article-summary">
               <span class="article-summary__icon">▣</span>
                 <p>{{ article.summary }}</p>
+                  <div class="ai-badge">
+                  <el-icon class="ai-icon" size="small"><MagicStick /></el-icon>
+                          该文章摘要由AI生成
+                </div>
             </div>
-
             <div class="article-body">
               <MarkdownViewer
                 :content="article.content"
@@ -226,17 +237,26 @@ watch([y, tocItems], () => {
 }
 
 .article-summary {
+  position: relative;
   display: grid;
   grid-template-columns: 8px minmax(0, 1fr);
   gap: 0.5rem;
-  padding: 1rem;
+  padding: 1rem 1rem 1.8rem;
   border-left: 3px solid #313640;
   border-radius: 0 6px 6px 0;
   background: #f8fafc;
   color: var(--text-secondary);
   margin: 20px;
 }
-
+ .article-summary .ai-badge {
+   position: absolute;
+   bottom: 0;
+   right: 1rem;
+   background: #f8fafc;
+   color: var(--text-secondary);
+   font-size:0.9rem;
+   opacity: 0.7;
+   }
 .article-summary__icon {
   margin-top: 0.12rem;
   color: #8b95a7;
@@ -344,23 +364,29 @@ watch([y, tocItems], () => {
     z-index: 2;
   }
 
-  .article-summary {
-    margin: 0 8px;
-  }
+   .article-summary {
+     margin: 0 8px;
+     padding: 0.85rem 0.85rem 1.6rem;
+   }
   .article-summary__icon {
     margin-top: 0.14rem;
     font-size: 0.8rem;
    }
 
    .article-summary p {
-     font-size: 0.96rem;
-     min-width: 0;
-      white-space: normal;
+      font-size: 0.96rem;
+      min-width: 0;
+       white-space: normal;
    overflow-wrap: anywhere;
-    word-break: break-word;
-   }
+     word-break: break-word;
+    }
 
-  .article-body {
+  
+
+
+
+
+.article-body {
     margin-top: 1.4rem;
     padding: 1rem;
   }

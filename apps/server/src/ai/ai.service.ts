@@ -4,17 +4,45 @@ import { ConfigService } from '@nestjs/config'
 import { GenerateSummaryDto } from './dto/generate-summary.dto'
 import { OptimizeArticleDto } from './dto/optimize-article.dto'
 
-interface MiniMaxMessage {
+interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
 }
 
-interface MiniMaxResponse {
-  choices?: Array<{
+interface DeepSeekOptions {
+  thinking?: {
+    type?: 'enabled' | 'disabled'
+    reasoning_effort?: 'high' | 'max'
+  }
+  max_tokens?: number
+  response_format?: { type: 'text' | 'json_object' }
+  stop?: string[]
+  stream?: boolean
+  stream_options?: { include_usage?: boolean }
+  temperature?: number
+  top_p?: number
+  user_id?: string
+}
+
+interface DeepSeekResponse {
+  id: string
+  object: string
+  created: number
+  model: string
+  choices: Array<{
+    index: number
     message?: {
+      role: string
       content?: unknown
     }
+    finish_reason: string
   }>
+  usage: {
+    prompt_tokens: number
+    completion_tokens: number
+    total_tokens: number
+  }
+  system_fingerprint: string
 }
 
 @Injectable()
@@ -22,25 +50,25 @@ export class AiService {
   constructor(private readonly configService: ConfigService) {}
 
   private get apiKey() {
-    return this.configService.get<string>('MINIMAX_API_KEY')?.trim() || ''
+    return this.configService.get<string>('DEEPSEEK_API_KEY')?.trim() || ''
   }
 
   private get apiUrl() {
-    return this.configService.get<string>('MINIMAX_API_URL')?.trim() || 'https://api.minimax.chat/v1/text/chatcompletion_v2'
+    return this.configService.get<string>('DEEPSEEK_API_URL')?.trim() || 'https://api.deepseek.com/chat/completions'
   }
 
   private get model() {
-    return this.configService.get<string>('MINIMAX_MODEL')?.trim() || 'MiniMax-M2.7'
+    return this.configService.get<string>('DEEPSEEK_MODEL')?.trim() || 'deepseek-v4-flash'
   }
 
   private ensureConfigured() {
     if (!this.apiKey) {
-      throw new InternalServerErrorException('未配置 MINIMAX_API_KEY')
+      throw new InternalServerErrorException('未配置 DEEPSEEK_API_KEY')
     }
   }
 
   // 兼容字符串、数组块等不同返回结构，尽量提取出模型真正生成的文本。
-  private extractMessageContent(payload: MiniMaxResponse) {
+  private extractMessageContent(payload: DeepSeekResponse) {
     const rawContent = payload.choices?.[0]?.message?.content
 
     if (typeof rawContent === 'string') {
@@ -80,9 +108,40 @@ export class AiService {
     }
   }
 
-  // 和 MiniMax 的 chat 接口通信，统一处理鉴权、错误和文本抽取。
-  private async requestMiniMax(messages: MiniMaxMessage[], temperature = 0.3) {
+  // 和 DeepSeek 的 chat 接口通信，统一处理鉴权、错误和文本抽取。
+  private async requestDeepSeek(
+     messages: DeepSeekMessage[],
+     model:string = this.model,
+     options:DeepSeekOptions = {},
+  ) {
     this.ensureConfigured()
+    //解构options的值
+    const {
+      thinking = {type:'disabled'},
+      max_tokens,
+      response_format = { type: 'text' }, 
+      stop,
+      stream = false,
+      stream_options,
+      temperature = 0.24,
+      top_p,
+      user_id,
+    } = options
+  
+  //构建请求体
+  const requestBody = {
+    messages,
+    model,
+    stream,
+    temperature,
+    thinking,
+      response_format,
+      ...(top_p !== undefined && { top_p }),
+      ...(max_tokens !== undefined && { max_tokens }),
+      ...(stop && { stop }),
+      ...(stream_options && { stream_options }),
+      ...(user_id && { user_id }),
+  }
 
     const response = await fetch(this.apiUrl, {
       method: 'POST',
@@ -90,24 +149,21 @@ export class AiService {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        stream: false,
-        temperature,
-      }),
+      body: JSON.stringify(
+        requestBody,
+      ),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new BadGatewayException(`MiniMax 请求失败：${errorText.slice(0, 200)}`)
+      throw new BadGatewayException(`DeepSeek 请求失败：${errorText.slice(0, 200)}`)
     }
 
-    const payload = (await response.json()) as MiniMaxResponse
+    const payload = (await response.json()) as DeepSeekResponse
     const content = this.extractMessageContent(payload)
 
     if (!content) {
-      throw new BadGatewayException('MiniMax 未返回有效内容')
+      throw new BadGatewayException('DeepSeek 未返回有效内容')    
     }
 
     return content
@@ -132,12 +188,15 @@ export class AiService {
       .filter(Boolean)
       .join('\n\n')
 
-    const content = await this.requestMiniMax(
+    const content = await this.requestDeepSeek(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      0.25,
+      this.model,
+      {
+        temperature: 0.24,
+      }
     )
 
     return { content }
@@ -165,18 +224,21 @@ export class AiService {
       .filter(Boolean)
       .join('\n\n')
 
-    const content = await this.requestMiniMax(
+    const content = await this.requestDeepSeek(
       [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      0.2,
+     'deepseek-v4-flash',
+      {
+        temperature: 0.24,
+      }
     )
 
     const parsed = this.extractJsonBlock<{ excerpt?: string; summary?: string }>(content)
 
     if (!parsed?.excerpt && !parsed?.summary) {
-      throw new BadGatewayException('MiniMax 返回的摘要格式无法解析')
+      throw new BadGatewayException('DeepSeek 返回的摘要格式无法解析')
     }
 
     return {
@@ -203,8 +265,7 @@ export class AiService {
     ]
       .filter(Boolean)
       .join('\n\n')
-
-    const messages: MiniMaxMessage[] = [
+     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: contextPrompt },
       ...dto.messages.map((message) => ({
@@ -213,7 +274,9 @@ export class AiService {
       })),
     ]
 
-    const content = await this.requestMiniMax(messages, 0.45)
+    const content = await this.requestDeepSeek(messages, this.model, {
+      temperature: 0.24,
+    })
 
     return { content }
   }

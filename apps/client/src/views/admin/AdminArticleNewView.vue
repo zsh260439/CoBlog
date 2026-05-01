@@ -107,7 +107,7 @@ const toggleTag = (tag: string) => {
 }
 
 // 把后端返回的图片路径补成可直接访问的完整地址
-const resolveUploadUrl = (url: string) => {
+const  resolveUploadUrl = (url: string) => {
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`
 }
 
@@ -198,7 +198,7 @@ const handleOptimizeContent = async () => {
 // 摘要生成结果同时写入 excerpt 和 summary，方便列表展示和后续发布提交。
 const handleGenerateSummary = async () => {
   if (!form.content.trim()) {
-    ElMessage.warning('请先输入正文内容再生成概括')
+    ElMessage.warning('正文不存在,无法生成摘要')
     return
   }
 
@@ -216,12 +216,12 @@ const handleGenerateSummary = async () => {
     const summary = result.data?.summary?.trim()
 
     if (!excerpt && !summary) {
-      throw new Error('AI 未返回摘要内容')
+      throw new Error('AI 未返回摘要内容,请检查正文是否为空')
     }
 
     form.excerpt = excerpt || summary || form.excerpt
     form.summary = summary || excerpt || form.summary
-    ElMessage.success('AI 已生成概括，可继续手动修改')
+    ElMessage.success('AI摘要已同步生成成功')
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || 'AI 概括生成失败')
   } finally {
@@ -316,7 +316,9 @@ const publishArticle = async () => {
       summary: form.summary.trim() || form.excerpt.trim(),
       tags: form.tags,
     }
-
+ //无论是编辑模式还是发布模式，在点击发布之前检查正文并且同步更新摘要 上述代码已经检查过
+    await handleGenerateSummary()
+  
     if (isEditMode.value) {
       const result = await updateArticle(String(route.params.id), payload)
       if (result.data) {
@@ -350,9 +352,7 @@ const publishArticle = async () => {
 watch(
   () => form.title,
   (value) => {
-    if (!slugTouched.value) {
       form.slug = createSlugFromText(value, 48)
-    }
   }
 )
 
@@ -448,8 +448,8 @@ onMounted(async () => {
         </div>
 
         <div class="form-field">
-          <label>摘要</label>
-          <el-input v-model="form.excerpt" type="textarea" :rows="4" placeholder="请输入文章摘要" />
+          <label>摘要（AI自动生成）：</label>
+          <el-input v-model="form.excerpt" readonly type="textarea" :rows="4" placeholder="AI将会自动生成的摘要,发布前自动补充" />
         </div>
 
         <div class="form-field">
