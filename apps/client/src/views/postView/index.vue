@@ -24,6 +24,8 @@ const {
   articleStats
 } = useArticleDetail(currentSlug)
 
+// 根据正文滚动位置刷新当前高亮标题。
+// 目录本身只负责展示，真正的“哪个标题算激活”统一由这里决定。
 const refreshActiveHeading = useThrottleFn(() => {
   if (!tocItems.value.length) {
     activeHeadingId.value = ''
@@ -63,12 +65,15 @@ const refreshActiveHeading = useThrottleFn(() => {
   activeHeadingId.value = ''
 }, 80)
 
+// MarkdownViewer 每次重新解析目录时，把标题列表回传给文章页。
+// 文章页拿到这份目录数据后，再驱动右侧 TOC 组件渲染和高亮。
 const handleCatalogChange = async (items: MarkdownHeading[]) => {
   tocItems.value = items
   await nextTick()
   refreshActiveHeading()
 }
 
+// 正文滚动或目录结构变化时，都重新计算当前激活标题。
 watch([y, tocItems], () => {
   refreshActiveHeading()
 })

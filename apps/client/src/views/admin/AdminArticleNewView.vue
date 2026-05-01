@@ -158,7 +158,6 @@ const handleManualSave = () => {
 // 提交前检查发文必填项是否完整
 const validateForm = () => {
   if (!form.title.trim()) return '请输入文章标题'
-  if (!form.excerpt.trim()) return '请输入文章摘要'
   if (!form.content.trim()) return '请输入 Markdown 正文'
   if (!form.category.trim()) return '请选择文章分类'
   return ''
@@ -222,6 +221,7 @@ const handleGenerateSummary = async () => {
     form.excerpt = excerpt || summary || form.excerpt
     form.summary = summary || excerpt || form.summary
     ElMessage.success('AI摘要已同步生成成功')
+    console.log(form)
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || 'AI 概括生成失败')
   } finally {
@@ -310,17 +310,17 @@ const publishArticle = async () => {
   submitLoading.value = true
 
   try {
-    const payload = {
+    //无论是编辑模式还是发布模式，在点击发布之前检查正文并且同步更新摘要 上述代码已经检查过 这边保证ai生成的摘要和summary字段都存在
+    await handleGenerateSummary()
+     const payload = {
       ...form,
       slug: form.slug.trim(),
       summary: form.summary.trim() || form.excerpt.trim(),
       tags: form.tags,
     }
- //无论是编辑模式还是发布模式，在点击发布之前检查正文并且同步更新摘要 上述代码已经检查过
-    await handleGenerateSummary()
-  
     if (isEditMode.value) {
       const result = await updateArticle(String(route.params.id), payload)
+      console.log("更新文章结果:", result)
       if (result.data) {
         setArticles(
           articles.value.map((item) => (item._id === result.data?._id ? result.data : item))

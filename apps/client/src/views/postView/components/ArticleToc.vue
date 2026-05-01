@@ -7,6 +7,7 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
   activeId: ''
 })
 
+// 目录容器的滚动由组件自己维护，高亮项变化后只滚动这个容器，不影响整页。
 const listRef = ref<HTMLElement | null>(null)
 
 // 目录优先把 h2 视为根节点；如果文章没有 h2，就退回到最小标题层级。
@@ -60,6 +61,7 @@ const visibleItems = computed(() => {
 })
 
 // 点击目录项时滚动到正文标题，并同步更新地址栏 hash。
+// 这里依赖 MarkdownViewer 产出的 heading id 与目录项 id 保持一致。
 const scrollToHeading = (id: string) => {
   const element = document.getElementById(id)
 
@@ -75,6 +77,7 @@ const scrollToHeading = (id: string) => {
 }
 
 // 激活项变化后，把右侧目录滚动到可视区域内。
+// 这样当前高亮标题不会因为列表太长而滚出可见范围。
 const syncActiveItemIntoView = () => {
   const container = listRef.value
   const activeItem = container?.querySelector<HTMLElement>('.article-toc__item.active')
