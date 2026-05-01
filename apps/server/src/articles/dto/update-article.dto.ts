@@ -20,10 +20,6 @@ export class UpdateArticleDto {
 
   @IsOptional()
   @IsString()
-  summary?: string
-
-  @IsOptional()
-  @IsString()
   category?: string
 
   @IsOptional()

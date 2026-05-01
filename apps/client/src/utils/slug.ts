@@ -18,5 +18,5 @@ export function createSlugFromText(value: string, maxLength = 48) {
     .slice(0, maxLength)
     .replace(/-+$/g, '')
 
-  return normalized || `article-${Date.now()}`
+  return normalized
 }

@@ -5,7 +5,6 @@ export interface Article {
   title: string // 文章标题
   content: string // 文章正文内容
   excerpt: string // 文章摘要
-  summary: string // 文章总结说明
   category: string // 分类中文名称
   categorySlug: string // 分类路由别名
   tags: string[] // 文章标签数组

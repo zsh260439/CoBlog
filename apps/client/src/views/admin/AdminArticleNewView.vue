@@ -5,7 +5,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { chatWithArticleAi, generateArticleSummaryWithAi, optimizeArticleWithAi } from '@/servers/ai'
+import { chatWithArticleAi, generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { API_BASE_URL } from '@/config/http'
 import { ensureMarkdownConfigured } from '@/config/markdown'
@@ -32,7 +32,6 @@ const createDefaultForm = (): AdminArticleForm => ({
   title: '',
   slug: '',
   excerpt: '',
-  summary: '',
   category:'',
   categorySlug: '',
   tags: [],
@@ -47,7 +46,7 @@ const submitError = ref('')
 const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
-const aiLoading = ref<'optimize' | 'summary' | ''>('')
+const aiLoading = ref<'optimize' | 'excerpt' | ''>('')
 const aiChatLoading = ref(false)
 const aiChatInput = ref('')
 const aiDrawerVisible = ref(false)
@@ -194,17 +193,16 @@ const handleOptimizeContent = async () => {
   }
 }
 
-// 摘要生成结果同时写入 excerpt 和 summary，方便列表展示和后续发布提交。
-const handleGenerateSummary = async () => {
+const handleGenerateExcerpt = async () => {
   if (!form.content.trim()) {
     ElMessage.warning('正文不存在,无法生成摘要')
     return
   }
 
-  aiLoading.value = 'summary'
+  aiLoading.value = 'excerpt'
 
   try {
-    const result = await generateArticleSummaryWithAi({
+    const result = await generateArticleExcerptWithAi({
       title: form.title.trim(),
       content: form.content,
       instruction: aiInstruction.value.trim(),
@@ -212,18 +210,15 @@ const handleGenerateSummary = async () => {
     })
 
     const excerpt = result.data?.excerpt?.trim()
-    const summary = result.data?.summary?.trim()
 
-    if (!excerpt && !summary) {
+    if (!excerpt) {
       throw new Error('AI 未返回摘要内容,请检查正文是否为空')
     }
 
-    form.excerpt = excerpt || summary || form.excerpt
-    form.summary = summary || excerpt || form.summary
-    ElMessage.success('AI摘要已同步生成成功')
-    console.log(form)
+    form.excerpt = excerpt
+    ElMessage.success('AI 摘要已生成')
   } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 概括生成失败')
+    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 摘要生成失败')
   } finally {
     aiLoading.value = ''
   }
@@ -307,15 +302,14 @@ const publishArticle = async () => {
     return
   }
 
+  cancelAutoSave()
   submitLoading.value = true
 
   try {
-    //无论是编辑模式还是发布模式，在点击发布之前检查正文并且同步更新摘要 上述代码已经检查过 这边保证ai生成的摘要和summary字段都存在
-    await handleGenerateSummary()
-     const payload = {
+    await handleGenerateExcerpt()
+    const payload = {
       ...form,
       slug: form.slug.trim(),
-      summary: form.summary.trim() || form.excerpt.trim(),
       tags: form.tags,
     }
     if (isEditMode.value) {
@@ -340,6 +334,7 @@ const publishArticle = async () => {
       ElMessage.success('文章发布成功')
     }
 
+    cancelAutoSave()
     router.push('/admin/articles')
   } catch (error: any) {
     submitError.value = error?.response?.data?.message || '文章发布失败，请检查后端服务是否正常'
@@ -352,7 +347,9 @@ const publishArticle = async () => {
 watch(
   () => form.title,
   (value) => {
-      form.slug = createSlugFromText(value, 48)
+    //标题为空不返回slug 避免‘’回填到slug
+    if (!value.trim()) return
+    form.slug = createSlugFromText(value, 48)
   }
 )
 
@@ -391,7 +388,6 @@ onMounted(async () => {
           title: result.data.title,
           slug: result.data.slug,
           excerpt: result.data.excerpt,
-          summary: result.data.summary,
           category: result.data.category,
           categorySlug: result.data.categorySlug,
           tags: [...result.data.tags],
@@ -504,8 +500,8 @@ onMounted(async () => {
             <el-button :loading="aiLoading === 'optimize'" @click="handleOptimizeContent">
               AI 优化正文
             </el-button>
-            <el-button :loading="aiLoading === 'summary'" @click="handleGenerateSummary">
-              AI 生成概括
+            <el-button :loading="aiLoading === 'excerpt'" @click="handleGenerateExcerpt">
+              AI 生成摘要
             </el-button>
             <el-button @click="aiDrawerVisible = true">
               AI 对话助手

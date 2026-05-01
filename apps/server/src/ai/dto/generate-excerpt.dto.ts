@@ -1,6 +1,6 @@
 import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator'
 
-export class GenerateSummaryDto {
+export class GenerateExcerptDto {
   @IsOptional()
   @IsString()
   title?: string

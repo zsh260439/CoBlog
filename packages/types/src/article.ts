@@ -4,7 +4,6 @@ export interface Article {
   title: string
   content: string
   excerpt: string
-  summary: string
   category: string
   categorySlug: string
   tags: string[]
@@ -24,7 +23,6 @@ export interface ArticleFormData {
   title: string
   content: string
   excerpt: string
-  summary?: string
   category: string
   categorySlug?: string
   tags?: string[]

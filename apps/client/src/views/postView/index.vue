@@ -100,9 +100,9 @@ watch([y, tocItems], () => {
       <section class="article-shell page-content-reveal">
         <div class="article-main">
           <article class="article-card article-card--content">
-            <div class="article-summary">
-              <span class="article-summary__icon">▣</span>
-                <p>{{ article.summary }}</p>
+            <div class="article-excerpt">
+              <span class="article-excerpt__icon">▣</span>
+                <p>{{ article.excerpt }}</p>
                   <div class="ai-badge">
                   <el-icon class="ai-icon" size="small"><MagicStick /></el-icon>
                           该文章摘要由AI生成
@@ -241,7 +241,7 @@ watch([y, tocItems], () => {
   padding: 1.6rem;
 }
 
-.article-summary {
+.article-excerpt {
   position: relative;
   display: grid;
   grid-template-columns: 8px minmax(0, 1fr);
@@ -253,7 +253,7 @@ watch([y, tocItems], () => {
   color: var(--text-secondary);
   margin: 20px;
 }
- .article-summary .ai-badge {
+ .article-excerpt .ai-badge {
    position: absolute;
    bottom: 0;
    right: 1rem;
@@ -262,12 +262,12 @@ watch([y, tocItems], () => {
    font-size:0.9rem;
    opacity: 0.7;
    }
-.article-summary__icon {
+.article-excerpt__icon {
   margin-top: 0.12rem;
   color: #8b95a7;
 }
 
-.article-summary p {
+.article-excerpt p {
   margin: 0;
   min-width: 0;
   line-height: 1.82;
@@ -369,16 +369,16 @@ watch([y, tocItems], () => {
     z-index: 2;
   }
 
-   .article-summary {
+   .article-excerpt {
      margin: 0 8px;
      padding: 0.85rem 0.85rem 1.6rem;
    }
-  .article-summary__icon {
+  .article-excerpt__icon {
     margin-top: 0.14rem;
     font-size: 0.8rem;
    }
 
-   .article-summary p {
+   .article-excerpt p {
       font-size: 0.96rem;
       min-width: 0;
        white-space: normal;

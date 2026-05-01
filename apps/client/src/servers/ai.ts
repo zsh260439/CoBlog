@@ -2,8 +2,8 @@ import { requestWithOptions } from '@/http-utils'
 import type {
   ArticleAiChatPayload,
   ArticleAiChatResult,
-  GenerateSummaryPayload,
-  GenerateSummaryResult,
+  GenerateExcerptPayload,
+  GenerateExcerptResult,
   OptimizeArticlePayload,
   OptimizeArticleResult,
 } from '@/types/admin/ai'
@@ -12,8 +12,8 @@ export const optimizeArticleWithAi = (payload: OptimizeArticlePayload) => {
   return requestWithOptions<OptimizeArticleResult>('/ai/article/optimize', 'POST', payload, { timeout: 120000 })
 }
 
-export const generateArticleSummaryWithAi = (payload: GenerateSummaryPayload) => {
-  return requestWithOptions<GenerateSummaryResult>('/ai/article/summary', 'POST', payload, { timeout: 120000 })
+export const generateArticleExcerptWithAi = (payload: GenerateExcerptPayload) => {
+  return requestWithOptions<GenerateExcerptResult>('/ai/article/excerpt', 'POST', payload, { timeout: 120000 })
 }
 
 export const chatWithArticleAi = (payload: ArticleAiChatPayload) => {
