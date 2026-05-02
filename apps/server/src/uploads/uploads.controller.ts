@@ -1,10 +1,10 @@
 import { Controller, Get, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { UploadsService } from "./uploads.service";
-import type { Request, Response } from 'express'
 import { memoryStorage } from "multer";
+import type { Response } from 'express'
 import { ApiResponse } from "src/common/utils/api-response";
 import { AuthGuard } from "src/auth/auth.guard";
+import { UploadsService } from "./uploads.service";
 
 @Controller('uploads')
 export class UploadsController {
@@ -15,40 +15,20 @@ export class UploadsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
-        if (!file.mimetype.startsWith('image/')) {
-          callback(new Error('只支持上传图片文件'), false)
-          return
-        }
-        callback(null, true)
-      },
-      limits: {
-        fileSize: 1024 * 1024 * 5,
-      }
+      limits: { fileSize: 1024 * 1024 * 5 },
     })
   )
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
-    const data = await this.uploadsService.createUploadFile(file);
+    const data = await this.uploadsService.create(file)
     return ApiResponse.success(data, '上传成功')
   }
 
   @Get('images/:id')
   async serveImage(@Param('id') id: string, @Res() res: Response) {
-    let file = await this.uploadsService.findById(id)
-
-    if (!file) {
-      file = await this.uploadsService.findByFilename(id)
-    }
-
-    if (!file || !file.data) {
-      res.status(404).send('图片不存在')
-      return
-    }
-
-    const mimeType = file.mimeType || 'image/png'
-    const raw = (file.data as any).buffer ? Buffer.from((file.data as any).buffer) : Buffer.from(file.data as any || '')
-    res.setHeader('Content-Type', mimeType)
-    res.setHeader('Cache-Control', 'public, max-age=3600')
-    res.send(raw)
+    const file = await this.uploadsService.find(id)
+    const buf = Buffer.from(file.data.buffer)
+    res.setHeader('Content-Type', file.mimeType || 'image/png')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    res.send(buf)
   }
 }

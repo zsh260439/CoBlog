@@ -1,45 +1,39 @@
-import { Injectable } from "@nestjs/common";
-import { UploadFile, type UploadFileDocument } from "./schema/upload-file.schema";
-import type { Model } from "mongoose";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Model } from "mongoose";
+import { UploadFile, UploadFileDocument } from "./schema/upload-file.schema";
 
 @Injectable()
 export class UploadsService {
-  constructor(@InjectModel(UploadFile.name) private readonly uploadFileModel: Model<UploadFileDocument>) { }
+  constructor(@InjectModel(UploadFile.name) private readonly model: Model<UploadFileDocument>) { }
 
-  async createUploadFile(file: Express.Multer.File) {
-    const uploadFile = await this.uploadFileModel.create({
+  async create(file: Express.Multer.File) {
+    const doc = await this.model.create({
       originalName: file.originalname,
       mimeType: file.mimetype,
       size: file.size,
       data: file.buffer,
       usage: 'article-image',
     })
-
     return {
-      _id: uploadFile._id.toString(),
-      originalName: uploadFile.originalName,
-      mimeType: uploadFile.mimeType,
-      size: uploadFile.size,
-      url: `/uploads/images/${uploadFile._id}`,
-      usage: uploadFile.usage,
-      createdAt: uploadFile.createdAt.toISOString(),
+      _id: doc._id.toString(),
+      url: `/uploads/images/${doc._id}`,
+      originalName: doc.originalName,
+      mimeType: doc.mimeType,
+      size: doc.size,
+      usage: doc.usage,
+      createdAt: doc.createdAt.toISOString(),
     }
   }
 
-  async findById(id: string) {
-    try {
-      const oid = new Types.ObjectId(id)
-      const file = await this.uploadFileModel.collection.findOne({ _id: oid })
-      return file as unknown as UploadFileDocument | null
-    } catch {
-      return null
-    }
-  }
-
-  async findByFilename(filename: string) {
-    const file = await this.uploadFileModel.collection.findOne({ filename })
-    return file as unknown as UploadFileDocument | null
+  async find(key: string) {
+    const doc = await this.model.collection.findOne({
+      $or: [
+        { filename: key },
+        { _id: key },
+      ]
+    } as any)
+    if (!doc) throw new NotFoundException()
+    return doc as unknown as UploadFileDocument
   }
 }

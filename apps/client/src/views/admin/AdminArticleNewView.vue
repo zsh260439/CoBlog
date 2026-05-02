@@ -7,7 +7,6 @@ import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { chatWithArticleAi, generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
-import { API_BASE_URL } from '@/config/http'
 import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createArticle, getArticleById, updateArticle } from '@/servers/article'
@@ -104,12 +103,7 @@ const toggleTag = (tag: string) => {
   addTag(tag)
 }
 
-// 把后端返回的图片路径补成可直接访问的完整地址
-const  resolveUploadUrl = (url: string) => {
-  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`
-}
-
-// 上传单张图片，并转换成编辑器需要的图片结构
+// 上传单张图片
 const uploadSingleImage = async (file: File) => {
   const result = await uploadImage(file)
   const url = result.data?.url
