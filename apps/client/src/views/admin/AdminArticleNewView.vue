@@ -119,7 +119,7 @@ const uploadSingleImage = async (file: File) => {
   }
 
   return {
-    url: resolveUploadUrl(url),
+    url,
     alt: file.name,
     title: file.name,
   }
