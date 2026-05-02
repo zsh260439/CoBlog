@@ -16,7 +16,6 @@ import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import type { AiChatMessage } from '@/types/admin/ai'
-import type { ArticleCategory } from '@/types/article'
 import { useDebounce } from '@/composables/userDebounce'
 ensureMarkdownConfigured()
 const route = useRoute()
@@ -347,8 +346,6 @@ const publishArticle = async () => {
 watch(
   () => form.title,
   (value) => {
-    //标题为空不返回slug 避免‘’回填到slug
-    if (!value.trim()) return
     form.slug = createSlugFromText(value, 48)
   }
 )

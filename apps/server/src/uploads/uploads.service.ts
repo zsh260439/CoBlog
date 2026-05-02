@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { UploadFile, type UploadFileDocument } from "./schema/upload-file.schema";
 import type { Model } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
-import { Types } from "mongoose";
 
 @Injectable()
 export class UploadsService {
@@ -29,9 +28,12 @@ export class UploadsService {
   }
 
   async findById(id: string) {
-    if (!Types.ObjectId.isValid(id)) return null
-    const file = await this.uploadFileModel.findById(id).select('+data')
-    return file
+    try {
+      const file = await this.uploadFileModel.findById(id).exec()
+      return file as UploadFileDocument | null
+    } catch {
+      return null
+    }
   }
 
   async findByFilename(filename: string) {
