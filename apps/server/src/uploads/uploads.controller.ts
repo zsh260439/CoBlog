@@ -45,8 +45,10 @@ export class UploadsController {
       return
     }
 
-    res.setHeader('Content-Type', file.mimeType)
+    const mimeType = file.mimeType || 'image/png'
+    const raw = (file.data as any).buffer ? Buffer.from((file.data as any).buffer) : Buffer.from(file.data as any || '')
+    res.setHeader('Content-Type', mimeType)
     res.setHeader('Cache-Control', 'public, max-age=3600')
-    res.send(file.data)
+    res.send(raw)
   }
 }
