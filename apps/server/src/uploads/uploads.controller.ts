@@ -46,7 +46,7 @@ export class UploadsController {
     }
 
     res.setHeader('Content-Type', file.mimeType)
-    res.setHeader('Cache-Control', 'public, max-age=31536000')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
     res.send(file.data)
   }
 }
