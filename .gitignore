@@ -13,6 +13,7 @@ coverage/
 .env.test.local
 .env.production.local
 .env.local
+full-backup/
 .vscode/
 .idea/
 *.suopnpm
