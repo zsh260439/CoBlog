@@ -44,7 +44,7 @@ const submitError = ref('')
 const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
-const aiLoading = ref<'optimize' | 'excerpt' | ''>('')
+const aiLoading = ref<'optimize'| ''>('')
 const aiChatLoading = ref(false)
 const aiChatInput = ref('')
 const aiDrawerVisible = ref(false)
@@ -191,9 +191,6 @@ const handleGenerateExcerpt = async () => {
     ElMessage.warning('正文不存在,无法生成摘要')
     return
   }
-
-  aiLoading.value = 'excerpt'
-
   try {
     const result = await generateArticleExcerptWithAi({
       title: form.title.trim(),
@@ -212,8 +209,6 @@ const handleGenerateExcerpt = async () => {
     ElMessage.success('AI 摘要已生成')
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || 'AI 摘要生成失败')
-  } finally {
-    aiLoading.value = ''
   }
 }
 
@@ -491,9 +486,6 @@ onMounted(async () => {
             <el-button :loading="aiLoading === 'optimize'" @click="handleOptimizeContent">
               AI 优化正文
             </el-button>
-            <el-button :loading="aiLoading === 'excerpt'" @click="handleGenerateExcerpt">
-              AI 生成摘要
-            </el-button>
             <el-button @click="aiDrawerVisible = true">
               AI 对话助手
             </el-button>
@@ -689,6 +681,10 @@ onMounted(async () => {
 
 .publish-actions--stack {
   grid-template-columns: 1fr;
+}
+
+.publish-actions--stack .el-button + .el-button {
+  margin-left: 0;
 }
 
 .publish-actions__ghost,
