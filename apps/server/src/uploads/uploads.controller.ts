@@ -34,7 +34,17 @@ export class UploadsController {
 
   @Get('images/:id')
   async serveImage(@Param('id') id: string, @Res() res: Response) {
-    const file = await this.uploadsService.findById(id)
+    let file = await this.uploadsService.findById(id)
+
+    if (!file) {
+      file = await this.uploadsService.findByFilename(id)
+    }
+
+    if (!file || !file.data) {
+      res.status(404).send('图片不存在')
+      return
+    }
+
     res.setHeader('Content-Type', file.mimeType)
     res.setHeader('Cache-Control', 'public, max-age=31536000')
     res.send(file.data)

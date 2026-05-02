@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { UploadFile, type UploadFileDocument } from "./schema/upload-file.schema";
 import type { Model } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
+import { Types } from "mongoose";
 
 @Injectable()
 export class UploadsService {
@@ -28,10 +29,13 @@ export class UploadsService {
   }
 
   async findById(id: string) {
+    if (!Types.ObjectId.isValid(id)) return null
     const file = await this.uploadFileModel.findById(id).select('+data')
-    if (!file) {
-      throw new NotFoundException('图片不存在')
-    }
+    return file
+  }
+
+  async findByFilename(filename: string) {
+    const file = await this.uploadFileModel.findOne({ filename }).select('+data')
     return file
   }
 }

@@ -3,6 +3,9 @@ import { HydratedDocument } from 'mongoose'
 
 @Schema({ timestamps: true })
 export class UploadFile {
+  @Prop({ trim: true })
+  filename?: string
+
   @Prop({ required: true, trim: true })
   originalName: string
 

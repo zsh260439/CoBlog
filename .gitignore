@@ -15,8 +15,7 @@ coverage/
 .env.local
 .vscode/
 .idea/
-*.suo
-*.ntvs*
+*.suopnpm
 *.njsproj
 *.sln
 *.sw?
