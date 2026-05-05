@@ -17,6 +17,14 @@ export class CreateMessageDto {
   @IsString()
   qq?: string
 
+  @IsString()
+  @IsNotEmpty()
+  senderId: string
+
+  @IsOptional()
+  @IsString()
+  parentId?: string
+
   @IsOptional()
   @IsString()
   device?: string
@@ -27,13 +35,5 @@ export class CreateMessageDto {
 
   @IsOptional()
   @IsBoolean()
-  isPrivate?: boolean
-
-  @IsOptional()
-  @IsBoolean()
   enableEmailNotice?: boolean
-
-  @IsOptional()
-  @IsBoolean()
-  useMarkdown?: boolean
 }
