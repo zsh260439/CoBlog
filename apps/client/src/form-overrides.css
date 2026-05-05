@@ -1,0 +1,52 @@
+.plain-form .el-input__wrapper,
+.plain-form .el-textarea__inner {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.08) inset;
+}
+
+.plain-form .el-input__wrapper.is-focus,
+.plain-form .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.18) inset;
+}
+
+.plain-form .el-checkbox__label {
+  color: var(--text-secondary);
+}
+
+.plain-form .el-checkbox__input.is-checked + .el-checkbox__label,
+.plain-form .el-checkbox__input.is-focus + .el-checkbox__label,
+.plain-form .el-checkbox__input.is-indeterminate + .el-checkbox__label {
+  color: #303133;
+}
+
+.plain-form .el-checkbox__input.is-checked .el-checkbox__inner,
+.plain-form .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  border-color: #111111;
+  background: #111111;
+}
+
+.plain-form .el-checkbox__inner:hover,
+.plain-form .el-checkbox__input.is-focus .el-checkbox__inner {
+  border-color: rgba(17, 17, 17, 0.36);
+}
+
+.plain-form .el-button--primary {
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
+}
+
+.plain-form .el-button--primary:hover,
+.plain-form .el-button--primary:focus-visible {
+  border-color: #2b2b2b;
+  background: #2b2b2b;
+}
+
+.plain-form .el-button--primary:active {
+  border-color: #000000;
+  background: #000000;
+}
+
+.plain-form .el-form-item {
+  margin-bottom: 0;
+}

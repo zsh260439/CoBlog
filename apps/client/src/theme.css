@@ -141,7 +141,6 @@ code, pre {
 .el-input__wrapper {
   border-radius: 6px !important;
   box-shadow: none !important;
-  background: var(--bg-elevated) !important;
   border: 1px solid var(--border-medium) !important;
   transition: all 0.3s ease !important;
 }
