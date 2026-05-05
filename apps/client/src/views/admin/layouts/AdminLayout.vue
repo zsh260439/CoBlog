@@ -7,6 +7,7 @@ import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeftBold,
+  ChatDotRound,
   CollectionTag,
   DataBoard,
   Document,
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/admin', label: '仪表盘', icon: DataBoard },
   { to: '/admin/articles', label: '文章管理', icon: Document },
   { to: '/admin/categories', label: '分类管理', icon: CollectionTag },
+  { to: '/admin/messages', label: '留言管理', icon: ChatDotRound },
   { to: '/admin/article/new', label: '新建文章', icon: EditPen },
 ]
 
@@ -44,10 +46,14 @@ const activeMenu = computed(() => {
     return '/admin/categories'
   }
 
+  if (route.path.startsWith('/admin/messages')) {
+    return '/admin/messages'
+  }
+
   return '/admin'
 })
 
-const pageTitle = computed(() => String(route.meta.title ?? 's仪表盘'))
+const pageTitle = computed(() => String(route.meta.title ?? '仪表盘'))
 
 const backToSite = () => {
   router.push('/blog')

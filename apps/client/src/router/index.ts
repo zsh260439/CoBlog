@@ -48,6 +48,16 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'messages',
+        name: 'admin-messages',
+        component: () => import('@/views/admin/AdminMessagesView.vue'),
+        meta: {
+          appShell: 'admin',
+          title: '留言管理',
+          description: '审核、拒绝和删除前台留言'
+        }
+      },
+      {
         path: 'article/new',
         name: 'admin-article-new',
         component: () => import('@/views/admin/AdminArticleNewView.vue'),
