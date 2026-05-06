@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { v4 as uuidv4 } from 'uuid'
 import { UAParser } from 'ua-parser-js'
 import { createMessage, getMessageList, getMyMessageList } from '@/servers/message'
 import type { GuestbookEntry, MessageFormData } from '@/types/message'
@@ -14,7 +15,7 @@ export function useGuestbook(immediate = true) {
   const submitLoading = ref(false)
 
   // senderId 本地持久化一次即可，刷新后继续沿用。
-  const senderId = localStorage.getItem(MESSAGE_SENDER_ID_KEY) || crypto.randomUUID()
+  const senderId = localStorage.getItem(MESSAGE_SENDER_ID_KEY) || uuidv4()
   localStorage.setItem(MESSAGE_SENDER_ID_KEY, senderId)
 
   // 设备和浏览器信息只在前台采集一次，提交时直接带给后端。

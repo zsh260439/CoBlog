@@ -19,6 +19,7 @@
     "md-editor-v3": "^6.4.2",
     "pinyin-pro": "^3.28.0",
     "ua-parser-js": "^2.0.9",
+    "uuid": "^14.0.0",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0",
     "vue3-marquee": "^4.2.2"
@@ -29,8 +30,8 @@
     "@vitejs/plugin-vue": "^5.0.0",
     "sass": "^1.72.0",
     "typescript": "^5.3.0",
+    "unocss": "^0.59.4",
     "vite": "^5.1.0",
-    "vue-tsc": "^3.2.6",
-    "unocss": "^0.59.4"
+    "vue-tsc": "^3.2.6"
   }
 }
