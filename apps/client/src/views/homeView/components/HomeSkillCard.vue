@@ -208,5 +208,9 @@ const handleLeave = () => {
   .home-skill-card__metrics {
     grid-template-columns: 1fr;
   }
+
+  .home-skill-card__details-scroll {
+    max-height: 180px;
+  }
 }
 </style>

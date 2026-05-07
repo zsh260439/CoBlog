@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as echarts from 'echarts'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface DistributionItem {
   label: string
@@ -47,6 +47,18 @@ const initChart = () => {
 onMounted(() => {
   initChart()
 })
+
+watch(
+  () => props.items,
+  () => {
+    if (chart) {
+      chart.dispose()
+      chart = null
+    }
+    initChart()
+  },
+  { deep: true },
+)
 
 // 页面销毁
 onBeforeUnmount(() => {

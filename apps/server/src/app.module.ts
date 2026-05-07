@@ -7,6 +7,7 @@ import { MessageModule } from './message/message.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { VisitsModule } from './visits/visits.module';
 @Module({
    imports:[
       ConfigModule.forRoot({
@@ -20,6 +21,7 @@ import { UploadsModule } from './uploads/uploads.module';
      TaxonomyModule,
      AuthModule,
      UploadsModule,
+     VisitsModule,
     ],
 })
 export class AppModule {}

@@ -12,57 +12,57 @@ const skillGroups: HomeSkillGroup[] = [
     id: 'frontend',
     badge: 'FE',
     title: '前端开发',
-    subtitle: 'Vue 生态、页面拆分与内容展示体验',
+    subtitle: 'Vue 3 · TypeScript · 组件工程与内容呈现',
     metrics: [
       { label: '核心技能', value: '6+' },
-      { label: '常用方案', value: '3' },
+      { label: '常用方案', value: '4' },
       { label: '最高掌握度', value: '90%' },
     ],
     details: [
       { name: 'Vue 3 组件化开发', level: '精通' },
       { name: 'TypeScript 类型约束', level: '精通' },
-      { name: 'Vue Router 页面组织', level: '熟练' },
-      { name: 'Markdown 内容渲染', level: '熟练' },
-      { name: 'Element Plus 后台界面', level: '熟练' },
-      { name: 'ECharts 数据可视化', level: '了解' },
+      { name: 'Vue Router / 前端路由', level: '熟练' },
+      { name: 'UnoCSS / 原子化样式', level: '熟练' },
+      { name: 'Element Plus 后台组件', level: '熟练' },
+      { name: 'Markdown 内容呈现', level: '熟练' },
     ],
   },
   {
     id: 'engineering',
     badge: 'EG',
     title: '工程实践',
-    subtitle: '请求层、类型抽离和界面交互的持续迭代',
+    subtitle: '构建链路、请求架构与可维护性迭代',
     metrics: [
       { label: '项目经验', value: '2' },
       { label: '复用模块', value: '10+' },
       { label: '维护偏好', value: '95%' },
     ],
     details: [
-      { name: 'Axios 请求封装', level: '精通' },
-      { name: '模块化目录拆分', level: '熟练' },
-      { name: '公共组件抽离', level: '熟练' },
-      { name: '页面交互打磨', level: '熟练' },
-      { name: '响应式布局适配', level: '熟练' },
-      { name: '基础单元测试', level: '了解' },
+      { name: 'Vite 工程化构建', level: '精通' },
+      { name: 'Axios 请求封装与拦截', level: '精通' },
+      { name: 'pnpm + Turbo 协作管理', level: '熟练' },
+      { name: '组合式 Hooks 抽离', level: '熟练' },
+      { name: '响应式 / 双端适配', level: '熟练' },
+      { name: '后台管理系统搭建', level: '熟练' },
     ],
   },
   {
     id: 'backend',
     badge: 'BE',
-    title: '服务端联调',
-    subtitle: '围绕博客与问诊项目补齐接口、上传与数据流转能力',
+    title: '服务端能力',
+    subtitle: 'NestJS · MongoDB · 接口设计与实时通信',
     metrics: [
-      { label: '后端方向', value: '3+' },
-      { label: '接口模块', value: '4' },
+      { label: '服务模块', value: '6+' },
+      { label: '数据模型', value: '4' },
       { label: '联调完成度', value: '85%' },
     ],
     details: [
-      { name: 'NestJS 内容模块', level: '熟练' },
-      { name: 'MongoDB 数据建模', level: '熟练' },
-      { name: '图片上传接口', level: '熟练' },
-      { name: '分类标签接口', level: '熟练' },
-      { name: '留言与表单流转', level: '熟练' },
-      { name: '部署前数据联调', level: '了解' },
+      { name: 'NestJS 模块化服务', level: '熟练' },
+      { name: 'MongoDB / Mongoose 建模', level: '熟练' },
+      { name: 'SSE 实时推送', level: '熟练' },
+      { name: 'RESTful 接口设计', level: '熟练' },
+      { name: '图片上传与静态资源', level: '熟练' },
+      { name: '访客统计与 IP 定位', level: '了解' },
     ],
   },
 ]
@@ -124,6 +124,12 @@ const projectTransforms = reactive<Record<string, { rotateX: number; rotateY: nu
 
 // 桌面端且用户没有开启减少动态时，才启用首页鼠标联动效果。
 const isCursorEnabled = computed(() => width.value >= 1024 && preferredReducedMotion.value !== 'reduce')
+
+const heroHintText = computed(() =>
+  isCursorEnabled.value
+    ? '移动鼠标开启探索吧。向下滚动查看技能栈与项目经历。'
+    : '向下滚动查看技能栈与项目经历。'
+)
 
 const cursorRingStyle = computed(() => ({
   opacity: String(cursorRing.opacity),
@@ -406,7 +412,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <p class="home__hero-hint">移动鼠标开启探索吧。向下滚动查看技能栈与项目经历。</p>
+      <p class="home__hero-hint">{{ heroHintText }}</p>
     </section>
 
     <section class="home__skills-section">
@@ -572,13 +578,16 @@ onMounted(() => {
   transform-origin: center center;
 }
 
-.home__hero-title span,
-.home__hero-title em {
-  display: inline-block;
+.home__hero-title span {
+  display: block;
+  font-size: 0.6em;
+  letter-spacing: 0.15em;
+  font-weight: 400;
+  opacity: 0.55;
 }
 
 .home__hero-title em {
-  margin-left: 0.55rem;
+  display: block;
   font-style: normal;
   font-weight: 300;
 }
@@ -763,30 +772,73 @@ onMounted(() => {
     padding-right: 1.25rem;
   }
 
+  .home__hero {
+    min-height: auto;
+    padding-top: calc(var(--header-height) + 2rem);
+    padding-bottom: 3rem;
+    overflow-x: hidden;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home__hero-orbit,
+  .home__hero-line,
+  .home__hero-orb,
+  .home__hero-heading-copy--mask {
+    display: none;
+  }
+
+  .home__hero-inner {
+    text-align: center;
+  }
+
   .home__hero-title {
-    font-size: clamp(3rem, 18vw, 5.4rem);
+    font-size: clamp(2.4rem, 18vw, 5.4rem);
+    letter-spacing: -0.04em;
   }
 
   .home__hero-title em {
     display: block;
-    margin-left: 0;
     margin-top: 0.25rem;
   }
 
   .home__hero-desc,
-  .home__hero-subtitle,
-  .home__hero-hint {
-    text-align: left;
+  .home__hero-subtitle {
+    text-align: center;
   }
 
   .home__hero-actions {
-    justify-content: flex-start;
+    justify-content: center;
+  }
+
+  .home__hero-action {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
   }
 
   .home__hero-hint {
     position: static;
     margin-top: 1.8rem;
+    text-align: center;
+    transform: none;
     animation: heroHintMobileBounce 2.3s ease-in-out infinite;
+  }
+
+  .home__section-header,
+  .home__projects-side {
+    text-align: left;
+  }
+
+  .home__skills-list {
+    gap: 1rem;
+    margin-top: 1.4rem;
+  }
+
+  .home__skills-section,
+  .home__projects-section {
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
   }
 
   @keyframes heroHintMobileBounce {

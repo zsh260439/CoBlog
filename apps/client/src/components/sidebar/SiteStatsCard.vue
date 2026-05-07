@@ -1,14 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { siteConfig } from '@/config/site'
+import { useVisitStats } from '@/composables/useVisitStats'
 import type { SiteStatsCardProps } from '@/types/ui'
 
 const props = defineProps<SiteStatsCardProps>()
+const { summary, loadVisitStats } = useVisitStats()
+
+onMounted(() => {
+  void loadVisitStats()
+})
 
 // 外部传了统计数据就优先使用，否则回退到站点配置里的快照数据。
 const resolvedItems = computed(() => {
   if (props.items?.length) {
     return props.items
+  }
+
+  if (summary.value) {
+    return [
+      { label: '在线访客', value: String(summary.value.onlineUsers) },
+      { label: '今日浏览', value: String(summary.value.todayViews) },
+      { label: '总浏览量', value: String(summary.value.totalViews) },
+      { label: '总访客量', value: String(summary.value.totalVisitors) },
+    ]
   }
 
   const { onlineUsers, todayViews, totalViews, totalVisitors } = siteConfig.siteStatsSnapshot

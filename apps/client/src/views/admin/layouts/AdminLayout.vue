@@ -308,6 +308,7 @@ const handleLogout = async () => {
   .topbar-right {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .page-main {

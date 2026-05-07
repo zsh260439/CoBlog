@@ -63,6 +63,8 @@ body {
 html {
   font-size: 15px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 code, pre {
