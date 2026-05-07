@@ -339,23 +339,13 @@ watch(
   }
 )
 
-// 当分类列表可用后，自动回填默认分类
-watch(
-  resolvedCategories,
-  (value) => {
-    if (!form.category && value.length) {
-      form.category = value[0].label
-      form.categorySlug = value[0].slug
-    }
-  },
-  { immediate: true }
-)
 //监视草稿 防抖自动保存避免退出
-watch(form,
+watch(form ,
 () => {
   if(isEditMode.value) {
     return
   }
+  console.log('已触发自动保存草稿,', form)
   debouncedSaveDraft()
 }, {
   deep: true

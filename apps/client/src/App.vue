@@ -7,21 +7,28 @@ import AppHeader from '@/components/ui/AppHeader.vue'
 import AppFooter from '@/components/ui/AppFooter.vue'
 import TechCursor from '@/components/ui/TechCursor.vue'
 import { trackVisit } from '@/servers/visit'
+import { useVisitStats } from '@/composables/useVisitStats'
 
 const route = useRoute()
 const router = useRouter()
+const { loadVisitStats } = useVisitStats()
 
 const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
 const isAdminShell = computed(() => route.meta.appShell === 'admin')
 const showTechCursor = computed(() => !isAdminShell.value && route.name !== 'home' && route.name !== 'login')
 
+let lastTrackedPath = ''
+
 const trackPageVisit = async (path: string, appShell: unknown, routeName: unknown) => {
-  if (appShell === 'admin' || routeName === 'login') {
-    return
-  }
+  if (appShell === 'admin' || routeName === 'login') return
+  if (path === lastTrackedPath) return
 
   try {
-    await trackVisit(path)
+    const res = await trackVisit(path)
+    lastTrackedPath = path
+    if (res.data?.counted) {
+      await loadVisitStats()
+    }
   } catch {
     // 统计失败不影响页面正常浏览
   }

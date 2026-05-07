@@ -4,9 +4,6 @@ import { HydratedDocument } from 'mongoose'
 @Schema({ timestamps: true })
 export class Visit {
   @Prop({ required: true, trim: true })
-  path: string
-
-  @Prop({ required: true, trim: true })
   ip: string
 
   @Prop({ default: '' })
@@ -15,8 +12,11 @@ export class Visit {
   @Prop({ default: '' })
   userAgent: string
 
-  createdAt: Date
-  updatedAt: Date
+  @Prop({ default: '' })
+  lastPath: string
+
+  @Prop()
+  lastActiveAt: Date
 }
 
 export type VisitDocument = HydratedDocument<Visit>

@@ -1,14 +1,24 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { aboutProfileCard, siteConfig } from '@/config/site'
 import MarqueeText from '@/components/ui/MarqueeText.vue'
 import TextParticle from '@/components/ui/TextParticle.vue'
-import { Monitor, Notebook } from '@element-plus/icons-vue';
+import LineTrendChart from '@/views/admin/adminDashboardView/components/LineTrendChart.vue'
+import DonutDistributionChart from '@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'
+import { useVisitStats } from '@/composables/useVisitStats'
+import { Monitor, Notebook } from '@element-plus/icons-vue'
+
+const { trend, cities, loadVisitStats } = useVisitStats()
 
 const notes = [
   '武汉轻工大学计算机科学与技术 24 级在读',
   '热爱并关注 Vue / TypeScript / Web 工程化和全栈思维',
   '喜欢分享知识和经验，与他人互动和合作',
 ]
+
+onMounted(() => {
+  void loadVisitStats()
+})
 </script>
 
 <template>
@@ -128,6 +138,22 @@ const notes = [
               </a>
               拿代码。
             </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-stats page-content-reveal">
+      <div class="about-stats__inner">
+        <span class="about-stats__kicker">Site Analytics</span>
+        <h2 class="about-stats__heading">站点统计</h2>
+        <div class="about-stats__grid">
+          <div class="about-stats__card">
+            <span class="about-stats__card-label">累计浏览趋势（近 7 天）</span>
+            <LineTrendChart :items="trend" />
+          </div>
+          <div class="about-stats__card">
+            <DonutDistributionChart :items="cities" />
           </div>
         </div>
       </div>
@@ -462,5 +488,73 @@ const notes = [
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+.about-stats {
+  padding: 0 2rem 5rem;
+}
+
+.about-stats__inner {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.about-stats__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.about-stats__kicker::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: rgba(17, 17, 17, 0.16);
+}
+
+.about-stats__heading {
+  margin: 0.4rem 0 0;
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  color: #111827;
+}
+
+.about-stats__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.8rem;
+}
+
+.about-stats__card {
+  border-radius: 20px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 28px rgba(17, 17, 17, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.64);
+}
+
+.about-stats__card-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4b5563;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 900px) {
+  .about-stats__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .about-stats {
+    padding: 0 1.25rem 4rem;
+  }
 }
 </style>

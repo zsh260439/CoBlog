@@ -4,44 +4,54 @@ import { Model } from 'mongoose'
 import { Visit, VisitDocument } from './schema/visit.schema'
 import { TrackVisitDto } from './dto/track-visit.dto'
 
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000
+const ONLINE_WINDOW_MS = 5 * 60 * 1000
+
 @Injectable()
 export class VisitsService {
   constructor(@InjectModel(Visit.name) private readonly visitModel: Model<VisitDocument>) {}
-
+  // 记录访问
   async track(dto: TrackVisitDto, ip: string, userAgent: string) {
-    const dedupeStart = new Date(Date.now() - 60 * 1000)
-    const recentVisit = await this.visitModel.findOne({
-      ip,
-      path: dto.path,
-      createdAt: { $gte: dedupeStart },
-    }).lean()
+    const now = new Date()
+    const sessionStart = new Date(now.getTime() - SESSION_TIMEOUT_MS)
 
-    if (recentVisit) {
-      return { ok: true, skipped: true }
+    const existing = await this.visitModel.findOne({
+      ip,
+      lastActiveAt: { $gte: sessionStart },
+    })
+
+    if (existing) {
+      await this.visitModel.updateOne(
+        { _id: existing._id },
+        { $set: { lastActiveAt: now } },
+      )
+      return { ok: true, counted: false }
     }
 
     const location = await this.resolveLocation(ip)
     await this.visitModel.create({
-      path: dto.path,
       ip,
       userAgent,
+      lastPath: dto.path,
+      lastActiveAt: now,
       ...(location ? { location } : {}),
     })
-    return { ok: true }
+    return { ok: true, counted: true }
   }
-
+  // 获取公开统计信息
   async getPublicStats() {
     const now = new Date()
     const todayStart = new Date(now)
+    // 重置时间为今天凌晨
     todayStart.setHours(0, 0, 0, 0)
-
-    const onlineStart = new Date(now.getTime() - 5 * 60 * 1000)
+    // 重置时间为5分钟前
+    const onlineStart = new Date(now.getTime() - ONLINE_WINDOW_MS)
 
     const [todayViews, totalViews, totalVisitors, onlineVisitors] = await Promise.all([
       this.visitModel.countDocuments({ createdAt: { $gte: todayStart } }),
       this.visitModel.countDocuments(),
       this.visitModel.distinct('ip').then((items) => items.length),
-      this.visitModel.distinct('ip', { createdAt: { $gte: onlineStart } }).then((items) => items.length),
+      this.visitModel.countDocuments({ lastActiveAt: { $gte: onlineStart } }),
     ])
 
     return {
@@ -51,7 +61,7 @@ export class VisitsService {
       totalVisitors,
     }
   }
-
+  // 获取关于统计信息
   async getAboutStats() {
     const now = new Date()
     const start = new Date(now)
@@ -73,9 +83,9 @@ export class VisitsService {
       { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
     ])
 
-    const trendMap = new Map<string, number>()
+    const trendMap = new Map<number, number>()
     trendRaw.forEach((item) => {
-      const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}-${String(item._id.day).padStart(2, '0')}`
+      const key = item._id.year * 10000 + item._id.month * 100 + item._id.day
       trendMap.set(key, item.count)
     })
 
@@ -83,7 +93,7 @@ export class VisitsService {
     const trend = Array.from({ length: 7 }, (_, index) => {
       const date = new Date(start)
       date.setDate(start.getDate() + index)
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      const key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
       cumulative += trendMap.get(key) ?? 0
       return {
         label: `${date.getMonth() + 1}/${date.getDate()}`,
@@ -112,12 +122,16 @@ export class VisitsService {
       return ''
     }
 
-    const response = await fetch(`https://ipwho.is/${normalized}`)
-    if (!response.ok) return ''
+    try {
+      const response = await fetch(`https://ipwho.is/${normalized}`)
+      if (!response.ok) return ''
 
-    const data = await response.json() as { success?: boolean; region?: string; city?: string }
-    if (data.success === false) return ''
+      const data = await response.json() as { success?: boolean; region?: string; city?: string }
+      if (data.success === false) return ''
 
-    return [data.region, data.city].filter(Boolean).join(' ')
+      return [data.region, data.city].filter(Boolean).join(' ')
+    } catch {
+      return ''
+    }
   }
 }
