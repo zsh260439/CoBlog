@@ -119,13 +119,13 @@ onMounted(() => {
             关于这个网站
           </span>
           <div class="about-jump__body">
-            <p>
+            <p style="margin-bottom: 30px;">
               本网站含有主页博客 Blog、管理 Admin双端，适配手机和网页版。
             </p>
             <p class="about-jump__muted">
                前端 Vue3 ／ 后端 Node.js
             </p>
-            <p>
+            <p style="margin-top: 30px; line-height: 1.5;">
               如果你喜欢这样的风格或对部分功能感兴趣，欢迎去
               <a
                 class="about-jump__link"
@@ -468,6 +468,8 @@ onMounted(() => {
 .about-jump__muted {
   color: #9ca3af !important;
   font-size: 0.9rem !important;
+  font-weight: 500;
+  letter-spacing: 0.09em;
 }
 
 .about-jump__link {

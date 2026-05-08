@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {InjectModel} from '@nestjs/mongoose'
 import {Message,MessageDocument} from './schema/message.schema'
 import {Model, Types} from 'mongoose'
+import axios from 'axios'
 import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
@@ -175,12 +176,15 @@ export class MessageService {
         return ''
       }
 
-      const response = await fetch(`https://ipwho.is/${normalized}`)
-      if (!response.ok) return ''
-
-      const data = await response.json() as { success?: boolean; region?: string; city?: string }
-      if (data.success === false) return ''
-
-      return [data.region, data.city].filter(Boolean).join(' ')
+      try {
+        const { data } = await axios.get(`http://ip-api.com/json/${normalized}`, {
+          timeout: 3000,
+          params: { lang: 'zh-CN' },
+        })
+        if (!data || data.status !== 'success') return ''
+        return [data.regionName, data.city].filter(Boolean).join(' ')
+      } catch {
+        return ''
+      }
     }
 }

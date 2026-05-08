@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import axios from 'axios'
 import { Visit, VisitDocument } from './schema/visit.schema'
 import { TrackVisitDto } from './dto/track-visit.dto'
 
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000
 const ONLINE_WINDOW_MS = 5 * 60 * 1000
 
 @Injectable()
@@ -123,14 +124,14 @@ export class VisitsService {
     }
 
     try {
-      const response = await fetch(`https://ipwho.is/${normalized}`)
-      if (!response.ok) return ''
-
-      const data = await response.json() as { success?: boolean; region?: string; city?: string }
-      if (data.success === false) return ''
-
-      return [data.region, data.city].filter(Boolean).join(' ')
-    } catch {
+      const { data } = await axios.get(`http://ip-api.com/json/${normalized}`, {
+        timeout: 3000,
+        params: { lang: 'zh-CN' },
+      })
+      if (!data || data.status !== 'success') return ''
+      return [data.regionName, data.city].filter(Boolean).join(' ')
+    } catch (err) {
+      console.error('resolveLocation failed:', normalized, err instanceof Error ? err.message : err)
       return ''
     }
   }

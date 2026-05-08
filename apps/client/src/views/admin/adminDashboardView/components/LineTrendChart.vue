@@ -1,76 +1,29 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts'
+import { onBeforeUnmount, ref, watch } from 'vue'
 
-interface TrendItem {
-  label: string
-  value: number
-}
+interface TrendItem { label: string; value: number }
 
-const props = defineProps<{
-  items: TrendItem[]
-}>()
+const props = defineProps<{ items: TrendItem[] }>()
 
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const ensureChart = () => {
-  if (!chartRef.value) {
-    return null
-  }
-
-  chart = echarts.getInstanceByDom(chartRef.value) ?? echarts.init(chartRef.value)
-  return chart
-}
-
-const updateChart = () => {
-  const currentChart = ensureChart()
-  if (!currentChart) {
-    return
-  }
-
-  const xData = props.items.map((item) => item.label)
-  const yData = props.items.map((item) => item.value)
-
-  currentChart.setOption({
-    xAxis: {
-      type: 'category',
-      data: xData,
-      axisLabel: {
-        interval: 0,
-        rotate: 0
-      }
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1
-    },
-    series: [
-      {
-        data: yData,
-        type: 'line'
-      }
-    ]
+const render = () => {
+  if (!chartRef.value) return
+  if (!chart) chart = echarts.init(chartRef.value)
+  chart.setOption({
+    xAxis: { type: 'category', data: props.items.map((i) => i.label) },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [{ data: props.items.map((i) => i.value), type: 'line' }],
   })
 }
 
-watch(
-  () => props.items,
-  () => {
-    updateChart()
-  },
-  { immediate: true }
-)
+watch(() => props.items, () => render(), { immediate: true })
 
-onBeforeUnmount(() => {
-  if (chart) {
-    chart.dispose()
-    chart = null
-  }
-})
+onBeforeUnmount(() => chart?.dispose())
 </script>
 
 <template>
-   <div ref="chartRef" style="width:100%; height: 390px;">
-   </div>
+  <div ref="chartRef" style="width: 100%; height: 390px;"></div>
 </template>

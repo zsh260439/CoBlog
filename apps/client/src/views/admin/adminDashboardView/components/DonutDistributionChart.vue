@@ -2,71 +2,27 @@
 import * as echarts from 'echarts'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-interface DistributionItem {
-  label: string
-  value: number
-}
+interface DistributionItem { label: string; value: number }
 
-const props = defineProps<{
-  items: DistributionItem[]
-}>()
+const props = defineProps<{ items: DistributionItem[] }>()
 
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-// 初始化并渲染图表
-const initChart = () => {
+const render = () => {
   if (!chartRef.value) return
-
-  // 直接创建图表
-  chart = echarts.init(chartRef.value)
-
-  // 转换数据格式
-  const data = props.items.map((item) => ({
-    name: item.label,
-    value: item.value
-  }))
-
-  // 设置饼图配置
+  if (!chart) chart = echarts.init(chartRef.value)
   chart.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
-    },
-    series: [
-      {
-        type: 'pie',
-        radius: ['40%', '70%'],
-        data
-      }
-    ]
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    series: [{ type: 'pie', radius: ['40%', '70%'], data: props.items }],
   })
 }
 
-// 页面挂载 → 只渲染一次
-onMounted(() => {
-  initChart()
-})
+onMounted(() => render())
 
-watch(
-  () => props.items,
-  () => {
-    if (chart) {
-      chart.dispose()
-      chart = null
-    }
-    initChart()
-  },
-  { deep: true },
-)
+watch(() => props.items, () => render(), { deep: true })
 
-// 页面销毁
-onBeforeUnmount(() => {
-  if (chart) {
-    chart.dispose()
-    chart = null
-  }
-})
+onBeforeUnmount(() => chart?.dispose())
 </script>
 
 <template>
