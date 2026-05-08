@@ -108,7 +108,7 @@ watch(
 }
 
 .header--overlay {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgb(225, 225, 225);
   border-bottom-color: rgba(23, 21, 18, 0.08);
   box-shadow: 0 10px 24px rgba(17, 17, 17, 0.04);
 }

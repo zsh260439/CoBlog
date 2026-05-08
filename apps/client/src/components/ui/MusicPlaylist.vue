@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useMusicPlayer, type Track } from '@/composables/useMusicPlayer'
+import { useMusicPlayer} from '@/composables/useMusicPlayer'
+import type { Track } from '@/types/music'
 
 const { playlist, currentTrack, isPlaying, switchTrack, togglePlaylist } = useMusicPlayer()
 
@@ -17,7 +18,7 @@ const isActive = (track: Track) => track.id === currentTrack.value.id
     </div>
 
     <div class="playlist-header">
-      <span class="playlist-title">Playlist</span>
+      <span class="playlist-title">音乐</span>
       <button class="playlist-close" @click="togglePlaylist">×</button>
     </div>
 
