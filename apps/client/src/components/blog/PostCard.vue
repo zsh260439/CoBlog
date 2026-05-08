@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ArticleCardProps } from '@/types/article'
 import { estimateReadTime, formatDate } from '@/utils'
+import { Clock, Document, Reading, View } from '@element-plus/icons-vue';
 
 const props = defineProps<ArticleCardProps>()
 const coverStyle = computed(() => {
@@ -18,6 +19,8 @@ const coverStyle = computed(() => {
 const excerpt = computed(() => props.article.excerpt || props.article.content.slice(0, 140))
 const publishedAt = computed(() => formatDate(props.article.createdAt, 'long'))
 const readTime = computed(() => estimateReadTime(props.article.content))
+const wordCount = computed(() => props.article.wordCount || 0)
+const view = computed(() => props.article.views || 0)
 </script>
 
 <template>
@@ -33,14 +36,29 @@ const readTime = computed(() => estimateReadTime(props.article.content))
         <span class="post-card__category-inline">{{ article.category }}</span>
         <span>{{ publishedAt }}</span>
         <span class="post-card__dot"></span>
-        <span>{{ readTime }}</span>
+        <span style="display: flex; align-items: center;">
+          <el-icon style="font-size: 0.8rem; margin-right: 4px;"><Clock /></el-icon>
+          {{ readTime }}
+        </span>
       </div>
 
       <h2 class="post-card__title">{{ article.title }}</h2>
       <p class="post-card__excerpt">{{ excerpt }}</p>
 
       <div class="post-card__footer">
-        <span class="post-card__action">阅读全文</span>
+        <span style="color:var(--text-secondary); font-size: 0.7rem;">
+          <el-icon style="font-size: 0.7rem; margin-right: 4px; color: var(--text-muted); "><Document /></el-icon>
+          {{ wordCount }} 字
+        </span>
+       <span style="color:var(--text-secondary); font-size: 0.7rem;display: flex; align-items: center; margin-bottom:2px">
+        <el-icon style="font-size: 0.7rem; margin-right: 4px; color: var(--text-muted); "><View /></el-icon>
+        {{ view }} 浏览
+       </span>
+        <span class="post-card__action">
+          <el-icon style="font-size: 0.8rem;color: var(--text-muted);"><Reading /></el-icon>
+          点击阅读全文
+        </span>
+
       </div>
     </div>
   </router-link>
@@ -52,7 +70,7 @@ const readTime = computed(() => estimateReadTime(props.article.content))
   grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(17, 17, 17, 0.04);
   text-decoration: none;
@@ -81,8 +99,8 @@ const readTime = computed(() => estimateReadTime(props.article.content))
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.95rem;
-  padding: 1.2rem 1.35rem;
+  gap: 0.5rem;
+  padding: 1rem 1.35rem;
 }
 
 .post-card__meta,

@@ -571,9 +571,9 @@ onMounted(() => {
 }
 
 .home__hero-title {
-  margin: 1.4rem 0 0.9rem;
-  font-size: clamp(3.8rem, 11vw, 8.4rem);
-  line-height: 0.92;
+  margin: 1.1rem 0 0.9rem;
+  font-size: clamp(3.8rem, 10vw, 8.4rem);
+  line-height: 0.9;
   letter-spacing: -0.08em;
   transform-origin: center center;
 }

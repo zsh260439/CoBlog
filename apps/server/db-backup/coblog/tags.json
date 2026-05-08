@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "69eda7092d6b386d308c86e0",
+    "label": "nestjs",
+    "slug": "nestjs",
+    "createdAt": "2026-04-26T05:47:53.352Z",
+    "updatedAt": "2026-04-26T05:47:53.352Z",
+    "__v": 0
+  },
+  {
+    "_id": "69eda70d2d6b386d308c86e1",
+    "label": "jwt",
+    "slug": "jwt",
+    "createdAt": "2026-04-26T05:47:57.710Z",
+    "updatedAt": "2026-04-26T05:47:57.710Z",
+    "__v": 0
+  },
+  {
+    "_id": "69eda7102d6b386d308c86e2",
+    "label": "js",
+    "slug": "js",
+    "createdAt": "2026-04-26T05:48:00.988Z",
+    "updatedAt": "2026-04-26T05:48:00.988Z",
+    "__v": 0
+  },
+  {
+    "_id": "69eda7132d6b386d308c86e3",
+    "label": "vue",
+    "slug": "vue",
+    "createdAt": "2026-04-26T05:48:03.603Z",
+    "updatedAt": "2026-04-26T05:48:03.603Z",
+    "__v": 0
+  },
+  {
+    "_id": "69f5e644e0bc02c835f2894c",
+    "label": "study",
+    "slug": "study",
+    "createdAt": "2026-05-02T11:55:48.771Z",
+    "updatedAt": "2026-05-02T11:55:48.771Z",
+    "__v": 0
+  }
+]

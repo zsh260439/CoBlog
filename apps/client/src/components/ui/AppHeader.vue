@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWindowScroll } from '@vueuse/core'
 import { primaryNav, siteConfig } from '@/config/site'
+import MusicPlayer from '@/components/ui/MusicPlayer.vue'
 
 const isMenuOpen = ref(false)
 const route = useRoute()
@@ -51,6 +52,8 @@ watch(
         <span>{{ brandLeading }}</span><span class="accent">{{ brandAccent }}</span><span>{{ brandTrailing }}</span>
         <span class="logo-bracket">/&gt;</span>
       </router-link>
+
+      <MusicPlayer />
 
       <nav class="nav-desktop">
         <router-link
