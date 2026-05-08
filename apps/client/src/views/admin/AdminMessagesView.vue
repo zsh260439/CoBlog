@@ -6,6 +6,7 @@ import { formatDate } from '@/utils/formatDate'
 import { ElMessage } from 'element-plus'
 import { useAdminMessages } from '@/composables/useAdminMessages'
 import { siteConfig } from '@/config/site'
+import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 
 const { messages, loadMessages, connect, approve, reject, remove, reply, batchApprove, batchReject, disconnect } = useAdminMessages()
 //对状态数据进行处理
