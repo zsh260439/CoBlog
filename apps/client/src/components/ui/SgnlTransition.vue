@@ -31,7 +31,7 @@ let camera: THREE.PerspectiveCamera | null = null
 let renderer: THREE.WebGLRenderer | null = null
 let linesMesh: THREE.LineSegments | null = null
 let material: THREE.LineBasicMaterial | null = null
-let clock: THREE.Clock | null = null
+let timer: THREE.Timer | null = null
 let animationId = 0
 
 function createSeededRandom(seed: number) {
@@ -49,9 +49,10 @@ const handleResize = () => {
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
-  if (!clock || !linesMesh || !material || !renderer || !scene || !camera) return
+  if (!timer || !linesMesh || !material || !renderer || !scene || !camera) return
 
-  const elapsedTime = clock.getElapsedTime()
+  timer.update()
+  const elapsedTime = timer.getElapsed()
   linesMesh.rotation.y = elapsedTime * 0.05
   material.opacity = 0.012 + Math.sin(elapsedTime * 0.5) * 0.003
   renderer.render(scene, camera)
@@ -139,7 +140,7 @@ onMounted(() => {
   linesMesh.position.x = -5
   scene.add(linesMesh)
 
-  clock = new THREE.Clock()
+  timer = new THREE.Timer()
   animate()
 
   window.addEventListener('resize', handleResize)
