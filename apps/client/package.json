@@ -11,7 +11,6 @@
   "dependencies": {
     "@coblog/types": "workspace:*",
     "@element-plus/icons-vue": "^2.3.1",
-    "@types/three": "^0.184.1",
     "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
     "echarts": "^6.0.0",
