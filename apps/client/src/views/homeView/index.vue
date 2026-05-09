@@ -216,13 +216,6 @@ onUnmounted(() => {
         </div>
       </div>
     </section>
-
-    <footer class="footer">
-      <div class="footer__inner">
-        <p class="footer__text">记录成长、思考和生活的地方。</p>
-        <p class="footer__copy">{{ siteConfig.name }} © {{ new Date().getFullYear() }}</p>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -352,11 +345,10 @@ onUnmounted(() => {
   padding-top: 5rem;
   background: linear-gradient(
     to bottom,
-    #d5d5d1 0%,
-    #dcdcd9 18%,
-    #e6e6e3 100%
+     #e5e5e2 100%
   );
 }
+
 
 .section__inner {
   max-width: 60rem;
@@ -533,37 +525,8 @@ onUnmounted(() => {
   border-radius: 3px;
 }
 
-/* ── Footer ── */
-.footer {
-  background: linear-gradient(180deg, #e1e1dd 0%, #dcdcd9 100%);
-  padding: 2.5rem 1.5rem;
-  border-top: 1px solid rgba(5, 5, 5, 0.1);
-}
 
-.footer__inner {
-  max-width: 60rem;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
 
-.footer__text {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #050505;
-  margin: 0;
-}
-
-.footer__copy {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
-  color: rgba(5, 5, 5, 0.4);
-  margin: 0;
-}
 
 @media (max-width: 767px) {
   .hero__title {
