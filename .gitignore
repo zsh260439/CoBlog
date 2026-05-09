@@ -22,3 +22,6 @@ full-backup/
 *.sw?
 .docs/
 scripts/
+tmp-test/
+tmp/
+**/tmp-test/

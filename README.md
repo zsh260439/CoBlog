@@ -1,117 +1,161 @@
 # CoBlog
 
-全栈博客项目，Vue 3 + NestJS + MongoDB，适合作为个人博客或练手作品。
+CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的全栈博客系统。项目同时提供前台内容站点与后台管理端，适合作为个人博客、作品集项目或全栈学习模板。
 
-## 功能
+## 项目亮点
 
-### 前台
-
-- 首页 / 博客列表 / 文章详情
-- Markdown 渲染 + 代码高亮
-- 文章目录提取与滚动高亮
-- 上一篇 / 下一篇导航、相关文章推荐
-- 分类页 / 标签页 / 归档页
-- 关于页 / 留言板
-- 站点统计卡片
-
-### 后台
-
-- JWT 双 Token 登录（accessToken + httpOnly refreshToken）
-- 仪表盘（文章趋势图、环形分类分布图）
-- 文章增删改查、Markdown 编辑器
-- 草稿防抖自动保存
-- AI 辅助（MiniMax — 正文润色、摘要生成、对话追问）
-- 分类 / 标签管理
-- 图片上传
-
-### 服务端
-
-- 文章 CRUD、分类标签 CRUD
-- 留言接口
-- 图片上传接口
-- JWT 鉴权 Guard、Token 轮转刷新
-- AI 对接 MiniMax API
+- 前台：文章列表、详情、分类、标签、归档、留言、关于页
+- 后台：文章编辑、分类标签管理、留言审核、站点统计
+- 编辑体验：`md-editor-v3` + 图片上传 + 草稿自动保存
+- 认证方案：`JWT Access Token + httpOnly Refresh Token`
+- AI 助手：支持文章优化、摘要生成、流式对话
+- 工程结构：`pnpm workspace + turbo` 的 monorepo 组织
 
 ## 技术栈
 
-| 层 | 技术 |
-|----|------|
-| 前端 | Vue 3、TypeScript、Vite、Vue Router、Element Plus |
-| 编辑器 | md-editor-v3 |
-| 渲染 | markdown-it、highlight.js |
-| 图表 | ECharts |
-| 后端 | NestJS、MongoDB、Mongoose |
-| 鉴权 | @nestjs/jwt、bcrypt、双 Token + httpOnly Cookie |
-| AI | MiniMax API |
+### 前端（apps/client）
 
-## 项目结构
+- 框架与语言：`Vue 3`、`TypeScript`
+- 构建工具：`Vite`
+- 路由：`Vue Router`
+- UI 组件：`Element Plus`、`@element-plus/icons-vue`
+- 原子化样式与样式体系：`UnoCSS`、`Sass`
+- 状态与组合式工具：`VueUse`
+- 网络请求：`Axios`
+- 图表：`ECharts`
+- Markdown 编辑与预览：`md-editor-v3`
+- 动画与可视化：`GSAP`、`Three.js`
+- 工具库：`uuid`、`ua-parser-js`、`jwt-decode`、`pinyin-pro`、`simplex-noise`
+- 类型支持：`@types/three`、`@types/ua-parser-js`、`@types/node`
 
-```text
-.
-├── client/                        前端
-│   ├── src/
-│   │   ├── components/            通用组件
-│   │   │   ├── blog/              博客卡片
-│   │   │   ├── sidebar/           侧边栏（个人信息、站点统计）
-│   │   │   └── ui/                布局组件（Header、Footer、PageHero）
-│   │   ├── composables/           组合式函数
-│   │   │   ├── useArticles.ts     文章列表
-│   │   │   ├── useArticleDetail.ts 文章详情
-│   │   │   ├── useTaxonomies.ts   分类标签
-│   │   │   └── useDebounce.ts     通用防抖
-│   │   ├── views/                 页面视图
-│   │   │   ├── homeView/          首页
-│   │   │   ├── postView/          文章详情
-│   │   │   ├── aboutView/         关于
-│   │   │   └── admin/             后台管理
-│   │   ├── types/                 类型定义
-│   │   ├── servers/               接口请求层
-│   │   ├── http-utils/            axios 封装、401 拦截队列
-│   │   ├── utils/                 工具函数（日期、slug、markdown 等）
-│   │   ├── config/                配置
-│   │   ├── router/                路由
-│   │   └── store/                 状态存储（草稿）
-│   └── public/
-├── server/                        NestJS 后端
-│   ├── src/
-│   │   ├── auth/                  JWT 鉴权（Guard、双 Token、轮转刷新）
-│   │   ├── articles/              文章模块
-│   │   ├── taxonomy/              分类标签模块
-│   │   ├── message/               留言模块
-│   │   ├── uploads/               上传模块
-│   │   ├── ai/                    AI 模块（MiniMax）
-│   │   ├── utils/                 工具服务（随机封面图）
-│   │   └── common/                公共工具（ApiResponse）
-│   └── uploads/images/            图片存储
-└── root
-    ├── package.json               同时启动前后端
-    └── README.md
-```
+### 后端（apps/server）
 
-## 本地运行
+- 框架：`NestJS`（`@nestjs/common`、`@nestjs/core`、`@nestjs/platform-express`）
+- 数据层：`Mongoose`、`MongoDB`
+- 鉴权与安全：`@nestjs/jwt`、`bcrypt`、`httpOnly Cookie`
+- 参数校验与转换：`class-validator`、`class-transformer`
+- 文件上传：`multer`
+- 配置管理：`@nestjs/config`
+- 响应式与实时：`rxjs`
+- 基础设施：`cookie-parser`、`reflect-metadata`
+- 开发与规范：`ESLint`、`Prettier`、`typescript-eslint`
+
+### AI 能力
+
+- 模型接口：`DeepSeek Chat Completions API`
+- 使用场景：正文优化、摘要生成、流式对话助写
+
+### 工程化与协作
+
+- Monorepo：`pnpm workspace`
+- 构建编排：`Turborepo`
+- 包管理与运行环境：`pnpm`、`Node.js`
+- CI/CD：`GitHub Actions`
+- 部署编排：`Nginx`、`PM2`
+- 代码规范：`ESLint`、`Prettier`
+
+## 快速开始（新手友好）
+
+### 1. 环境准备
+
+- Node.js `>= 20`
+- pnpm `>= 10`
+- MongoDB（本地或远程）
+
+### 2. 克隆与安装
 
 ```bash
-npm install
-npm run dev
+git clone https://github.com/zsh260439/CoBlog.git
+cd CoBlog
+pnpm install
 ```
+
+### 3. 配置环境变量
+
+在仓库根目录创建 `.env.development.local`：
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+
+PORT=3000
+MONGODB_URI=mongodb://127.0.0.1:27017/coblog
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=1d
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
+
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+### 4. 启动项目
+
+```bash
+pnpm dev:server
+pnpm dev:client
+```
+
+默认访问：
+
+- 前台：`http://localhost:5173`
+- 后端：`http://localhost:3000`
 
 ## 常用命令
 
 ```bash
-npm run dev:client    # 只启动前端
-npm run dev:server    # 只启动后端
-npm run build         # 构建前后端
+pnpm dev            # turbo 并行启动工作区开发任务
+pnpm dev:client     # 仅启动前端
+pnpm dev:server     # 仅启动后端
+
+pnpm build          # 构建全部包
+pnpm build:client   # 构建前端
+pnpm build:server   # 构建后端
 ```
 
-## 环境变量
+## 目录结构
 
-```env
-# 服务端 .env
-PORT=3000
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-MINIMAX_API_KEY=your_minimax_api_key
-MINIMAX_API_URL=https://api.minimax.chat/v1/text/chatcompletion_v2
-MINIMAX_MODEL=MiniMax-M2.7
+```text
+.
+├── apps/
+│   ├── client/                # Vue 客户端
+│   └── server/                # Nest 服务端
+├── packages/
+│   └── types/                 # 共享类型包
+├── docs/                      # 项目文档
+├── pnpm-workspace.yaml
+└── turbo.json
 ```
+
+## 功能预览（核心模块）
+
+### 前台站点
+
+- 首页视觉模块
+- 文章阅读页（目录联动、上一篇/下一篇、相关推荐）
+- 分类页、标签页、归档页
+- 留言页
+
+### 后台管理
+
+- 登录鉴权
+- 文章管理（新建/编辑/发布）
+- 分类标签管理
+- 留言审核与回复
+- 访问统计看板
+
+### AI 助写
+
+- 正文优化
+- 自动摘要
+- 流式对话助手（边生成边显示）
+
+## 开源协作
+
+欢迎通过 `Issue` 或 `Pull Request` 参与改进：
+
+- Bug 修复
+- 功能增强
+- 文档完善
+- 性能优化
+
+如果你是第一次参与开源协作，建议先从文档和小功能优化入手。
