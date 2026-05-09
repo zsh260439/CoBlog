@@ -5,7 +5,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { chatWithArticleAi, generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
+import { generateArticleExcerptWithAi, optimizeArticleWithAi, streamChatWithArticleAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
@@ -15,7 +15,7 @@ import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import type { AiChatMessage } from '@/types/admin/ai'
-import { useDebounce } from '@/composables/userDebounce'
+import { useDebounce } from '@/composables/useDebounce'
 import AIChatInput from '@/components/ui/AIChatInput.vue'
 ensureMarkdownConfigured()
 const route = useRoute()
@@ -214,6 +214,12 @@ const handleGenerateExcerpt = async () => {
   }
 }
 
+const scrollAiMessagesToBottom = () => {
+  requestAnimationFrame(() => {
+    aiMessagesRef.value!.scrollTop = aiMessagesRef.value!.scrollHeight
+  })
+}
+
 // 对话式 AI 助手会携带当前标题、正文和历史消息，尽量返回可直接复用的 Markdown 内容。
 const handleSendAiMessage = async () => {
   if (!aiChatInput.value.trim()) {
@@ -234,36 +240,31 @@ const handleSendAiMessage = async () => {
   const currentQuestion = aiChatInput.value.trim()
   aiChatInput.value = ''
 
+  aiMessages.value = [
+    ...nextMessages,
+    {
+      role: 'assistant',
+      content: '',
+    },
+  ]
+
+  const assistantIndex = aiMessages.value.length - 1
+  scrollAiMessagesToBottom()
+
   try {
-    const result = await chatWithArticleAi({
+    await streamChatWithArticleAi({
       title: form.title.trim(),
       content: form.content,
       instruction: aiInstruction.value.trim(),
       messages: nextMessages.filter((item) => item.role === 'user' || item.role === 'assistant'),
+    }, (chunk) => {
+      aiMessages.value[assistantIndex].content += chunk
+      scrollAiMessagesToBottom()
     })
-
-    const answer = result.data?.content?.trim()
-
-    if (!answer) {
-      throw new Error('AI 未返回有效回复')
-    }
-
-    aiMessages.value = [
-      ...nextMessages,
-      {
-        role: 'assistant',
-        content: answer,
-      },
-    ]
   } catch (error: any) {
-    aiMessages.value = [
-      ...nextMessages,
-      {
-        role: 'assistant',
-        content: `AI 请求失败：${error?.response?.data?.message || error?.message || '请稍后重试'}`,
-      },
-    ]
+    aiMessages.value[assistantIndex].content = `AI 请求失败：${error?.message || '请稍后重试'}`
     aiChatInput.value = currentQuestion
+    scrollAiMessagesToBottom()
   } finally {
     aiChatLoading.value = false
   }
@@ -326,7 +327,6 @@ const publishArticle = async () => {
     }
     if (isEditMode.value) {
       const result = await updateArticle(String(route.params.id), payload)
-      console.log("更新文章结果:", result)
       if (result.data) {
         setArticles(
           articles.value.map((item) => (item._id === result.data?._id ? result.data : item))
@@ -372,6 +372,13 @@ watch(form ,
 }, {
   deep: true
 })
+
+watch(aiDrawerVisible, (visible) => {
+  if (visible) {
+    scrollAiMessagesToBottom()
+  }
+})
+
 // 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {
   await Promise.all([loadTaxonomies(), loadArticles()])

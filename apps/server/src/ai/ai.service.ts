@@ -220,4 +220,81 @@ export class AiService {
 
     return { content }
   }
+
+  async streamArticleAssistant(dto: ArticleChatDto, onChunk: (chunk: string) => void) {
+    const systemPrompt = [
+      '你是一个帮助开发者写技术文章的 AI 助手。',
+      '你要优先输出结构清晰、能直接粘贴进博客编辑器的 Markdown。',
+      '如果用户要求生成正文，请直接给出完整 Markdown，包括标题层级、列表、引用、代码块和总结。',
+      '如果用户是在追问某个概念，请先解释，再给出可以写进文章的 Markdown 片段。',
+      '不要使用“下面是优化结果”之类废话，尽量直接输出内容本体。',
+      '不能编造不存在的 API、结论或代码行为。',
+    ].join('')
+
+    const contextPrompt = [
+      dto.title ? `当前文章标题：${dto.title}` : '',
+      dto.instruction ? `写作要求：${dto.instruction}` : '',
+      dto.content?.trim() ? `当前正文草稿：\n${dto.content}` : '当前正文草稿为空，你可以根据用户问题直接生成 Markdown。',
+    ]
+      .filter(Boolean)
+      .join('\n\n')
+
+    const messages: DeepSeekMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: contextPrompt },
+      ...dto.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+    ]
+
+    this.ensureConfigured()
+
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        messages,
+        model: this.model,
+        stream: true,
+        temperature: 0.24,
+        thinking: { type: 'disabled' },
+        response_format: { type: 'text' },
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new BadGatewayException(`DeepSeek 请求失败：${errorText.slice(0, 200)}`)
+    }
+
+    const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader()
+    let buffer = ''
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+
+      buffer += value
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+
+        const payload = line.slice(6).trim()
+        if (payload === '[DONE]') return
+
+        const json = JSON.parse(payload)
+        const content = json.choices?.[0]?.delta?.content || ''
+
+        if (content) {
+          onChunk(content)
+        }
+      }
+    }
+  }
 }
