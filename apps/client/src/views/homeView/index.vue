@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { siteConfig } from '@/config/site'
 import InkHero from '@/components/ui/InkHero.vue'
 import SgnlTransition from '@/components/ui/SgnlTransition.vue'
+import { consumeHomeIntroPlayback } from './introState'
+
+const shouldPlayIntro = ref(consumeHomeIntroPlayback())
+let previousBodyOverflow = ''
+let previousHtmlOverflow = ''
 
 interface SkillItem {
   name: string
@@ -105,15 +110,42 @@ const setupReveal = () => {
   return observer
 }
 
+const lockPageScroll = () => {
+  previousBodyOverflow = document.body.style.overflow
+  previousHtmlOverflow = document.documentElement.style.overflow
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
+}
+
+const unlockPageScroll = () => {
+  document.body.style.overflow = previousBodyOverflow
+  document.documentElement.style.overflow = previousHtmlOverflow
+}
+
+const handleHeroReady = () => {
+  if (!shouldPlayIntro.value) return
+
+  shouldPlayIntro.value = false
+  unlockPageScroll()
+}
+
 onMounted(() => {
   setupReveal()
+
+  if (shouldPlayIntro.value) {
+    lockPageScroll()
+  }
+})
+
+onUnmounted(() => {
+  unlockPageScroll()
 })
 </script>
 
 <template>
   <div class="home">
     <div class="hero-fusion">
-      <InkHero>
+      <InkHero :skip-intro="!shouldPlayIntro" @ready="handleHeroReady">
         <p class="hero__subtitle">{{ siteConfig.ownerRole }} · {{ siteConfig.ownerLocation }}</p>
         <div class="hero__actions">
           <router-link to="/blog" class="hero__btn hero__btn--outline " >进入博客</router-link>
@@ -278,8 +310,52 @@ onMounted(() => {
 
 /* ── Section ── */
 .section {
+  position: relative;
   padding: 3rem 1.5rem;
-  background: #8e8e8e;
+}
+
+.section--skills {
+  padding-top: 8rem;
+  background: linear-gradient(
+    to bottom,
+    #000000 0%,
+    #050505 10%,
+    #161616 20%,
+    #3b3b39 36%,
+    #7a7a76 54%,
+    #b9b9b4 70%,
+    #dcdcd9 84%,
+    #e5e5e2 100%
+  );
+}
+
+.section--skills::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 220px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.02) 18%,
+    rgba(220, 220, 217, 0.14) 48%,
+    rgba(220, 220, 217, 0.45) 72%,
+    rgba(220, 220, 217, 0.92) 100%
+  );
+  filter: blur(18px);
+}
+
+.section--projects {
+  padding-top: 5rem;
+  background: linear-gradient(
+    to bottom,
+    #d5d5d1 0%,
+    #dcdcd9 18%,
+    #e6e6e3 100%
+  );
 }
 
 .section__inner {
@@ -294,6 +370,8 @@ onMounted(() => {
   margin-bottom: 2rem;
   border-bottom: 1px solid rgba(5, 5, 5, 0.12);
   padding-bottom: 1rem;
+  position: relative;
+  z-index: 2;
 }
 
 .section__label {
@@ -315,21 +393,25 @@ onMounted(() => {
 /* ── Skills ── */
 .skills-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
 }
 
 .skill-card {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(5, 5, 5, 0.06);
-  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.62));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
   padding: 1.25rem;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
 }
 
 .skill-card:hover {
-  box-shadow: 0 4px 16px rgba(5, 5, 5, 0.06);
-  border-color: rgba(5, 5, 5, 0.12);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.72));
+  transform: translateY(-2px);
 }
 
 .skill-card__head {
@@ -382,24 +464,27 @@ onMounted(() => {
 /* ── Projects ── */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
 }
 
 .project-card {
   display: block;
   text-decoration: none;
   color: inherit;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(5, 5, 5, 0.06);
-  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.68));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
   padding: 1.5rem;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
 }
 
 .project-card:hover {
-  box-shadow: 0 8px 24px rgba(5, 5, 5, 0.06);
-  border-color: rgba(5, 5, 5, 0.12);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.76));
   transform: translateY(-3px);
 }
 
@@ -450,7 +535,7 @@ onMounted(() => {
 
 /* ── Footer ── */
 .footer {
-  background: #dcdcd9;
+  background: linear-gradient(180deg, #e1e1dd 0%, #dcdcd9 100%);
   padding: 2.5rem 1.5rem;
   border-top: 1px solid rgba(5, 5, 5, 0.1);
 }

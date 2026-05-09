@@ -28,6 +28,16 @@
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
 import { useMouse, useRafFn, useWindowSize } from '@vueuse/core'
 
+const props = withDefaults(defineProps<{
+  skipIntro?: boolean
+}>(), {
+  skipIntro: false,
+})
+
+const emit = defineEmits<{
+  ready: []
+}>()
+
 const wrapRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
@@ -48,6 +58,8 @@ let program: WebGLProgram | null = null
 let animationId = 0
 let progress = 0
 let targetProgress = 0
+let hasEmittedReady = false
+const sequenceTimeouts: number[] = []
 
 const heroTitleStyle = computed(() => ({
   transform: `translate(-50%, -50%) translate3d(${heroMotion.titleX}px, ${heroMotion.titleY}px, 0) rotate(${heroMotion.titleRotate}deg)`,
@@ -212,6 +224,16 @@ function render() {
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.drawArrays(gl.TRIANGLES, 0, 6)
 
+  syncDisplayState()
+
+  if (!hasEmittedReady && progress >= 0.995) {
+    emitReadyOnce()
+  }
+
+  animationId = requestAnimationFrame(render)
+}
+
+function syncDisplayState() {
   if (titleRef.value) {
     const titleOpacity = 0.15 + 0.85 * progress
     titleRef.value.style.color = `rgba(240,240,238,${titleOpacity})`
@@ -221,8 +243,26 @@ function render() {
     const percent = Math.min(100, progress * 100).toFixed(3)
     counterRef.value.innerText = `${percent} %`
   }
+}
 
-  animationId = requestAnimationFrame(render)
+function emitReadyOnce() {
+  if (hasEmittedReady) return
+
+  hasEmittedReady = true
+  emit('ready')
+}
+
+function clearSequenceTimeouts() {
+  sequenceTimeouts.forEach(timeoutId => window.clearTimeout(timeoutId))
+  sequenceTimeouts.length = 0
+}
+
+function completeDiffusion() {
+  clearSequenceTimeouts()
+  progress = 1
+  targetProgress = 1
+  syncDisplayState()
+  emitReadyOnce()
 }
 
 function handleResize() {
@@ -266,17 +306,24 @@ const { pause, resume } = useRafFn(() => {
 onMounted(() => {
   initWebGL()
 
-  const sequence = [
-    { time: 500, target: 0.1 },
-    { time: 1500, target: 0.15 },
-    { time: 2500, target: 0.4 },
-    { time: 3500, target: 0.45 },
-    { time: 4500, target: 0.8 },
-    { time: 5500, target: 1.0 }
-  ]
-  sequence.forEach(step => {
-    setTimeout(() => { targetProgress = step.target }, step.time)
-  })
+  if (props.skipIntro) {
+    completeDiffusion()
+  } else {
+    const sequence = [
+      { time: 500, target: 0.1 },
+      { time: 1500, target: 0.15 },
+      { time: 2500, target: 0.4 },
+      { time: 3500, target: 0.45 },
+      { time: 4500, target: 0.8 },
+      { time: 5500, target: 1.0 }
+    ]
+    sequence.forEach(step => {
+      const timeoutId = window.setTimeout(() => {
+        targetProgress = step.target
+      }, step.time)
+      sequenceTimeouts.push(timeoutId)
+    })
+  }
 
   render()
   resume()
@@ -286,6 +333,7 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
   pause()
+  clearSequenceTimeouts()
   window.removeEventListener('resize', handleResize)
   if (gl && program) {
     gl.deleteProgram(program)
