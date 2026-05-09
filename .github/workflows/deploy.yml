@@ -1,0 +1,130 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.ECS_HOST }}
+      DEPLOY_USER: ${{ secrets.ECS_USER }}
+      DEPLOY_ROOT: ${{ secrets.DEPLOY_ROOT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Prepare deploy package
+        shell: bash
+        run: |
+          node <<'EOF'
+          const fs = require('fs')
+          const pkg = JSON.parse(fs.readFileSync('apps/server/package.json', 'utf8'))
+          delete pkg.dependencies['@coblog/types']
+          fs.mkdirSync('.deploy', { recursive: true })
+          fs.writeFileSync('.deploy/server-package.json', `${JSON.stringify(pkg, null, 2)}\n`)
+          EOF
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Verify SSH key
+        shell: bash
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o PreferredAuthentications=publickey \
+            -o PasswordAuthentication=no \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
+            -p 22 \
+            "echo ok"
+
+      - name: Prepare remote directories
+        shell: bash
+        run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
+            -p 22 \
+            "mkdir -p '$DEPLOY_ROOT/server' '$DEPLOY_ROOT/client'"
+
+      - name: Upload server package.json
+        shell: bash
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            .deploy/server-package.json \
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/server/package.json"
+
+      - name: Upload server dist
+        shell: bash
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            -r apps/server/dist \
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/server/"
+
+      - name: Upload client dist
+        shell: bash
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            -r apps/client/dist \
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/client/"
+
+      - name: Upload nginx config
+        shell: bash
+        run: |
+          scp \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            -P 22 \
+            deploy/nginx/coblog.conf \
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"/etc/nginx/conf.d/coblog.conf"
+
+      - name: Restart app
+        shell: bash
+        run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
+            -p 22 \
+            "set -e; cd '$DEPLOY_ROOT/server'; if [ -f '$DEPLOY_ROOT/.env' ]; then cp '$DEPLOY_ROOT/.env' .env; fi; npm install --omit=dev; if pm2 describe coblog-api >/dev/null 2>&1; then pm2 restart coblog-api --update-env; else pm2 start '$DEPLOY_ROOT/server/dist/main.js' --name coblog-api; fi; pm2 save; nginx -t; systemctl reload nginx"
