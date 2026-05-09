@@ -16,7 +16,6 @@ export function useArticleDetail(slug: Ref<string>) {
     return [
       { icon: 'Calendar',       text: formatDate(article.value.createdAt, 'iso').slice(0, 16).replace('T', ' ') },
       { icon: 'View',           text: `${article.value.views} 浏览` },
-      { icon: 'ChatDotRound',   text: `${article.value.comments ?? 0} 评论` },
       { icon: 'CollectionTag',  text: article.value.category },
       { icon: 'Document',       text: `${article.value.wordCount} 字` },
       { icon: 'Reading',        text: estimateReadTime(article.value.content) }
