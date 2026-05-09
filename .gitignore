@@ -25,3 +25,6 @@ scripts/
 tmp-test/
 tmp/
 **/tmp-test/
+docs/
+deploy/
+tmp-test.mjs

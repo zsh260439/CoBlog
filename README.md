@@ -50,8 +50,6 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的全栈博客系统。项目
 - Monorepo：`pnpm workspace`
 - 构建编排：`Turborepo`
 - 包管理与运行环境：`pnpm`、`Node.js`
-- CI/CD：`GitHub Actions`
-- 部署编排：`Nginx`、`PM2`
 - 代码规范：`ESLint`、`Prettier`
 
 ## 快速开始（新手友好）
@@ -121,7 +119,6 @@ pnpm build:server   # 构建后端
 │   └── server/                # Nest 服务端
 ├── packages/
 │   └── types/                 # 共享类型包
-├── docs/                      # 项目文档
 ├── pnpm-workspace.yaml
 └── turbo.json
 ```
