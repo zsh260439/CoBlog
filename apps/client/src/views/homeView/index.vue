@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { siteConfig } from '@/config/site'
 import InkHero from '@/components/ui/InkHero.vue'
+import SgnlTransition from '@/components/ui/SgnlTransition.vue'
 
 interface SkillItem {
   name: string
@@ -111,14 +112,20 @@ onMounted(() => {
 
 <template>
   <div class="home">
-    <InkHero>
-      <p class="hero__subtitle">{{ siteConfig.ownerRole }} · {{ siteConfig.ownerLocation }}</p>
-      <div class="hero__actions">
-        <router-link to="/blog" class="hero__btn hero__btn--outline " >进入博客</router-link>
-        <router-link to="/about" class="hero__btn hero__btn--outline">了解我</router-link>
-        <a href="https://github.com/zsh260439" target="_blank" class="hero__btn hero__btn--outline">GitHub</a>
+    <div class="hero-fusion">
+      <InkHero>
+        <p class="hero__subtitle">{{ siteConfig.ownerRole }} · {{ siteConfig.ownerLocation }}</p>
+        <div class="hero__actions">
+          <router-link to="/blog" class="hero__btn hero__btn--outline " >进入博客</router-link>
+          <router-link to="/about" class="hero__btn hero__btn--outline">了解我</router-link>
+          <a href="https://github.com/zsh260439" target="_blank" class="hero__btn hero__btn--outline">GitHub</a>
+        </div>
+      </InkHero>
+
+      <div class="hero-fusion__overlay">
+        <SgnlTransition :show-ui="false" transparent overlay-mask :seed="2026" />
       </div>
-    </InkHero>
+    </div>
 
     <section class="section section--skills">
       <div class="section__inner">
@@ -236,10 +243,43 @@ onMounted(() => {
   background: rgba(240, 240, 238, 0.06);
 }
 
+.hero-fusion {
+  position: relative;
+}
+
+.hero-fusion__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.hero-fusion :deep(.ink-title) {
+  z-index: 20;
+}
+
+.hero-fusion :deep(.ink-meta) {
+  z-index: 20;
+}
+
+.hero-fusion :deep(.blog-content) {
+  z-index: 20;
+}
+
+.hero-fusion :deep(.crosshair) {
+  z-index: 20;
+}
+
+.hero-fusion__overlay :deep(.sgnl-stage) {
+  min-height: 100%;
+  height: 100%;
+}
+
+
 /* ── Section ── */
 .section {
   padding: 3rem 1.5rem;
-  background: #dcdcd9;
+  background: #8e8e8e;
 }
 
 .section__inner {
