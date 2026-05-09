@@ -23,7 +23,7 @@ export class AuthController {
         response.cookie('refresh_token',data.refreshToken,{
             httpOnly:true,//前端无法读取 防xss攻击
             sameSite:'lax',// 防CSRF跨站攻击
-            secure:false,//开发环境先关闭
+            secure: process.env.NODE_ENV === 'production',
             maxAge: 24 * 60 * 60 * 1000
         })
         //3:返回给前端 只返回短token
@@ -51,10 +51,10 @@ export class AuthController {
        //将新的令牌写入响应cookie,配置cookie安全属性
        response.cookie('refresh_token',data.refreshToken,{
          httpOnly: true,    // 仅服务端可访问，防止XSS攻击
-        sameSite: 'lax',   // 限制跨站请求，防范CSRF攻击
-          secure: false,     // 仅HTTPS传输，开发环境关闭
-          maxAge: 7 * 24 * 60 * 60 * 1000  // Cookie有效期
-       })
+         sameSite: 'lax',   // 限制跨站请求，防范CSRF攻击
+          secure: process.env.NODE_ENV === 'production',
+           maxAge: 7 * 24 * 60 * 60 * 1000  // Cookie有效期
+        })
        return ApiResponse.success({
            //返回给前端一个短期令牌
           accessToken:data.accessToken

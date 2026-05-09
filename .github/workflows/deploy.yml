@@ -10,7 +10,7 @@ jobs:
     env:
       DEPLOY_HOST: ${{ secrets.ECS_HOST }}
       DEPLOY_USER: ${{ secrets.ECS_USER }}
-      DEPLOY_ROOT: /opt/coblog
+      DEPLOY_ROOT: ${{ secrets.DEPLOY_ROOT }}
 
     steps:
       - uses: actions/checkout@v4
