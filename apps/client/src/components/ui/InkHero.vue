@@ -211,7 +211,7 @@ function render() {
   if (!gl || !program) return
 
   const time = performance.now() * 0.001
-  progress += (targetProgress - progress) * 0.02
+  progress += (targetProgress - progress) * 0.01
 
   const timeLoc = gl.getUniformLocation(program, 'u_time')
   const progressLoc = gl.getUniformLocation(program, 'u_progress')
@@ -226,7 +226,7 @@ function render() {
 
   syncDisplayState()
 
-  if (!hasEmittedReady && progress >= 0.995) {
+  if (!hasEmittedReady && progress >= 0.7) {
     emitReadyOnce()
   }
 
@@ -310,12 +310,12 @@ onMounted(() => {
     completeDiffusion()
   } else {
     const sequence = [
-      { time: 500, target: 0.1 },
-      { time: 1500, target: 0.15 },
-      { time: 2500, target: 0.4 },
-      { time: 3500, target: 0.45 },
-      { time: 4500, target: 0.8 },
-      { time: 5500, target: 1.0 }
+      { time: 100, target: 0.1 },
+      { time: 500, target: 0.15 },
+      { time: 700, target: 0.45 },
+      { time: 1300, target: 0.5 },
+      { time: 1800, target: 0.85 },
+      { time: 2500, target: 1.0 }
     ]
     sequence.forEach(step => {
       const timeoutId = window.setTimeout(() => {

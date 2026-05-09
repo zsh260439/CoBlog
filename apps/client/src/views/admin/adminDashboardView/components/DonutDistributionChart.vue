@@ -14,7 +14,18 @@ const render = () => {
   if (!chart) chart = echarts.init(chartRef.value)
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    series: [{ type: 'pie', radius: ['40%', '70%'], data: props.items }],
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data: props.items,
+      label: {
+        show: true,
+        formatter: '{b}: {c}人'
+      },
+      labelLine: {
+        show: true
+      }
+    }],
   })
 }
 

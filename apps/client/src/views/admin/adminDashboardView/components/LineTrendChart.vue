@@ -15,7 +15,17 @@ const render = () => {
   chart.setOption({
     xAxis: { type: 'category', data: props.items.map((i) => i.label) },
     yAxis: { type: 'value', minInterval: 1 },
-    series: [{ data: props.items.map((i) => i.value), type: 'line' }],
+    series: [{
+      data: props.items.map((i) => i.value),
+      type: 'line',
+      smooth: true,
+      symbolSize: 8,
+      label: {
+        show: true,
+        position: 'top',
+        formatter: '{c}'
+      }
+    }],
   })
 }
 
