@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import ScrollProgress from '@/components/ScrollProgress.vue'
 import BackToTopButton from '@/components/ui/BackToTopButton.vue'
@@ -15,7 +15,10 @@ const { loadVisitStats } = useVisitStats()
 
 const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
 const isAdminShell = computed(() => route.meta.appShell === 'admin')
+const isHomePage = computed(() => route.name === 'home')
 const showTechCursor = computed(() => !isAdminShell.value && route.name !== 'home' && route.name !== 'login')
+
+const showHeader = ref(false)
 
 let lastTrackedPath = ''
 
@@ -36,23 +39,35 @@ const trackPageVisit = async (path: string, appShell: unknown, routeName: unknow
 
 let removeAfterEach: (() => void) | undefined
 
+const shouldShowHeader = computed(() => {
+  if (isAdminShell.value) return false
+  if (isHomePage.value) return showHeader.value
+  return true
+})
+
+const handleScroll = () => {
+  showHeader.value = window.scrollY > 50
+}
+
 onMounted(async () => {
   await router.isReady()
   await trackPageVisit(route.fullPath, route.meta.appShell, route.name)
   removeAfterEach = router.afterEach(async (to) => {
     await trackPageVisit(to.fullPath, to.meta.appShell, to.name)
   })
+  window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onBeforeUnmount(() => {
   removeAfterEach?.()
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
 <template>
   <div class="app">
     <ScrollProgress v-if="!isAdminShell" />
-    <AppHeader v-if="!isAdminShell" />
+    <AppHeader v-if="shouldShowHeader" />
     <TechCursor v-if="showTechCursor" />
     <main class="main" :class="{ 'main--overlay': isOverlayLayout, 'main--plain': isAdminShell }">
       <RouterView v-slot="{ Component }">
