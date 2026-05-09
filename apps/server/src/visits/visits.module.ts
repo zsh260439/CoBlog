@@ -10,6 +10,5 @@ import { VisitsService } from './visits.service'
   ],
   controllers: [VisitsController],
   providers: [VisitsService],
-  exports: [VisitsService],
 })
 export class VisitsModule {}

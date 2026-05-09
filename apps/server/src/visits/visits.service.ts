@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import axios from 'axios'
 import { Visit, VisitDocument } from './schema/visit.schema'
 import { TrackVisitDto } from './dto/track-visit.dto'
+import { resolveLocation } from '../common/utils/resolve-location'
 
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000
 const ONLINE_WINDOW_MS = 5 * 60 * 1000
@@ -29,7 +29,7 @@ export class VisitsService {
       return { ok: true, counted: false }
     }
 
-    const location = await this.resolveLocation(ip)
+    const location = await resolveLocation(ip)
     await this.visitModel.create({
       ip,
       userAgent,
@@ -115,24 +115,5 @@ export class VisitsService {
     }))
 
     return { trend, cities }
-  }
-
-  private async resolveLocation(ip: string) {
-    const normalized = ip.replace('::ffff:', '').trim()
-    if (!normalized || normalized === '::1' || normalized === '127.0.0.1') {
-      return ''
-    }
-
-    try {
-      const { data } = await axios.get(`http://ip-api.com/json/${normalized}`, {
-        timeout: 3000,
-        params: { lang: 'zh-CN' },
-      })
-      if (!data || data.status !== 'success') return ''
-      return [data.regionName, data.city].filter(Boolean).join(' ')
-    } catch (err) {
-      console.error('resolveLocation failed:', normalized, err instanceof Error ? err.message : err)
-      return ''
-    }
   }
 }

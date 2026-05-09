@@ -2,10 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {InjectModel} from '@nestjs/mongoose'
 import {Message,MessageDocument} from './schema/message.schema'
 import {Model, Types} from 'mongoose'
-import axios from 'axios'
 import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
+import { resolveLocation } from '../common/utils/resolve-location'
 
 @Injectable()
 export class MessageService {
@@ -60,7 +60,7 @@ export class MessageService {
         throw new BadRequestException('待审核留言过多，请稍后再试')
       }
 
-      const location = await this.resolveLocation(ip)
+      const location = await resolveLocation(ip)
       const { parentId = '', ...messagePayload } = createMessageDto
 
       // parentId 存在时，沿用根节点并挂到目标留言下面，前台就能还原楼中楼结构。
@@ -110,7 +110,7 @@ export class MessageService {
         throw new BadRequestException('父留言不存在')
       }
 
-      const location = await this.resolveLocation(ip)
+      const location = await resolveLocation(ip)
       const id = new Types.ObjectId()
       const message = await this.messageModel.create({
         _id: id,
@@ -167,24 +167,5 @@ export class MessageService {
       const pendingCount = await this.pendingCount()
       this.stream$.next({ type: 'deleted', data: { id, pendingCount } })
       return message ? this.serialize(message) : null
-    }
-
-    // 线上环境根据真实来访 IP 查省市；本地 127.0.0.1 / ::1 不查。
-    private async resolveLocation(ip: string) {
-      const normalized = ip.replace('::ffff:', '').trim()
-      if (!normalized || normalized === '::1' || normalized === '127.0.0.1') {
-        return ''
-      }
-
-      try {
-        const { data } = await axios.get(`http://ip-api.com/json/${normalized}`, {
-          timeout: 3000,
-          params: { lang: 'zh-CN' },
-        })
-        if (!data || data.status !== 'success') return ''
-        return [data.regionName, data.city].filter(Boolean).join(' ')
-      } catch {
-        return ''
-      }
     }
 }

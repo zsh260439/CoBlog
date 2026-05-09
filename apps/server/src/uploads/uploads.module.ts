@@ -15,7 +15,6 @@ import { AuthModule } from "src/auth/auth.module";
     ],
     controllers:[UploadsController],
     providers:[UploadsService],
-    exports:[UploadsService],
 })
 
 export class UploadsModule {}
