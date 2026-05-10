@@ -232,7 +232,7 @@ function render() {
 
   syncDisplayState()
 
-  if (!hasEmittedReady && progress >= 0.95) {
+  if (!hasEmittedReady && progress >= 0.7) {
     emitReadyOnce()
   }
 
