@@ -60,6 +60,7 @@ let progress = 0
 let targetProgress = 0
 let hasEmittedReady = false
 const sequenceTimeouts: number[] = []
+let lastRenderTime = 0
 
 const heroTitleStyle = computed(() => ({
   transform: `translate(-50%, -50%) translate3d(${heroMotion.titleX}px, ${heroMotion.titleY}px, 0) rotate(${heroMotion.titleRotate}deg)`,
@@ -211,7 +212,12 @@ function render() {
   if (!gl || !program) return
 
   const time = performance.now() * 0.001
-  progress += (targetProgress - progress) * 0.01
+  const now = performance.now()
+  if (!lastRenderTime) lastRenderTime = now
+  const deltaMs = now - lastRenderTime
+  lastRenderTime = now
+  const frameIndependentLerp = 1 - Math.pow(1 - 0.05, deltaMs / (1000 / 60))
+  progress += (targetProgress - progress) * frameIndependentLerp
 
   const timeLoc = gl.getUniformLocation(program, 'u_time')
   const progressLoc = gl.getUniformLocation(program, 'u_progress')
@@ -226,7 +232,7 @@ function render() {
 
   syncDisplayState()
 
-  if (!hasEmittedReady && progress >= 0.7) {
+  if (!hasEmittedReady && progress >= 0.95) {
     emitReadyOnce()
   }
 
@@ -333,6 +339,7 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
   pause()
+  lastRenderTime = 0
   clearSequenceTimeouts()
   window.removeEventListener('resize', handleResize)
   if (gl && program) {
