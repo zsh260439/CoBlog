@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { MdPreview } from 'md-editor-v3'
 import type { HeadList } from 'md-editor-v3'
 import 'md-editor-v3/lib/preview.css'
-import { API_BASE_URL } from '@/config/http'
 import { ensureMarkdownConfigured } from '@/config/markdown'
 import type { MarkdownHeading } from '@/types/content'
 import type { MarkdownViewerProps } from '@/types/ui'
@@ -21,7 +20,6 @@ const emit = defineEmits<{
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-// 把 Markdown 里的相对上传资源路径补成完整后端地址，避免预览区图片失效。
 const resolvedContent = computed(() => {
   const normalizedTitle = props.articleTitle?.trim()
   let content = props.content
@@ -34,8 +32,6 @@ const resolvedContent = computed(() => {
   }
 
   return content
-    .replace(/\]\((\/uploads\/[^)]+)\)/g, (_, path: string) => `](${API_BASE_URL}${path})`)
-    .replace(/src=(['"])\/uploads\//g, (_, quote: string) => `src=${quote}${API_BASE_URL}/uploads/`)
 })
 
 const handleCatalogChange = (items: HeadList[]) => {

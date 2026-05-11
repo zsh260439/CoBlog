@@ -27,10 +27,8 @@ export class UploadsService {
   }
 
   async find(key: string) {
-    const doc = await this.model.collection.findOne({
-      _id: key,
-    } as any)
+    const doc = await this.model.findById(key).lean()
     if (!doc) throw new NotFoundException()
-    return doc as unknown as UploadFileDocument
+    return doc
   }
 }

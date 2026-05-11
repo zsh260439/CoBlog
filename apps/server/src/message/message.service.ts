@@ -13,15 +13,18 @@ export class MessageService {
 
     constructor(@InjectModel(Message.name) private readonly messageModel:Model<MessageDocument>){}
 
-    // 统一把 Mongo 文档转成前台稳定使用的数据结构
-    private serialize(message: any) {
+    private serialize(message: Record<string, any> | null) {
+      if (!message) {
+        return message
+      }
+
       return {
         ...message,
-        id: message._id?.toString?.() ?? message._id,
+        id: String(message._id),
         _id: undefined,
-        createdAt: message.createdAt?.toISOString?.() ?? message.createdAt,
-        updatedAt: message.updatedAt?.toISOString?.() ?? message.updatedAt,
-        reviewedAt: message.reviewedAt?.toISOString?.() ?? message.reviewedAt,
+        createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : message.createdAt,
+        updatedAt: message.updatedAt ? new Date(message.updatedAt).toISOString() : message.updatedAt,
+        reviewedAt: message.reviewedAt ? new Date(message.reviewedAt).toISOString() : message.reviewedAt,
       }
     }
 
@@ -80,7 +83,7 @@ export class MessageService {
           authorType: 'visitor',
           replyToAuthor: parent.author,
           status: 'pending',
-          ...(location ? { location } : {}),
+          location,
         })
 
         this.stream$.next({ type: 'created', data: { pendingCount: pendingCount + 1 } })
@@ -97,7 +100,7 @@ export class MessageService {
         authorType: 'visitor',
         replyToAuthor: '',
         status: 'pending',
-        ...(location ? { location } : {}),
+        location,
       })
 
       this.stream$.next({ type: 'created', data: { pendingCount: pendingCount + 1 } })
@@ -125,8 +128,8 @@ export class MessageService {
         authorType: 'admin',
         replyToAuthor: parent.author,
         location,
-        device: dto.device || '',
-        browser: dto.browser || '',
+        device: dto.device,
+        browser: dto.browser,
         enableEmailNotice: false,
         status: 'approved',
         reviewedAt: new Date(),

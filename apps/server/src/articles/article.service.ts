@@ -16,17 +16,16 @@ export class ArticlesService {
     return content.replace(/[`#>*_\-[\]()!]/g, '').replace(/\s+/g, '')
   }
 
-  private serializeArticle(article: any) {
+  private serializeArticle(article: Record<string, any> | null) {
     if (!article) {
       return article
     }
 
     return {
       ...article,
-      _id: article._id?.toString?.() ?? article._id,
-      tags: article.tags,
-      createdAt: article.createdAt?.toISOString?.() ?? article.createdAt,
-      updatedAt: article.updatedAt?.toISOString?.() ?? article.updatedAt,
+      _id: String(article._id),
+      createdAt: article.createdAt ? new Date(article.createdAt).toISOString() : article.createdAt,
+      updatedAt: article.updatedAt ? new Date(article.updatedAt).toISOString() : article.updatedAt,
     }
   }
 
@@ -125,7 +124,7 @@ export class ArticlesService {
       wordCount: this.stripMarkdown(createArticleDto.content ?? '').length,
     })
 
-    return this.serializeArticle(article.toObject() as Article )
+    return this.serializeArticle(article.toObject())
   }
 
   async update(id: string, updateArticleDto: UpdateArticleDto) {

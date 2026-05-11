@@ -14,12 +14,8 @@ export class TaxonomyService {
     @InjectModel(Article.name) private readonly articleModel: Model<ArticleDocument>
   ) {}
 
-  private toISO(date: unknown): string {
-    if (!date) {
-      return new Date().toISOString()
-    }
-    const d = new Date(date as string | number | Date)
-    return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
+  private toISO(date: Date | string): string {
+    return new Date(date).toISOString()
   }
 // 列表分类
   async listCategories() {
@@ -38,24 +34,13 @@ export class TaxonomyService {
     ])
 
     const countMap = new Map(counts.map((item) => [item._id, item.count]))
-    const categoryMap = new Map(
-      categories.map((category) => [category.slug, {
-        _id: category._id.toString(),
-        label: category.label,
-        slug: category.slug,
-        count: countMap.get(category.slug) ?? 0,
-        createdAt: this.toISO(category.createdAt),
-        updatedAt: this.toISO(category.updatedAt),
-      }])
-    )
-     //转换为数组
-    return [...categoryMap.values()].map((category) => ({
-      _id: category._id.toString(),
+    return categories.map((category) => ({
+      _id: String(category._id),
       label: category.label,
       slug: category.slug,
-      count: category.count,
-      createdAt: category.createdAt,
-      updatedAt: category.updatedAt,
+      count: countMap.get(category.slug) ?? 0,
+      createdAt: this.toISO(category.createdAt),
+      updatedAt: this.toISO(category.updatedAt),
     }))
   }
     // 创建分类
@@ -93,24 +78,13 @@ export class TaxonomyService {
     ])
 
     const countMap = new Map(counts.map((item) => [item._id, item.count]))
-    const tagMap = new Map(
-      tags.map((tag) => [tag.label, {
-        _id: tag._id.toString(),
-        label: tag.label,
-        slug: tag.slug,
-        count: countMap.get(tag.label) ?? 0,
-        createdAt: this.toISO(tag.createdAt),
-        updatedAt: this.toISO(tag.updatedAt),
-      }])
-    )
-   //转换为数组
-    return [...tagMap.values()].map((tag) => ({
-      _id: tag._id.toString(),
+    return tags.map((tag) => ({
+      _id: String(tag._id),
       label: tag.label,
       slug: tag.slug,
-      count: tag.count,
-      createdAt: tag.createdAt,
-      updatedAt: tag.updatedAt,
+      count: countMap.get(tag.label) ?? 0,
+      createdAt: this.toISO(tag.createdAt),
+      updatedAt: this.toISO(tag.updatedAt),
     }))
   }
 // 创建标签

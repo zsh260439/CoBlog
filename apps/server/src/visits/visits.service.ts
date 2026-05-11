@@ -35,7 +35,7 @@ export class VisitsService {
       userAgent,
       lastPath: dto.path,
       lastActiveAt: now,
-      ...(location ? { location } : {}),
+      location,
     })
     return { ok: true, counted: true }
   }
