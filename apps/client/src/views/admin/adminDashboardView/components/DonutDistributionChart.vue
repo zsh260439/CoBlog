@@ -12,15 +12,19 @@ let chart: echarts.ECharts | null = null
 const render = () => {
   if (!chartRef.value) return
   if (!chart) chart = echarts.init(chartRef.value)
+  const chartData = props.items.map((item) => ({
+    name: item.label,
+    value: item.value,
+  }))
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
-      data: props.items,
+      data: chartData,
       label: {
         show: true,
-        formatter: '{b}: {c}人'
+        formatter: '{b}: {c}'
       },
       labelLine: {
         show: true
