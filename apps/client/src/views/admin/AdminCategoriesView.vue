@@ -9,7 +9,7 @@ import type { AdminTaxonomyForm } from '@/types/admin'
 import type { ArticleCategory } from '@/types/article'
 import { deleteCategory, updateCategory, deleteTag, updateTag } from '@/servers/taxonomy'
 const { categories, tags, isLoading, loadTaxonomies, createCategoryItem, createTagItem } = useTaxonomies()
-const { loadArticles } = useArticles(false)
+const { loadArticles } = useArticles()
 
 const categoryDialogVisible = ref(false)
 const tagDialogVisible = ref(false)

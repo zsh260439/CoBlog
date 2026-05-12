@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
@@ -8,9 +8,13 @@ import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 
-const { articles, isLoading, error } = useArticles()
+const { articles, isLoading, error, loadArticles } = useArticles()
 const { categories } = useTaxonomies()
 const categoryCount = computed(() => categories.value.length)
+
+onMounted(() => {
+  loadArticles()
+})
 
 </script>
 

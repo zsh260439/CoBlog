@@ -8,11 +8,12 @@ import { siteConfig } from '@/config/site'
 import { useArchive } from '@/composables/useArchive'
 import { useArticles } from '@/composables/useArticles'
 
-const { articles } = useArticles()
+const { articles, loadArticles } = useArticles()
 const { archiveGroups, isLoading, error, loadArchiveGroups, formatArchiveDate } = useArchive()
 
 onMounted(() => {
-  void loadArchiveGroups()
+  loadArticles()
+  loadArchiveGroups()
 })
 </script>
 

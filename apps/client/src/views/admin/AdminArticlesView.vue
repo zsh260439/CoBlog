@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, Search, Plus } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
@@ -8,8 +8,13 @@ import { deleteArticle } from '@/servers/article'
 import { useArticles } from '@/composables/useArticles'
 
 const router = useRouter()
-const { articles, isLoading, error, setArticles } = useArticles()
+const { articles, isLoading, error, setArticles, loadArticles } = useArticles()
 const { loadTaxonomies } = useTaxonomies()
+
+onMounted(() => {
+  loadArticles()
+  loadTaxonomies()
+})
 
 const keyword = ref('')
 const currentPage = ref(1)

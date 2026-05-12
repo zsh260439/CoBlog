@@ -12,11 +12,12 @@ import LineTrendChart from '@/views/admin/adminDashboardView/components/LineTren
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 
-const { articles, isLoading } = useArticles()
+const { articles, isLoading, loadArticles } = useArticles()
 const { categories, loadTaxonomies } = useTaxonomies()
 
 onMounted(() => {
-  void loadTaxonomies()
+  loadArticles()
+  loadTaxonomies()
 })
 
 const totalWords = computed(() => {

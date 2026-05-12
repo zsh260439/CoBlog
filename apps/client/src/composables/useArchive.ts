@@ -3,25 +3,39 @@ import { getArticlesByArchive } from '@/servers/article'
 import type { Article } from '@/types/article'
 import type { ArchiveGroup } from '@/types/article'
 
-export function useArchive() {
-  const archiveGroups = ref<ArchiveGroup[]>([])
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
+const archiveGroups = ref<ArchiveGroup[]>([])
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+let loadingPromise: Promise<void> | null = null
 
-  const loadArchiveGroups = async () => {
+export function useArchive() {
+  const loadArchiveGroups = async (force = false) => {
+    if (!force && archiveGroups.value.length) {
+      return
+    }
+
+    if (loadingPromise) {
+      return loadingPromise
+    }
+
     isLoading.value = true
     error.value = null
 
-    try {
-      const result = await getArticlesByArchive()
-      archiveGroups.value = result.data ?? []
-    } catch (err) {
-      console.error(err)
-      archiveGroups.value = []
-      error.value = '归档加载失败'
-    } finally {
-      isLoading.value = false
-    }
+    loadingPromise = (async () => {
+      try {
+        const result = await getArticlesByArchive()
+        archiveGroups.value = result.data ?? []
+      } catch (err) {
+        console.error(err)
+        archiveGroups.value = []
+        error.value = '归档加载失败'
+      } finally {
+        isLoading.value = false
+        loadingPromise = null
+      }
+    })()
+
+    return loadingPromise
   }
 
   const formatArchiveDate = (date: string) => {

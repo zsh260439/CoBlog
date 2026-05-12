@@ -82,7 +82,7 @@ useEventListener(window, 'keydown', (event) => {
 
 onMounted(() => {
   // 组件挂载后再拉取分类和标签，保证侧栏统计是最新数据。
-  void loadTaxonomies()
+  loadTaxonomies()
 })
 </script>
 

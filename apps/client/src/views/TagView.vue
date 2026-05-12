@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
@@ -13,7 +13,11 @@ const route = useRoute()
 const currentTag = computed(() => String(route.params.tag ?? ''))
 
 const { articles, isLoading, error } = useTag(currentTag)
-const { articles: allArticles } = useArticles()
+const { articles: allArticles, loadArticles } = useArticles()
+
+onMounted(() => {
+  loadArticles()
+})
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
@@ -14,7 +14,11 @@ const currentSlug = computed(() => String(route.params.slug ?? ''))
 
 const { currentCategory, articles, isLoading, error } = useCategory(currentSlug)
 // 全站文章数量
-const { articles: allArticles } = useArticles()
+const { articles: allArticles, loadArticles } = useArticles()
+
+onMounted(() => {
+  loadArticles()
+})
 </script>
 
 <template>
