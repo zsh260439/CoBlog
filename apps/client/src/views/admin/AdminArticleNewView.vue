@@ -5,7 +5,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { generateArticleExcerptWithAi, optimizeArticleWithAi, streamChatWithArticleAi } from '@/servers/ai'
+import { generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
@@ -14,9 +14,8 @@ import { uploadImage } from '@/servers/upload'
 import { useAppStore } from '@/store'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
-import type { AiChatMessage } from '@/types/admin/ai'
 import { useDebounce } from '@/composables/useDebounce'
-import AIChatInput from '@/components/ui/AIChatInput.vue'
+import ArticleAiDrawer from '@/components/ArticleAiDrawer.vue'
 ensureMarkdownConfigured()
 const route = useRoute()
 const router = useRouter()
@@ -25,7 +24,7 @@ defineOptions({
 })
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
-const { articles, loadArticles, setArticles } = useArticles(false)
+const { articles, loadArticles, setArticles } = useArticles()
 // 创建文章表单的默认值
 const createDefaultForm = (): AdminArticleForm => ({
   title: '',
@@ -46,20 +45,7 @@ const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
 const aiLoading = ref<'optimize'| ''>('')
-const aiChatLoading = ref(false)
-const aiChatInput = ref('')
 const aiDrawerVisible = ref(false)
-const aiMessagesRef = ref<HTMLElement | null>(null)
-const aiMessages = ref<AiChatMessage[]>([
-  {
-    role: 'assistant',
-    content: '你好，我可以帮你把零散笔记整理成 Markdown 正文，也可以直接回答技术问题。你可以直接说：请根据当前内容生成一篇结构完整的文章。',
-  },
-])
-
-const latestAssistantMessage = computed(() => {
-  return [...aiMessages.value].reverse().find((item) => item.role === 'assistant')?.content || ''
-})
 
 const resolvedCategories = computed(() => categories.value)
 
@@ -214,94 +200,12 @@ const handleGenerateExcerpt = async () => {
   }
 }
 
-const scrollAiMessagesToBottom = () => {
-  requestAnimationFrame(() => {
-    aiMessagesRef.value!.scrollTop = aiMessagesRef.value!.scrollHeight
-  })
+const handleReplaceContentByAi = (content: string) => {
+  form.content = content
 }
 
-// 对话式 AI 助手会携带当前标题、正文和历史消息，尽量返回可直接复用的 Markdown 内容。
-const handleSendAiMessage = async () => {
-  if (!aiChatInput.value.trim()) {
-    ElMessage.warning('请输入你想让 AI 帮你完成的内容')
-    return
-  }
-
-  const nextMessages: AiChatMessage[] = [
-    ...aiMessages.value,
-    {
-      role: 'user',
-      content: aiChatInput.value.trim(),
-    },
-  ]
-
-  aiMessages.value = nextMessages
-  aiChatLoading.value = true
-  const currentQuestion = aiChatInput.value.trim()
-  aiChatInput.value = ''
-
-  aiMessages.value = [
-    ...nextMessages,
-    {
-      role: 'assistant',
-      content: '',
-    },
-  ]
-
-  const assistantIndex = aiMessages.value.length - 1
-  scrollAiMessagesToBottom()
-
-  try {
-    await streamChatWithArticleAi({
-      title: form.title.trim(),
-      content: form.content,
-      instruction: aiInstruction.value.trim(),
-      messages: nextMessages.filter((item) => item.role === 'user' || item.role === 'assistant'),
-    }, (chunk) => {
-      aiMessages.value[assistantIndex].content += chunk
-      scrollAiMessagesToBottom()
-    })
-  } catch (error: any) {
-    aiMessages.value[assistantIndex].content = `AI 请求失败：${error?.message || '请稍后重试'}`
-    aiChatInput.value = currentQuestion
-    scrollAiMessagesToBottom()
-  } finally {
-    aiChatLoading.value = false
-  }
-}
-
-const applyAiAnswerToContent = (mode: 'replace' | 'append') => {
-  const answer = latestAssistantMessage.value.trim()
-
-  if (!answer) {
-    ElMessage.warning('当前没有可应用到正文的 AI 回复')
-    return
-  }
-
-  form.content = mode === 'replace' ? answer : `${form.content.trim()}\n\n${answer}`.trim()
-  ElMessage.success(mode === 'replace' ? '已用 AI 回复替换正文' : '已追加到正文末尾')
-}
-
-const handleResendAiMessage = async () => {
-  const lastUserMsg = [...aiMessages.value].reverse().find((m) => m.role === 'user')
-  if (!lastUserMsg) return
-  aiChatInput.value = lastUserMsg.content
-  aiMessages.value = aiMessages.value.filter((m) => m !== lastUserMsg)
-  await handleSendAiMessage()
-}
-
-const copyAiMessage = async (content: string) => {
-  try {
-    await navigator.clipboard.writeText(content)
-    ElMessage.success('已复制到剪贴板')
-  } catch {
-    ElMessage.error('复制失败')
-  }
-}
-
-const handleSendAiChat = async (text: string) => {
-  aiChatInput.value = text
-  await handleSendAiMessage()
+const handleAppendContentByAi = (content: string) => {
+  form.content = `${form.content.trim()}\n\n${content}`.trim()
 }
 
 // 执行文章发布或更新请求
@@ -372,13 +276,6 @@ watch(form ,
 }, {
   deep: true
 })
-
-watch(aiDrawerVisible, (visible) => {
-  if (visible) {
-    scrollAiMessagesToBottom()
-  }
-})
-
 // 页面初始化时加载 taxonomy，并根据模式回填草稿或文章详情
 onMounted(async () => {
   await Promise.all([loadTaxonomies(), loadArticles()])
@@ -549,46 +446,14 @@ onMounted(async () => {
       </aside>
     </div>
 
-    <Teleport to="body">
-      <Transition name="ai-modal">
-        <div v-if="aiDrawerVisible" class="ai-modal-overlay" @click.self="aiDrawerVisible = false">
-          <div class="ai-modal">
-            <div class="ai-modal__header">
-              <span>AI 写作助手</span>
-              <button class="ai-modal__close" @click="aiDrawerVisible = false">✕</button>
-            </div>
-
-            <div class="ai-modal__messages" ref="aiMessagesRef">
-              <div
-                v-for="(msg, index) in aiMessages"
-                :key="`${msg.role}-${index}`"
-                class="ai-chat__row"
-                :class="msg.role === 'user' ? 'ai-chat__row--user' : 'ai-chat__row--ai'"
-              >
-                <div class="ai-chat__bubble">
-                  <pre class="ai-chat__text">{{ msg.content }}</pre>
-                </div>
-
-                <div v-if="msg.role === 'assistant' && index === aiMessages.length - 1" class="ai-chat__bubble-actions">
-                  <button class="ai-action-btn" title="刷新回复" @click="handleResendAiMessage">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                  </button>
-                  <button class="ai-action-btn" title="复制内容" @click="copyAiMessage(msg.content)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  </button>
-                  <button class="ai-action-btn" title="替换正文" @click="applyAiAnswerToContent('replace')">替换</button>
-                  <button class="ai-action-btn" title="追加到正文" @click="applyAiAnswerToContent('append')">追加</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="ai-modal__input">
-              <AIChatInput :loading="aiChatLoading" @submit="handleSendAiChat" />
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ArticleAiDrawer
+      v-model:visible="aiDrawerVisible"
+      :title="form.title"
+      :content="form.content"
+      :instruction="aiInstruction"
+      @replace-content="handleReplaceContentByAi"
+      @append-content="handleAppendContentByAi"
+    />
   </div>
 </template>
 
@@ -798,161 +663,6 @@ onMounted(async () => {
   border-color: #111111;
   background: #111111;
   color: #ffffff;
-}
-
-/* ── AI Modal ── */
-.ai-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.ai-modal {
-  width: min(600px, 100%);
-  max-height: 80vh;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.ai-modal__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #111;
-}
-
-.ai-modal__close {
-  border: none;
-  background: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: #9ca3af;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-}
-
-.ai-modal__close:hover {
-  background: #f3f4f6;
-  color: #111;
-}
-
-.ai-modal__messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 200px;
-  max-height: 50vh;
-}
-
-.ai-modal__input {
-  padding: 12px 16px 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-/* Modal transition */
-.ai-modal-enter-active { transition: opacity 0.2s ease; }
-.ai-modal-leave-active { transition: opacity 0.15s ease; }
-.ai-modal-enter-from,
-.ai-modal-leave-to { opacity: 0; }
-
-.ai-modal-enter-active .ai-modal { animation: modalSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
-.ai-modal-leave-active .ai-modal { animation: modalSlideOut 0.15s ease; }
-
-@keyframes modalSlideIn {
-  from { transform: translateY(16px) scale(0.97); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-@keyframes modalSlideOut {
-  from { transform: translateY(0) scale(1); opacity: 1; }
-  to { transform: translateY(8px) scale(0.98); opacity: 0; }
-}
-
-/* Chat bubbles */
-.ai-chat__row {
-  display: flex;
-  flex-direction: column;
-  max-width: 85%;
-}
-
-.ai-chat__row--user {
-  align-self: flex-end;
-  align-items: flex-end;
-}
-
-.ai-chat__row--ai {
-  align-self: flex-start;
-  align-items: flex-start;
-}
-
-.ai-chat__bubble {
-  border-radius: 16px;
-  padding: 12px 16px;
-}
-
-.ai-chat__row--user .ai-chat__bubble {
-  background: #111;
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-
-.ai-chat__row--ai .ai-chat__bubble {
-  background: #f3f4f6;
-  color: #111827;
-  border-bottom-left-radius: 4px;
-}
-
-.ai-chat__text {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: inherit;
-  font-size: 0.85rem;
-  line-height: 1.7;
-}
-
-.ai-chat__bubble-actions {
-  display: flex;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.ai-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ai-action-btn:hover {
-  background: #f3f4f6;
-  border-color: rgba(0, 0, 0, 0.15);
-  color: #111;
 }
 
 @media (max-width: 1100px) {

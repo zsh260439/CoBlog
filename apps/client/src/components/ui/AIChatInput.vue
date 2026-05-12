@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, computed } from 'vue'
 import gsap from 'gsap'
-
 const props = withDefaults(defineProps<{
   loading?: boolean
   placeholder?: string
+  modelValue?: string
 }>(), {
+  modelValue: '',
   loading: false,
   placeholder: '输入你的问题...',
 })
 
 const emit = defineEmits<{
+  'update:modelValue': [value: string]
   submit: [value: string]
 }>()
 
-const inputRef = ref<HTMLInputElement | null>(null)
 const placeholderRef = ref<HTMLElement | null>(null)
-const inputValue = ref('')
+//输入框的值是子组件的属性
+const inputValue = computed({
+  get:()=>props.modelValue,
+  set:(value:string)=>emit('update:modelValue', value)
+})
 const isActive = ref(false)
 
 const placeholders = [
@@ -87,6 +92,7 @@ const handleKeydown = (e: KeyboardEvent) => {
     handleSubmit()
   }
 }
+
 
 onUnmounted(stopCycle)
 </script>
