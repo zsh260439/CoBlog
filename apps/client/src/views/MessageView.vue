@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {  ChatLineRound, Close, Promotion, RefreshRight } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -12,8 +12,13 @@ import { aboutProfileCard, siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import type { GuestbookEntry, MessageFormData } from '@/types/message'
 //个人信息要用的
-const { articles } = useArticles()
-const { messages, isLoading, error, submitMessage, submitLoading } = useGuestbook()
+const { articles, loadArticles } = useArticles()
+const { messages, isLoading, error, loadMessages, submitMessage, submitLoading } = useGuestbook()
+
+onMounted(() => {
+  loadArticles()
+  loadMessages()
+})
 
 const formRef = ref<FormInstance>()
   //要跳转到的元素位置

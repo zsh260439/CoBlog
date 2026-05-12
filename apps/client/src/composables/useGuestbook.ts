@@ -7,10 +7,11 @@ import type { GuestbookEntry, MessageFormData } from '@/types/message'
 // senderId 只负责标识"这个浏览器"，用来恢复自己的待审核/被拒绝留言状态。
 const MESSAGE_SENDER_ID_KEY = 'guestbook:sender-id'
 
-export function useGuestbook(immediate = true) {
+export function useGuestbook() {
   const messages = ref<GuestbookEntry[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  let loadingPromise: Promise<void> | null = null
 
   const submitLoading = ref(false)
 
@@ -28,24 +29,37 @@ export function useGuestbook(immediate = true) {
     return [...map.values()].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
   }
 
-  const loadMessages = async () => {
+  const loadMessages = async (force = false) => {
+    if (!force && messages.value.length) {
+      return
+    }
+
+    if (loadingPromise) {
+      return loadingPromise
+    }
+
     isLoading.value = true
     error.value = null
 
-    try {
-      const [publicResult, ownResult] = await Promise.all([
-        getMessageList(),
-        getMyMessageList(senderId),
-      ])
-      const publicMessages = Array.isArray(publicResult.data) ? publicResult.data : []
-      const ownMessages = Array.isArray(ownResult.data) ? ownResult.data : []
-      messages.value = mergeMessages(publicMessages, ownMessages)
-    } catch {
-      messages.value = []
-      error.value = '留言加载失败'
-    } finally {
-      isLoading.value = false
-    }
+    loadingPromise = (async () => {
+      try {
+        const [publicResult, ownResult] = await Promise.all([
+          getMessageList(),
+          getMyMessageList(senderId),
+        ])
+        const publicMessages = Array.isArray(publicResult.data) ? publicResult.data : []
+        const ownMessages = Array.isArray(ownResult.data) ? ownResult.data : []
+        messages.value = mergeMessages(publicMessages, ownMessages)
+      } catch {
+        messages.value = []
+        error.value = '留言加载失败'
+      } finally {
+        isLoading.value = false
+        loadingPromise = null
+      }
+    })()
+
+    return loadingPromise
   }
   // 提交留言
   const submitMessage = async (form: MessageFormData, parentId = '') => {
@@ -63,7 +77,7 @@ export function useGuestbook(immediate = true) {
         browser: ua.getBrowser().name || '',
         enableEmailNotice: form.enableEmailNotice,
       })
-      await loadMessages()
+      await loadMessages(true)
       return true
     } catch {
       return false
@@ -72,14 +86,11 @@ export function useGuestbook(immediate = true) {
     }
   }
 
-  if (immediate) {
-    void loadMessages()
-  }
-
   return {
     messages,
     isLoading,
     error,
+    loadMessages,
     submitMessage,
     submitLoading,
     senderId,

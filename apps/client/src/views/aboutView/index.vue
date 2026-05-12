@@ -17,7 +17,7 @@ const notes = [
 ]
 
 onMounted(() => {
-  void loadVisitStats()
+  loadVisitStats()
 })
 </script>
 
