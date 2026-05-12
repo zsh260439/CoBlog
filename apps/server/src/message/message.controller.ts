@@ -3,6 +3,7 @@ import {MessageService} from './message.service'
 import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import {ApiResponse} from '../common/utils/api-response'
+import { getClientIp } from '../common/utils/get-client-ip'
 import type { Request } from 'express'
 import { AuthGuard } from 'src/auth/auth.guard'
 import { JwtService } from '@nestjs/jwt'
@@ -31,10 +32,7 @@ export class MessageController {
     // 创建留言时，从请求头取真实 IP，让后端补 location、做 pending 限流。
   @Post()
      async create(@Body() createMessageDto: CreateMessageDto, @Req() req: Request) {
-    const forwarded = req.headers['x-forwarded-for']
-    const ip = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0]?.trim() || req.ip || ''
+    const ip = getClientIp(req)
     const data = await this.messageService.create(createMessageDto, ip)
     return ApiResponse.success(data, '提交留言成功')
   }
@@ -74,10 +72,7 @@ export class MessageController {
   @UseGuards(AuthGuard)
   @Post(':id/admin-reply')
   async adminReply(@Param('id') id: string, @Body() dto: CreateAdminReplyDto, @Req() req: Request) {
-    const forwarded = req.headers['x-forwarded-for']
-    const ip = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0]?.trim() || req.ip || ''
+    const ip = getClientIp(req)
     const data = await this.messageService.createAdminReply(id, dto, ip)
     return ApiResponse.success(data, '站长回复成功')
   }

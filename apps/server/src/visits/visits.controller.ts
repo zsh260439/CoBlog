@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import type { Request } from 'express'
 import { ApiResponse } from '../common/utils/api-response'
+import { getClientIp } from '../common/utils/get-client-ip'
 import { TrackVisitDto } from './dto/track-visit.dto'
 import { VisitsService } from './visits.service'
 
@@ -10,10 +11,7 @@ export class VisitsController {
 
   @Post('track')
   async track(@Body() dto: TrackVisitDto, @Req() req: Request) {
-    const forwarded = req.headers['x-forwarded-for']
-    const ip = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0]?.trim() || req.ip || ''
+    const ip = getClientIp(req)
     const data = await this.visitsService.track(dto, ip, req.headers['user-agent'] || '')
     return ApiResponse.success(data, '记录访问成功')
   }
