@@ -13,7 +13,6 @@ export class ArticleChatMessageDto {
 export class ArticleChatDto {
   @IsOptional()
   @IsString()
-  @MaxLength(120)
   title?: string
 
   @IsOptional()
@@ -22,7 +21,6 @@ export class ArticleChatDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(500)
   instruction?: string
 
   @IsArray()
