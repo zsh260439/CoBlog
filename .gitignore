@@ -27,3 +27,4 @@ tmp/
 **/tmp-test/
 docs/
 tmp-test.mjs
+/cert.pem
