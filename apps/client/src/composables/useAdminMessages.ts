@@ -23,7 +23,7 @@ export function useAdminMessages() {
     isLoading.value = true
     try {
       const listResult = await getAdminMessageList()
-      messages.value = Array.isArray(listResult.data) ? listResult.data : []
+      messages.value = listResult.data
     } finally {
       isLoading.value = false
     }
@@ -63,12 +63,12 @@ export function useAdminMessages() {
         ...payload,
         device: ua.getOS().name || ua.getDevice().type || 'Unknown',
         browser: ua.getBrowser().name || '',
-        location: location || undefined,
+        location,
       })
     }, '回复成功')
 
   const connect = () => {
-    const token = localStorage.getItem('local-token') || ''
+    const token = localStorage.getItem('local-token')
     if (!token) return
     //创建事件源
     source = createMessageEventSource(token)
@@ -84,7 +84,9 @@ export function useAdminMessages() {
   }
   
   const disconnect = () => {
-    source?.close()
+    if (source) {
+      source.close()
+    }
     source = null
   }
  //在组件卸载时断开连接

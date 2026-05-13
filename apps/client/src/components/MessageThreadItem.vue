@@ -22,7 +22,8 @@ const emit = defineEmits<{
   reply: [item: MessageItem]
 }>()
 
-const children = computed(() => props.repliesByParentId[props.item.id] ?? [])
+// 父组件已经提前把所有回复按 parentId 分桶，这里只取当前留言直接挂载的下一层子回复。
+const children = computed(() => props.repliesByParentId[props.item.id] || [])
 const isAdmin = computed(() => props.item.authorType === 'admin')
 const initials = computed(() => props.item.author.slice(0, 1).toUpperCase())
 const formattedTime = computed(() => formatDate(props.item.createdAt, 'short'))
@@ -36,7 +37,7 @@ const qqAvatar = (qq?: string) => qq ? `https://q.qlogo.cn/g?b=qq&nk=${qq}&s=100
 
 const avatarSrc = computed(() => {
   if (isAdmin.value) return props.ownerAvatar
-  return qqAvatar(props.item.qq || '')
+  return qqAvatar(props.item.qq)
 })
 
 const deviceIcon = computed(() => (isMobileDeviceLabel(props.item.device) ? Iphone : Monitor))

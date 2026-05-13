@@ -102,7 +102,6 @@ onUnmounted(stopCycle)
     <div class="chat-input-inner">
       <div class="chat-input-field">
         <input
-          ref="inputRef"
           v-model="inputValue"
           type="text"
           class="chat-input"

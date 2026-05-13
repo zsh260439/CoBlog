@@ -50,6 +50,7 @@ const syncTagSlug = () => {
     tagForm.slug = createSlugFromText(tagForm.label, 32)
 }
 
+// 分类和标签弹窗共用同一套流程：先校验，再根据 isEdit 决定走新增还是更新。
 const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
    if (!categoryForm.label.trim() || !categoryForm.slug.trim()) {
     ElMessage.warning('请先填写完整的分类名称和 slug')
@@ -68,8 +69,8 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
       categoryDialogVisible.value = false
       //重置form表单
       resetCategoryForm()
-    } catch (error: any) {
-      ElMessage.error(error?.response?.data?.message || '分类编辑失败')
+    } catch {
+      ElMessage.error('分类编辑失败')
     } finally {
       submittingCategory.value = false
       categorySlugEdited.value = false
@@ -84,8 +85,8 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
       ElMessage.success('分类新增成功')
       categoryDialogVisible.value = false
       resetCategoryForm()
-    } catch (error: any) {
-      ElMessage.error(error?.response?.data?.message || '分类新增失败')
+    } catch {
+      ElMessage.error('分类新增失败')
     } finally {
       submittingCategory.value = false
       //更新页面
@@ -120,8 +121,8 @@ const submitTag = async (isEdit: boolean,preTagSlug:string) => {
       tagDialogVisible.value = false
       resetTagForm()
     }
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '标签新增失败')
+  } catch {
+    ElMessage.error(isEdit ? '标签编辑失败' : '标签新增失败')
   } finally {
     submittingTag.value = false
     //无论是否成功 都需要将 tagSlugEdited 重置为 false
@@ -158,8 +159,8 @@ const handleDeleteCategory = async (slug: string) => {
     await deleteCategory(slug)
     ElMessage.success('分类删除成功')
     await Promise.all([loadTaxonomies(), loadArticles()])
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '分类删除失败')
+  } catch {
+    ElMessage.error('分类删除失败')
   }
 }
 //删除标签
@@ -173,8 +174,8 @@ const handleDeleteTag = async (slug: string) => {
     await deleteTag(slug)
     ElMessage.success('标签删除成功')
     await Promise.all([loadTaxonomies(), loadArticles()])
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '标签删除失败')
+  } catch {
+    ElMessage.error('标签删除失败')
   }
 }
 onMounted(() => {

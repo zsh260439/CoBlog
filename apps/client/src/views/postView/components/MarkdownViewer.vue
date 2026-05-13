@@ -20,8 +20,9 @@ const emit = defineEmits<{
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+// 文章详情页会单独显示标题，这里把 Markdown 正文里重复的首个一级标题去掉，避免视觉重复。
 const resolvedContent = computed(() => {
-  const normalizedTitle = props.articleTitle?.trim()
+  const normalizedTitle = props.articleTitle ? props.articleTitle.trim() : ''
   let content = props.content
 
   if (normalizedTitle) {

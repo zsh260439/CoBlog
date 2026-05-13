@@ -32,8 +32,8 @@ export function useTaxonomies() {
     loadingPromise = (async () => {
       try {
         const [categoryResult, tagResult] = await Promise.all([getCategoryList(), getTagList()])
-        categories.value = categoryResult.data ?? []
-        tags.value = tagResult.data ?? []
+        categories.value = categoryResult.data
+        tags.value = tagResult.data
       } catch (currentError) {
         console.error(currentError)
         error.value = '分类或标签加载失败'
@@ -48,18 +48,13 @@ export function useTaxonomies() {
 
   const createCategoryItem = async (payload: CreateArticleCategoryPayload) => {
     const result = await createCategory(payload)
-    if (result.data) {
-      //追加分类
-      categories.value = [...categories.value, result.data]
-    }
+    categories.value = [...categories.value, result.data]
     return result.data
   }
 
   const createTagItem = async (payload: CreateArticleTagPayload) => {
     const result = await createTag(payload)
-    if (result.data) {
-      tags.value = [...tags.value, result.data]
-    }
+    tags.value = [...tags.value, result.data]
     return result.data
   }
 

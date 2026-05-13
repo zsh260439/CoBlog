@@ -10,7 +10,7 @@ import { useArticles } from '@/composables/useArticles'
 import { siteConfig } from '@/config/site'
 
 const route = useRoute()
-const currentTag = computed(() => String(route.params.tag ?? ''))
+const currentTag = computed(() => String(route.params.tag || ''))
 
 const { articles, isLoading, error } = useTag(currentTag)
 const { articles: allArticles, loadArticles } = useArticles()

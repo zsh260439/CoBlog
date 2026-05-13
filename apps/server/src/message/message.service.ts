@@ -56,9 +56,8 @@ export class MessageService {
       return this.messageModel.countDocuments({ status: 'pending' })
     }
 
-    // 创建留言时：先按 IP 限制 pending 数量，再清洗前端传来的 location。
+    // 创建留言时：按 senderId 限制 pending 数量，直接使用前端传来的 location。
     async create(createMessageDto:CreateMessageDto, ip: string){
-      const safeIp = ip || '127.0.0.1'
       const pendingCount = await this.messageModel.countDocuments({
         senderId: createMessageDto.senderId,
         status: 'pending',
@@ -81,8 +80,8 @@ export class MessageService {
         const message = await this.messageModel.create({
           _id: id,
           ...messagePayload,
-          ip: safeIp,
-          rootId: parent.rootId || parent._id.toString(),
+          ip,
+          rootId: parent.rootId,
           parentId: parent._id.toString(),
           authorType: 'visitor',
           replyToAuthor: parent.author,
@@ -98,7 +97,7 @@ export class MessageService {
       const message = await this.messageModel.create({
         _id: id,
         ...messagePayload,
-        ip: safeIp,
+        ip,
         rootId: id.toString(),
         parentId: '',
         authorType: 'visitor',
@@ -112,7 +111,6 @@ export class MessageService {
     }
 
     async createAdminReply(parentId: string, dto: CreateAdminReplyDto, ip: string) {
-      const safeIp = ip || '127.0.0.1'
       const parent = await this.messageModel.findById(parentId).lean()
       if (!parent) {
         throw new BadRequestException('父留言不存在')
@@ -127,8 +125,8 @@ export class MessageService {
         email: '',
         qq: '',
         senderId: 'admin',
-        ip: safeIp,
-        rootId: parent.rootId || parent._id.toString(),
+        ip,
+        rootId: parent.rootId,
         parentId: parent._id.toString(),
         authorType: 'admin',
         replyToAuthor: parent.author,

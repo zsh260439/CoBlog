@@ -1,5 +1,5 @@
-export function normalizeLocation(value?: string) {
-  const normalized = (value || '').trim()
+export function normalizeLocation(value: string) {
+  const normalized = value.trim()
 
   if (!normalized) {
     return ''

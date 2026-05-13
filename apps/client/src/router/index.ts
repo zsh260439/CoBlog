@@ -154,7 +154,7 @@ const router = createRouter({
     return { top: 0 }
   }
 })
-//登录路由切换逻辑
+// 只有后台路由需要 token；公开页面直接放行，后台页面在这里统一处理刷新。
 router.beforeEach(async (to) =>{
   const {isAccessTokenExpired} = useAuth()
     //首先检查token是否存在
@@ -179,14 +179,13 @@ router.beforeEach(async (to) =>{
     if(!isAccessTokenExpired(token)){
        return true
     } 
-    //token过期 尝试refresh
-          try {
-           const result = await refreshAccessToken()
-           const newToken = result.data?.accessToken
-          if(!newToken) throw new Error('刷新token失败')
-          localStorage.setItem('local-token',newToken)
-        return true
-         } catch {
+     //token过期 尝试refresh
+           try {
+            const result = await refreshAccessToken()
+            const newToken = result.data.accessToken
+           localStorage.setItem('local-token',newToken)
+         return true
+          } catch {
            localStorage.removeItem('local-token')
            ElMessage.warning('登录状态过期,请重新登录!')
            return '/login'

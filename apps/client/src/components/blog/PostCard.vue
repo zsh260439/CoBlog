@@ -16,11 +16,11 @@ const coverStyle = computed(() => {
 })
 
 // 展示层需要的摘要、日期和阅读时长都在这里预处理。
-const excerpt = computed(() => props.article.excerpt || props.article.content.slice(0, 140))
+const excerpt = computed(() => props.article.excerpt)
 const publishedAt = computed(() => formatDate(props.article.createdAt, 'long'))
 const readTime = computed(() => estimateReadTime(props.article.content))
-const wordCount = computed(() => props.article.wordCount || 0)
-const view = computed(() => props.article.views || 0)
+const wordCount = computed(() => props.article.wordCount)
+const view = computed(() => props.article.views)
 </script>
 
 <template>

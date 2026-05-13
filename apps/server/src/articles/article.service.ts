@@ -102,9 +102,13 @@ export class ArticlesService {
 
     articles.forEach((article:Article) => {
       const year = new Date(article.createdAt).getFullYear().toString()
-      const currentGroup = groupMap.get(year) ?? []
+      let currentGroup = groupMap.get(year)
+      if (!currentGroup) {
+        currentGroup = []
+        groupMap.set(year, currentGroup)
+      }
+
       currentGroup.push(article)
-      groupMap.set(year, currentGroup)
     })
 
     return [...groupMap.entries()].map(([year, items]) => ({
@@ -114,14 +118,14 @@ export class ArticlesService {
   }
  
   async create(createArticleDto: CreateArticleDto) {
-     let coverImage = createArticleDto.coverImage?.trim() || ''
+     let coverImage = createArticleDto.coverImage ? createArticleDto.coverImage.trim() : ''
      if(!coverImage) {
        coverImage = await this.imageService.getRandomCoverImage()
-     }
+      }
     const article = await this.articleModel.create({
       ...createArticleDto,
       coverImage,
-      wordCount: this.stripMarkdown(createArticleDto.content ?? '').length,
+      wordCount: this.stripMarkdown(createArticleDto.content).length,
     })
 
     return this.serializeArticle(article.toObject())
@@ -129,10 +133,10 @@ export class ArticlesService {
 
   async update(id: string, updateArticleDto: UpdateArticleDto) {
     //加上更新的图片
-    let coverImage = updateArticleDto.coverImage?.trim() || ''
+    let coverImage = updateArticleDto.coverImage ? updateArticleDto.coverImage.trim() : ''
      if(!coverImage) {
        coverImage = await this.imageService.getRandomCoverImage()
-     }
+      }
     //创建个新对象
     const updatePayload: Record<string, unknown> = { ...updateArticleDto,coverImage }
     

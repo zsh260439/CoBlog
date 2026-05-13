@@ -7,13 +7,17 @@ const VISITOR_LOCATION_CACHE_MS = 30 * 60 * 1000
 
 function loadVisitorLocation() {
   const raw = localStorage.getItem(VISITOR_LOCATION_KEY)
-  return raw ? JSON.parse(raw) as { location: string; expiresAt: number } : null
+  if (!raw) {
+    return null
+  }
+
+  return JSON.parse(raw) as { location: string; expiresAt: number }
 }
 
 export const useVisitorLocationStore = defineStore('visitor-location', () => {
   const cached = loadVisitorLocation()
-  const location = ref(cached?.location || '')
-  const expiresAt = ref(cached?.expiresAt || 0)
+  const location = ref(cached ? cached.location : '')
+  const expiresAt = ref(cached ? cached.expiresAt : 0)
   const loading = ref<Promise<string> | null>(null)
 
   const ensureLocation = async (force = false) => {
@@ -28,12 +32,14 @@ export const useVisitorLocationStore = defineStore('visitor-location', () => {
     loading.value = (async () => {
       try {
         const result = await getVisitorLocation()
-        const nextLocation = result.data?.location?.trim() || ''
+        const nextLocation = result.data.location.trim()
+        const nextExpiresAt = Date.now() + VISITOR_LOCATION_CACHE_MS
+
         location.value = nextLocation
-        expiresAt.value = Date.now() + VISITOR_LOCATION_CACHE_MS
+        expiresAt.value = nextExpiresAt
         localStorage.setItem(VISITOR_LOCATION_KEY, JSON.stringify({
           location: nextLocation,
-          expiresAt: expiresAt.value,
+          expiresAt: nextExpiresAt,
         }))
         return nextLocation
       } finally {

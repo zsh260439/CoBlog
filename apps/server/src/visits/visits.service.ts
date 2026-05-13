@@ -34,7 +34,7 @@ export class VisitsService {
       return { ok: true, counted: false }
     }
 
-    const location = (dto.location || '').trim()
+    const location = dto.location.trim()
     await this.visitModel.create({
       ip,
       senderId: dto.senderId,
@@ -101,7 +101,7 @@ export class VisitsService {
       const date = new Date(start)
       date.setDate(start.getDate() + index)
       const key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
-      cumulative += trendMap.get(key) ?? 0
+      cumulative += trendMap.get(key) || 0
       return {
         label: `${date.getMonth() + 1}/${date.getDate()}`,
         value: cumulative,

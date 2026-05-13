@@ -27,11 +27,11 @@ export const createTag = (payload: CreateArticleTagPayload) => {
 }
 //删除分类
 export const deleteCategory = (slug:string)=>{
- return request<Number>('/taxonomies/categories/' + slug, 'DELETE')
+ return request<{ deletedCount: number }>('/taxonomies/categories/' + slug, 'DELETE')
 }
 //删除标签
 export const deleteTag = (slug:string)=>{
- return request<Number>('/taxonomies/tags/' + slug, 'DELETE')
+ return request<{ deletedCount: number }>('/taxonomies/tags/' + slug, 'DELETE')
 }
 //更新分类
 export const updateCategory = (slug:string,payload:CreateArticleCategoryPayload)=>{

@@ -12,7 +12,7 @@ import { MagicStick } from '@element-plus/icons-vue'
 const route = useRoute()
 const router = useRouter()
 const { y } = useWindowScroll()
-const currentSlug = computed(() => String(route.params.slug ?? ''))
+const currentSlug = computed(() => String(route.params.slug || ''))
 const previewId = computed(() => `article-preview-${currentSlug.value || 'detail'}`)
 const tocItems = ref<MarkdownHeading[]>([])
 const activeHeadingId = ref('')
@@ -23,6 +23,13 @@ const {
   error,
   articleStats
 } = useArticleDetail(currentSlug)
+const relatedArticles = computed(() => {
+  if (!article.value || !article.value.related) {
+    return []
+  }
+
+  return article.value.related
+})
 
 // 根据正文滚动位置刷新当前高亮标题。
 // 目录本身只负责展示，真正的“哪个标题算激活”统一由这里决定。
@@ -140,11 +147,11 @@ watch([y, tocItems], () => {
             </div>
           </section>
 
-          <section class="article-card article-card--related" v-if="article.related?.length">
+          <section class="article-card article-card--related" v-if="relatedArticles.length">
             <h3>相关文章</h3>
 
             <router-link
-              v-for="item in article.related"
+              v-for="item in relatedArticles"
               :key="item.slug"
               :to="{ name: 'article', params: { slug: item.slug } }"
               class="related-link"

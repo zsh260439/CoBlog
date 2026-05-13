@@ -1,15 +1,15 @@
 export interface AdminMessageItem {
   id: string
   author: string
-  authorType?: 'visitor' | 'admin'
+  authorType: 'visitor' | 'admin'
   content: string
   email?: string
   qq?: string
   senderId: string
   ip: string
-  parentId?: string
-  rootId?: string
-  replyToAuthor?: string
+  parentId: string
+  rootId: string
+  replyToAuthor: string
   location: string
   device: string
   browser: string

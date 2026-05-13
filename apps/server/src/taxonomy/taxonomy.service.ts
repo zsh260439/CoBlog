@@ -38,7 +38,7 @@ export class TaxonomyService {
       _id: String(category._id),
       label: category.label,
       slug: category.slug,
-      count: countMap.get(category.slug) ?? 0,
+      count: countMap.get(category.slug) || 0,
       createdAt: this.toISO(category.createdAt),
       updatedAt: this.toISO(category.updatedAt),
     }))
@@ -82,7 +82,7 @@ export class TaxonomyService {
       _id: String(tag._id),
       label: tag.label,
       slug: tag.slug,
-      count: countMap.get(tag.label) ?? 0,
+      count: countMap.get(tag.label) || 0,
       createdAt: this.toISO(tag.createdAt),
       updatedAt: this.toISO(tag.updatedAt),
     }))
@@ -134,7 +134,7 @@ export class TaxonomyService {
     await this.tagModel.deleteOne({ slug })
 
     return {
-      deletedCount: updateResult.modifiedCount ?? 0
+      deletedCount: updateResult.modifiedCount
     }
   }
   //更新分类 其中所对应的文章数量也需要更新
@@ -186,6 +186,11 @@ export class TaxonomyService {
       },
       { returnDocument:'after' }
     )
+
+    if (!tag) {
+      throw new NotFoundException('标签不存在')
+    }
+
     //同步文章的标签 因为一个文章tag可能很多，所以要精准定位tag并且只修改这个tag
     await this.articleModel.updateMany(
       { tags: oldTag.label },
@@ -201,10 +206,10 @@ export class TaxonomyService {
 
     const count = await this.articleModel.countDocuments({ tags: newLabelTrim })
 
-  return {
+   return {
      count,
-     label: tag?.label ?? newLabelTrim,
-     slug: tag?.slug ?? newSlugTrim,
-   }
+      label: tag.label,
+      slug: tag.slug,
+    }
   }
 }

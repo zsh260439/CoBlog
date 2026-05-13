@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { ArticleDraftState } from '@/types/admin'
-
 const ARTICLE_DRAFT_STORAGE_KEY = 'admin:article-draft'
 
 function loadArticleDraft() {

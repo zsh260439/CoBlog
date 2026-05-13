@@ -38,7 +38,7 @@ export function useCategory(slug: Ref<string>) {
 
     try {
       const result = await getArticlesByCategory(categorySlug)
-      articles.value = result.data ?? []
+      articles.value = result.data
     } catch (err) {
       console.error(err)
       articles.value = []

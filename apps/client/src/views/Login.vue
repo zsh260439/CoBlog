@@ -58,11 +58,7 @@ const handleSubmit = async () => {
       password: form.password,
     })
 
-    const token = result.data?.accessToken
-    if (!token) {
-      throw new Error('未获取到 token')
-    }
-
+    const token = result.data.accessToken
     localStorage.setItem('local-token', token)
     ElMessage.success('登录成功')
     router.push('/admin')

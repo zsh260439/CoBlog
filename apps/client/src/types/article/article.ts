@@ -8,11 +8,11 @@ export interface Article {
   category: string // 分类中文名称
   categorySlug: string // 分类路由别名
   tags: string[] // 文章标签数组
-  coverImage?: string // 封面图地址，可选
+  coverImage?: string // 封面图地址
   createdAt: string // 创建时间
   views: number // 浏览量
   wordCount: number // 字数统计
-  previous?:{slug:string;title:string} |null
-  next?:{slug:string,title:string} |null
-  related?:Article[]
+  previous?: { slug: string; title: string } | null
+  next?: { slug: string; title: string } | null
+  related?: Article[]
 }

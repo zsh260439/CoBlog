@@ -9,8 +9,13 @@ const props = defineProps<{ items: TrendItem[] }>()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const handleResize = () => chart?.resize()
+const handleResize = () => {
+  if (chart) {
+    chart.resize()
+  }
+}
 
+// 图表实例只初始化一次，后续数据变化只更新 option，避免重复创建 canvas。
 const ensureChart = async () => {
   await nextTick()
   if (!chartRef.value) return null
@@ -56,7 +61,9 @@ watch(() => props.items, () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
-  chart?.dispose()
+  if (chart) {
+    chart.dispose()
+  }
 })
 </script>
 

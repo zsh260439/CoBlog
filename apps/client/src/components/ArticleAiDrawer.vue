@@ -33,7 +33,8 @@ const aiMessages = ref<AiChatMessage[]>([
 ])
 
 const latestAssistantMessage = computed(() => {
-  return [...aiMessages.value].reverse().find((item) => item.role === 'assistant')?.content || ''
+  const message = [...aiMessages.value].reverse().find((item) => item.role === 'assistant')
+  return message ? message.content : ''
 })
 
 const updateAiStickToBottom = () => {

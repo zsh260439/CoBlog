@@ -8,21 +8,19 @@ export function estimateReadTime(content: string): string {
 }
 
 export function sanitizeArticleFormPayload(payload: ArticleFormData): ArticleFormData {
-  const normalizedCategorySlug =
-    payload.categorySlug?.trim() ||
-    createSlugFromText(payload.category.trim(), 32)
+  const normalizedCategorySlug = payload.categorySlug.trim() || createSlugFromText(payload.category.trim(), 32)
   const normalizedContent = payload.content.trim()
   const normalizedExcerpt = payload.excerpt.trim()
-  const normalizedCoverImage = payload.coverImage?.trim()
+  const normalizedCoverImage = payload.coverImage.trim()
 
   return {
     title: payload.title.trim(),
-    slug: payload.slug?.trim(),
+    slug: payload.slug.trim(),
     content: normalizedContent,
     excerpt: normalizedExcerpt,
     category: payload.category.trim(),
     categorySlug: normalizedCategorySlug,
-    tags: (payload.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
-    ...(normalizedCoverImage ? { coverImage: normalizedCoverImage } : {}),
+    tags: payload.tags.map((tag) => tag.trim()).filter(Boolean),
+    coverImage: normalizedCoverImage,
   }
 }

@@ -13,7 +13,7 @@ onMounted(() => {
 
 // 外部传了统计数据就优先使用，否则回退到站点配置里的快照数据。
 const resolvedItems = computed(() => {
-  if (props.items?.length) {
+  if (props.items && props.items.length) {
     return props.items
   }
 

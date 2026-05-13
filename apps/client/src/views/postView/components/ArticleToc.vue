@@ -51,7 +51,8 @@ const activeRootId = computed(() => {
     return activeItem.rootId
   }
 
-  return normalizedItems.value.find((item) => item.isRoot)?.id || ''
+  const rootItem = normalizedItems.value.find((item) => item.isRoot)
+  return rootItem ? rootItem.id : ''
 })
 
 // 目录始终保留所有根标题，同时展示当前根标题下面的子标题。

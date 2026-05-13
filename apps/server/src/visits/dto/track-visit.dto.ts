@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsNotEmpty, IsString } from 'class-validator'
 
 export class TrackVisitDto {
   @IsString()
@@ -9,7 +9,6 @@ export class TrackVisitDto {
   @IsNotEmpty()
   senderId: string
 
-  @IsOptional()
   @IsString()
-  location?: string
+  location: string
 }

@@ -5,11 +5,11 @@ type VisitorLocationPayload = {
   location: string
 }
 
-export const trackVisit = (path: string, senderId: string, location?: string) => {
+export const trackVisit = (path: string, senderId: string, location: string) => {
   return request<{ ok: boolean; counted: boolean }>('/visits/track', 'POST', {
     path,
     senderId,
-    ...(location ? { location } : {}),
+    location,
   })
 }
 

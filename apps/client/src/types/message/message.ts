@@ -2,16 +2,16 @@
 export interface MessageItem {
   id: string
   author: string
-  authorType?: 'visitor' | 'admin'
+  authorType: 'visitor' | 'admin'
   location: string
   device: string
   browser: string
   content: string
   createdAt: string
-  parentId?: string
-  rootId?: string
-  replyToAuthor?: string
-  status?: 'pending' | 'approved' | 'rejected'
+  parentId: string
+  rootId: string
+  replyToAuthor: string
+  status: 'pending' | 'approved' | 'rejected'
   reviewedAt?: string
   qq?: string
 }

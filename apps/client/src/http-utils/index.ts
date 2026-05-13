@@ -36,8 +36,7 @@ const baseRequest = <T>(
   return http.request<any, ApiResult<T>>({
     url,
     method,
-    // 允许个别接口（例如 AI 助手）单独延长超时时间。
-    timeout: options?.timeout,
+    timeout: options ? options.timeout : undefined,
     [method.toUpperCase() === 'GET' ? 'params' : 'data']: submitData,
   })
 }
@@ -48,7 +47,7 @@ export const request = <T>(url: string, method: Method = 'GET', submitData?: Sub
 export const authRequest = <T>(url : string , method:Method = 'GET',submitData?:SubmitData) =>{
    return baseRequest<T>(authHttpInstance,url,method,submitData)
 }
-
+//给ai使用的request 可以单独设置超时时间
 export const requestWithOptions = <T>(
   url: string,
   method: Method = 'GET',
@@ -75,10 +74,9 @@ httpInstance.interceptors.request.use(
 
 
 // 普通响应拦截器
- //刷新锁 标记是否正在刷新token 防止多个401重复调用接口
-  let isRefreshing  =  false
-  //请求队列 存储正在请求刷新的失败接口 等token获得后统一处理
-  let requestQueue:Array<(token:string)=> void > = []
+// 刷新锁保证同一时间只发起一次 refresh，其余 401 请求进入队列等待新 token。
+let isRefreshing  =  false
+let requestQueue:Array<(token:string)=> void > = []
   httpInstance.interceptors.response.use(
   //正常请求不用管
   (res)=>{
@@ -111,13 +109,11 @@ httpInstance.interceptors.request.use(
        //上锁 表示正在请求
        isRefreshing = true
        try {
-         const result = await refreshAccessToken()
-         const newToken = result.data?.accessToken
-        //如果没有 抛出错误
-        if(!newToken) throw new Error('刷新token失败!')
-        localStorage.setItem('local-token',newToken)
-        requestQueue.forEach((callback)=>callback(newToken))
-        requestQueue = []
+          const result = await refreshAccessToken()
+          const newToken = result.data.accessToken
+         localStorage.setItem('local-token',newToken)
+         requestQueue.forEach((callback)=>callback(newToken))
+         requestQueue = []
         originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return httpInstance(originalRequest)

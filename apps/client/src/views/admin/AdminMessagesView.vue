@@ -228,7 +228,7 @@ onBeforeUnmount(disconnect)
         <el-table-column prop="author" label="留言者" min-width="150">
           <template #default="{ row }">
             <div class="author-info flex gap-1">
-              <el-avatar :src="qqAvatar(row.qq || '')" :size="40" />
+              <el-avatar :src="qqAvatar(row.qq)" :size="40" />
               <div class="author-detail">
                 <p class="text-sm font-bold m-0 text-black">{{ row.author }}</p>
                 <p class="text-[11px] text-gray-500 m-0">{{ row.location }}</p>
@@ -327,7 +327,7 @@ onBeforeUnmount(disconnect)
 
     <div v-if="currentMessage" class="visitor-info ml-8">
       <div class="author-info flex gap-1">
-        <el-avatar :src="qqAvatar(currentMessage.qq || '')" :size="40" />
+        <el-avatar :src="qqAvatar(currentMessage.qq)" :size="40" />
         <div class="author-detail">
           <div class="flex items-center gap-2">
             <p class="text-sm font-bold m-0 text-black">{{ currentMessage.author }}</p>
@@ -360,9 +360,9 @@ onBeforeUnmount(disconnect)
 
       <div class="mx-8 mt-5 grid grid-cols-2 gap-y-3 text-[14px] text-gray-500">
         <div class="flex items-center gap-2"><el-icon><Clock /></el-icon>{{ formatDate(currentMessage.createdAt, 'short') }}</div>
-        <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.location || '未知' }}</div>
-        <div class="flex items-center gap-2"><el-icon><component :is="deviceIcon(currentMessage.device)" /></el-icon>{{ currentMessage.device || '未知设备' }}</div>
-        <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.browser || '未知浏览器' }}</div>
+        <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.location }}</div>
+        <div class="flex items-center gap-2"><el-icon><component :is="deviceIcon(currentMessage.device)" /></el-icon>{{ currentMessage.device }}</div>
+        <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.browser }}</div>
       </div>
 
       <div class="mx-8 mt-5 border-t border-solid border-gray-200"></div>

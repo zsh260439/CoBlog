@@ -15,7 +15,7 @@ export function useVisitStats() {
   const loadVisitStats = async (force = false) => {
     const isCacheFresh = Date.now() - lastLoadedAt < VISIT_STATS_CACHE_MS
 
-    if (!force && isCacheFresh && summary.value && trend.value.length && cities.value.length) {
+    if (!force && isCacheFresh && summary.value) {
       return
     }
 
@@ -28,10 +28,10 @@ export function useVisitStats() {
     loadingPromise = (async () => {
       try {
         const result = await getVisitStats()
-        const payload = result.data as VisitStatsPayload | undefined
-        summary.value = payload?.summary ?? null
-        trend.value = payload?.trend ?? []
-        cities.value = payload?.cities ?? []
+        const payload: VisitStatsPayload = result.data
+        summary.value = payload.summary
+        trend.value = payload.trend
+        cities.value = payload.cities
         lastLoadedAt = Date.now()
       } finally {
         isLoading.value = false

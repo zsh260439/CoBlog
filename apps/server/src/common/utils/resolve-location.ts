@@ -17,11 +17,7 @@ export async function resolveLocation(ip: string) {
       params: { source: 'commercial' },
     })
 
-    if (!data || typeof data.region !== 'string') {
-      return ''
-    }
-
-    const district = typeof data.district === 'string' ? data.district.trim() : ''
+    const district = data.district.trim()
     const base = normalizeLocation(data.region)
     return normalizeLocation([base, district].filter(Boolean).join(' '))
   } catch {

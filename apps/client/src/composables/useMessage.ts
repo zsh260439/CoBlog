@@ -39,9 +39,7 @@ export function useMessage() {
           getMessageList(),
           getMyMessageList(messageStore.senderId),
         ])
-        const publicMessages = Array.isArray(publicResult.data) ? publicResult.data : []
-        const ownMessages = Array.isArray(ownResult.data) ? ownResult.data : []
-        messages.value = mergeMessages(publicMessages, ownMessages)
+        messages.value = mergeMessages(publicResult.data, ownResult.data)
       } catch {
         messages.value = []
         error.value = '留言加载失败'
@@ -63,13 +61,13 @@ export function useMessage() {
         senderId: messageStore.senderId,
         author: form.author,
         content: form.content,
-        parentId: parentId || undefined,
-        email: form.email || undefined,
-        qq: form.qq || undefined,
+        parentId,
+        email: form.email,
+        qq: form.qq,
         device: ua.getOS().name || ua.getDevice().type || 'Unknown',
         browser: ua.getBrowser().name || '',
         enableEmailNotice: form.enableEmailNotice,
-        location: location || undefined,
+        location,
       })
       await loadMessages(true)
       return true

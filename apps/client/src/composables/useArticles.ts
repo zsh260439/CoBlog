@@ -23,7 +23,7 @@ export function useArticles() {
     loadingPromise = (async () => {
       try {
         const result = await getArticleList()
-        articles.value = result.data ?? []
+        articles.value = result.data
       } catch {
         articles.value = []
         error.value = '文章加载失败'

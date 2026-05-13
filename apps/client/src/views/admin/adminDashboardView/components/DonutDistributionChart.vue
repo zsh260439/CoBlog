@@ -9,7 +9,11 @@ const props = defineProps<{ items: DistributionItem[] }>()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const handleResize = () => chart?.resize()
+const handleResize = () => {
+  if (chart) {
+    chart.resize()
+  }
+}
 
 const ensureChart = async () => {
   await nextTick()
@@ -75,7 +79,9 @@ watch(() => props.items, () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
-  chart?.dispose()
+  if (chart) {
+    chart.dispose()
+  }
 })
 </script>
 

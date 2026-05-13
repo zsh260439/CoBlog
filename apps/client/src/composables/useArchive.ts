@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import { getArticlesByArchive } from '@/servers/article'
-import type { Article } from '@/types/article'
 import type { ArchiveGroup } from '@/types/article'
 
 const archiveGroups = ref<ArchiveGroup[]>([])
@@ -24,7 +23,7 @@ export function useArchive() {
     loadingPromise = (async () => {
       try {
         const result = await getArticlesByArchive()
-        archiveGroups.value = result.data ?? []
+        archiveGroups.value = result.data
       } catch (err) {
         console.error(err)
         archiveGroups.value = []

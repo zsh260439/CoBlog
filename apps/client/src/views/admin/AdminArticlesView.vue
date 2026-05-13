@@ -39,15 +39,9 @@ const filteredArticles = computed(() => {
 const paginatedArticles = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return filteredArticles.value.slice(start, start + pageSize).map((article, index) => {
-    const views = 700 + (filteredArticles.value.length - start - index) * 111
-    const comments = Math.max(2, article.tags.length * 3 + index)
-
     return {
       ...article,
       tableId: start + index + 1,
-      viewCount: views.toLocaleString(),
-      commentCount: comments,
-      statusLabel: '已发布',
       publishTime: article.createdAt.replace('T', ' ').slice(0, 16),
     }
   })
@@ -83,7 +77,7 @@ const handleDelete = async (id: string, title: string) => {
       return
     }
 
-    ElMessage.error(error?.response?.data?.message || '文章删除失败')
+    ElMessage.error('文章删除失败')
   }
 }
 </script>
@@ -123,12 +117,15 @@ const handleDelete = async (id: string, title: string) => {
           </template>
         </el-table-column>
 
-        <el-table-column prop="viewCount" label="浏览量" width="100" align="center" />
-        <el-table-column prop="commentCount" label="评论数" width="90" align="center" />
+        <el-table-column label="浏览量" width="100" align="center">
+          <template #default="{ row }">
+            {{ row.views.toLocaleString() }}
+          </template>
+        </el-table-column>
 
         <el-table-column label="状态" width="100" align="center">
-          <template #default="{ row }">
-            <span class="status-pill">{{ row.statusLabel }}</span>
+          <template #default>
+            <span class="status-pill">已发布</span>
           </template>
         </el-table-column>
 

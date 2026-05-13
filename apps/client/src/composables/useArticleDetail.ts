@@ -22,14 +22,14 @@ export function useArticleDetail(slug: Ref<string>) {
     ]
   })
 
-  // 根据 slug 请求文章详情（后端同时返回 previous、next、related）
+  // 文章详情页所有展示数据都围绕这一份 article 展开，这里统一负责按 slug 拉取并回填。
   const loadArticleDetail = async (currentSlug: string) => {
     isLoading.value = true
     error.value = null
 
     try {
       const result = await getArticleDetail(currentSlug)
-      article.value = result.data ?? null  // data 为 undefined 时兜底 null
+      article.value = result.data
     } catch {
       article.value = null
       error.value = '文章未找到'

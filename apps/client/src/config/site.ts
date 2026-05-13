@@ -3,7 +3,7 @@ import type {  SiteNavItem } from '@/types/site'
 export const siteConfig = {
   name: 'CoBlog',
   ownerName: 'Zsint',
-  ownerRole: '前端开发',
+  ownerRole: '全栈开发',
   ownerLocation: '湖北武汉',
   description: '一个记录学习过程的博客网站',
   aboutHeroImage: '/images/about-hero.png',
@@ -29,5 +29,4 @@ export const primaryNav: SiteNavItem[] = [
 export const aboutProfileCard = {
   avatar: '/images/about-hero.png',
   email: '2604391962@qq.com',
-  socials: ['GitHub', 'QQ', 'Gitee'],
 }

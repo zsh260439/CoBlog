@@ -10,7 +10,8 @@ import { useArticles } from '@/composables/useArticles'
 import { siteConfig } from '@/config/site'
 
 const route = useRoute()
-const currentSlug = computed(() => String(route.params.slug ?? ''))
+const currentSlug = computed(() => String(route.params.slug || ''))
+const currentCategoryLabel = computed(() => currentCategory.value ? currentCategory.value.label : '分类')
 
 const { currentCategory, articles, isLoading, error } = useCategory(currentSlug)
 // 全站文章数量
@@ -24,7 +25,7 @@ onMounted(() => {
 <template>
   <div class="category-view">
     <PageHero
-      :title="currentCategory?.label ?? '分类'"
+      :title="currentCategoryLabel"
       :description="currentCategory ? `${currentCategory.label} 下的文章整理` : '未找到对应分类'"
       image="/images/CATEGORY.webp"
       height="medium"

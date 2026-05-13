@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator'
 
 export class CreateMessageDto {
   @IsString()
@@ -10,7 +10,7 @@ export class CreateMessageDto {
   content: string
 
   @IsOptional()
-  @IsEmail()
+  @IsString()
   email?: string
 
   @IsOptional()
@@ -37,7 +37,6 @@ export class CreateMessageDto {
   @IsBoolean()
   enableEmailNotice?: boolean
 
-  @IsOptional()
   @IsString()
-  location?: string
+  location: string
 }

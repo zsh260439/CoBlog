@@ -52,12 +52,15 @@ const refreshCaptcha = () => {
   captchaAnswer.value = ''
 }
 
+// 提交成功后统一清空表单、验证码和当前回复目标，保持留言入口回到初始状态。
 const resetForm = () => {
   Object.assign(form, { author: '', content: '', email: '', qq: '', enableEmailNotice: false })
   replyTarget.value = null
   refreshCaptcha()
   //清除所有的校验提示
-  formRef.value?.clearValidate()
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 const beginReply = async (item: MessageItem) => {
@@ -65,14 +68,16 @@ const beginReply = async (item: MessageItem) => {
   replyTarget.value = item
   await nextTick()
   //滚动到回复目标位置
-  composerAnchorRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (composerAnchorRef.value) {
+    composerAnchorRef.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
 
 const cancelReply = () => {
   replyTarget.value = null
 }
 
-// 留言接口返回扁平数组，按 parentId 分桶，由 MessageThreadItem 递归渲染楼中楼。
+// 合并后的留言列表是扁平数组，这里按 parentId 分桶，再把根留言和回复树交给递归组件渲染。
 const threadBuckets = computed(() => {
   const replyMap = new Map<string, MessageItem[]>()
   const roots: MessageItem[] = []
@@ -83,20 +88,20 @@ const threadBuckets = computed(() => {
       roots.push(item)
       return
     }
-    //按照每个parentId分桶，将回复分桶
-    const siblings = replyMap.get(item.parentId) ?? []
-    //将回复添加到回复桶中
+
+    let siblings = replyMap.get(item.parentId)
+    if (!siblings) {
+      siblings = []
+      replyMap.set(item.parentId, siblings)
+    }
+
     siblings.push(item)
-    //更新回复桶中的回复列表
-    replyMap.set(item.parentId, siblings)
   })
-  //将根留言按创建时间排序
+
   roots.sort((left, right) => +new Date(right.createdAt) - +new Date(left.createdAt))
 
   return {
-    //根留言
     roots,
-    //回复桶
     repliesByParentId: Object.fromEntries(replyMap),
   }
 })
@@ -105,6 +110,8 @@ const rootMessages = computed(() => threadBuckets.value.roots)
 const repliesByParentId = computed(() => threadBuckets.value.repliesByParentId)
 const totalCount = computed(() => messages.value.length)
 const isReplyMode = computed(() => Boolean(replyTarget.value))
+const replyTargetId = computed(() => replyTarget.value ? replyTarget.value.id : '')
+const replyTargetAuthor = computed(() => replyTarget.value ? replyTarget.value.author : '')
 
 const handleSubmit = async () => {
   const valid = formRef.value ? await formRef.value.validate().catch(() => false) : false
@@ -116,7 +123,7 @@ const handleSubmit = async () => {
     return
   }
 
-  const ok = await submitMessage(form, replyTarget.value?.id || '')
+  const ok = await submitMessage(form, replyTargetId.value)
   if (!ok) {
     ElMessage.error(isReplyMode.value ? '回复提交失败' : '留言提交失败')
     return
@@ -142,7 +149,7 @@ const handleSubmit = async () => {
                 <el-icon><Promotion /></el-icon>
               </span>
               <div>
-                <h3>{{ isReplyMode ? `回复 ${replyTarget?.author}` : '发表留言' }}</h3>
+                <h3>{{ isReplyMode ? `回复 ${replyTargetAuthor}` : '发表留言' }}</h3>
                 <p>{{ isReplyMode ? '注意回复的言行哦，不要发布违规内容' : '留个印记吧，站长都会看。' }}</p>
               </div>
             </div>
@@ -236,7 +243,7 @@ const handleSubmit = async () => {
                 :item="item"
                 :owner-avatar="aboutProfileCard.avatar"
                 :replies-by-parent-id="repliesByParentId"
-                :active-reply-id="replyTarget?.id || ''"
+                :active-reply-id="replyTargetId"
                 @reply="beginReply"
               />
             </div>

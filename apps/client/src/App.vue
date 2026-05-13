@@ -30,9 +30,9 @@ const trackPageVisit = async (path: string, appShell: unknown, routeName: unknow
 
   try {
     await visitorLocationStore.ensureLocation()
-    const res = await trackVisit(path, vistorStore.senderId, location.value || undefined)
+    const res = await trackVisit(path, vistorStore.senderId, location.value)
     lastTrackedPath = path
-    if (res.data?.counted) {
+    if (res.data.counted) {
       await loadVisitStats(true)
     }
   } catch {
@@ -51,7 +51,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  removeAfterEach?.()
+  if (removeAfterEach) {
+    removeAfterEach()
+  }
 })
 </script>
 

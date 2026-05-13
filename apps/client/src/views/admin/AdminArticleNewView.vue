@@ -51,11 +51,11 @@ const resolvedCategories = computed(() => categories.value)
 
 // 根据当前已选分类，拿到完整分类对象
 const selectedCategory = computed(() => {
-  return resolvedCategories.value.find((item) => item.label === form.category) ?? null
+  return resolvedCategories.value.find((item) => item.label === form.category) || null
 })
 
 // 判断当前页面是否处于编辑文章模式
-const isEditMode = computed(() => String(route.params.id ?? '').length > 0)
+const isEditMode = computed(() => String(route.params.id || '').length > 0)
 
 // 截取一部分标签作为后台快速选择列表
 const suggestedTags = computed(() => tags.value.slice(0, 16))
@@ -63,7 +63,7 @@ const suggestedTags = computed(() => tags.value.slice(0, 16))
 // 在切换分类时同步更新 categorySlug
 const syncCategory = () => {
   const currentCategory = resolvedCategories.value.find((item) => item.label === form.category)
-  form.categorySlug = currentCategory?.slug ?? createSlugFromText(form.category, 32)
+  form.categorySlug = currentCategory ? currentCategory.slug : createSlugFromText(form.category, 32)
 }
 
 // 向文章表单里添加一个标签
@@ -94,11 +94,7 @@ const toggleTag = (tag: string) => {
 // 上传单张图片
 const uploadSingleImage = async (file: File) => {
   const result = await uploadImage(file)
-  const url = result.data?.url
-
-  if (!url) {
-    throw new Error('图片上传失败')
-  }
+  const url = result.data.url
 
   return {
     url,
@@ -159,11 +155,7 @@ const handleOptimizeContent = async () => {
       instruction: aiInstruction.value.trim(),
     })
 
-    const optimizedContent = result.data?.content?.trim()
-
-    if (!optimizedContent) {
-      throw new Error('AI 未返回优化后的正文')
-    }
+    const optimizedContent = result.data.content.trim()
 
     form.content = optimizedContent
     ElMessage.success('AI 已优化正文，可继续手动微调')
@@ -187,11 +179,7 @@ const handleGenerateExcerpt = async () => {
       excerptLength: 120,
     })
 
-    const excerpt = result.data?.excerpt?.trim()
-
-    if (!excerpt) {
-      throw new Error('AI 未返回摘要内容,请检查正文是否为空')
-    }
+    const excerpt = result.data.excerpt.trim()
 
     form.excerpt = excerpt
     ElMessage.success('AI 摘要已生成')
@@ -208,7 +196,7 @@ const handleAppendContentByAi = (content: string) => {
   form.content = `${form.content.trim()}\n\n${content}`.trim()
 }
 
-// 执行文章发布或更新请求
+// 发布和编辑共用这一条提交流程：先补摘要，再根据当前模式决定 create 还是 update。
 const publishArticle = async () => {
   syncCategory()
   submitError.value = ''
@@ -231,18 +219,14 @@ const publishArticle = async () => {
     }
     if (isEditMode.value) {
       const result = await updateArticle(String(route.params.id), payload)
-      if (result.data) {
-        setArticles(
-          articles.value.map((item) => (item._id === result.data?._id ? result.data : item))
-        )
-      }
+      setArticles(
+        articles.value.map((item) => (item._id === result.data._id ? result.data : item))
+      )
       await loadTaxonomies()
       ElMessage.success('文章更新成功')
     } else {
       const result = await createArticle(payload)
-      if (result.data) {
-        setArticles([result.data, ...articles.value])
-      }
+      setArticles([result.data, ...articles.value])
       await loadTaxonomies()
       clearArticleDraft()
       Object.assign(form, createDefaultForm())
@@ -285,19 +269,17 @@ onMounted(async () => {
 
     try {
       const result = await getArticleById(String(route.params.id))
-      if (result.data) {
-        Object.assign(form, {
-          title: result.data.title,
-          slug: result.data.slug,
-          excerpt: result.data.excerpt,
-          category: result.data.category,
-          categorySlug: result.data.categorySlug,
-          tags: [...result.data.tags],
-          coverImage: result.data.coverImage ?? '',
-          content: result.data.content,
-        })
-        slugTouched.value = true
-      }
+      Object.assign(form, {
+        title: result.data.title,
+        slug: result.data.slug,
+        excerpt: result.data.excerpt,
+        category: result.data.category,
+        categorySlug: result.data.categorySlug,
+        tags: [...result.data.tags],
+        coverImage: result.data.coverImage,
+        content: result.data.content,
+      })
+      slugTouched.value = true
     } catch (error: any) {
       submitError.value = error?.response?.data?.message || '文章加载失败'
     } finally {
@@ -315,7 +297,7 @@ onMounted(async () => {
   Object.assign(form, {
     ...createDefaultForm(),
     ...cachedDraft,
-    tags: Array.isArray(cachedDraft.tags) ? cachedDraft.tags : [],
+    tags: cachedDraft.tags,
   })
   slugTouched.value = Boolean(cachedDraft.slug)
 })

@@ -21,7 +21,15 @@ onMounted(() => {
 })
 
 const totalWords = computed(() => {
-  return articles.value.reduce((sum, article) => sum + (article.wordCount ?? 0), 0)
+  return articles.value.reduce((sum, article) => sum + article.wordCount, 0)
+})
+
+const latestArticleDate = computed(() => {
+  if (!articles.value.length) {
+    return '--'
+  }
+
+  return articles.value[0].createdAt.slice(5, 10)
 })
 
 const todayKey = new Date().toISOString().slice(0, 10)
@@ -55,7 +63,7 @@ const statsPrimary = computed(() => [
 const statsSecondary = computed(() => [
   { label: '今日文章', value: todayArticles.value, badge: '今日' },
   { label: '近 7 天文章', value: recentWeekArticles.value, badge: '近7天' },
-  { label: '最近更新', value: articles.value[0]?.createdAt?.slice(5, 10) ?? '--', badge: '最新' },
+  { label: '最近更新', value: latestArticleDate.value, badge: '最新' },
   { label: '活跃分类', value: categories.value.filter((c) => c.count > 0).length, badge: '分类' },
 ])
 
