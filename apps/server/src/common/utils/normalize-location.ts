@@ -6,5 +6,7 @@ export function normalizeLocation(value: string) {
   }
 
   const withoutCountry = normalized.replace(/^中国\s+/, '').trim()
-  return withoutCountry.replace(/\s+/g, ' ')
+  const segments = withoutCountry.replace(/\s+/g, ' ').split(' ').filter(Boolean)
+
+  return segments.slice(0, 2).join(' ')
 }
