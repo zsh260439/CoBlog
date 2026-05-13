@@ -4,6 +4,7 @@ import { Model } from 'mongoose'
 import { Visit, VisitDocument } from './schema/visit.schema'
 import { TrackVisitDto } from './dto/track-visit.dto'
 import { resolveLocation } from '../common/utils/resolve-location'
+import { normalizeLocation } from '../common/utils/normalize-location'
 
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000
 const ONLINE_WINDOW_MS = 5 * 60 * 1000
@@ -34,7 +35,7 @@ export class VisitsService {
       return { ok: true, counted: false }
     }
 
-    const location = dto.location.trim()
+    const location = normalizeLocation(dto.location)
     await this.visitModel.create({
       ip,
       senderId: dto.senderId,
