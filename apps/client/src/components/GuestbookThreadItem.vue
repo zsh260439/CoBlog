@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChatLineRound, Clock, Location, Monitor } from '@element-plus/icons-vue'
+import { ChatLineRound, Clock, Iphone, Location, Monitor } from '@element-plus/icons-vue'
 import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 import type { GuestbookEntry } from '@/types/message'
-import { formatDate } from '@/utils'
+import { formatDate, isMobileDeviceLabel } from '@/utils'
 
 defineOptions({ name: 'GuestbookThreadItem' })
 
@@ -38,6 +38,8 @@ const avatarSrc = computed(() => {
   if (isAdmin.value) return props.ownerAvatar
   return qqAvatar(props.item.qq || '')
 })
+
+const deviceIcon = computed(() => (isMobileDeviceLabel(props.item.device) ? Iphone : Monitor))
 
 const handleReply = () => emit('reply', props.item)
 const forwardReply = (item: GuestbookEntry) => emit('reply', item)
@@ -87,7 +89,7 @@ const forwardReply = (item: GuestbookEntry) => emit('reply', item)
             <span>{{ item.location }}</span>
           </span>
           <span v-if="item.device" class="thread-item__meta-item">
-            <el-icon><Monitor /></el-icon>
+            <el-icon><component :is="deviceIcon" /></el-icon>
             <span>{{ item.device }}</span>
           </span>
           <span v-if="item.browser" class="thread-item__meta-item">

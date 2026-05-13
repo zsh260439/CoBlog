@@ -32,7 +32,7 @@ export class MessageController {
     // 创建留言时，从请求头取真实 IP，让后端补 location、做 pending 限流。
   @Post()
      async create(@Body() createMessageDto: CreateMessageDto, @Req() req: Request) {
-    const ip = getClientIp(req)
+    const ip = getClientIp(req) || '127.0.0.1'
     const data = await this.messageService.create(createMessageDto, ip)
     return ApiResponse.success(data, '提交留言成功')
   }
@@ -72,7 +72,7 @@ export class MessageController {
   @UseGuards(AuthGuard)
   @Post(':id/admin-reply')
   async adminReply(@Param('id') id: string, @Body() dto: CreateAdminReplyDto, @Req() req: Request) {
-    const ip = getClientIp(req)
+    const ip = getClientIp(req) || '127.0.0.1'
     const data = await this.messageService.createAdminReply(id, dto, ip)
     return ApiResponse.success(data, '站长回复成功')
   }

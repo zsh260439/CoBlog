@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as echarts from 'echarts'
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface TrendItem { label: string; value: number }
 
@@ -9,10 +9,22 @@ const props = defineProps<{ items: TrendItem[] }>()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const render = () => {
-  if (!chartRef.value) return
+const handleResize = () => chart?.resize()
+
+const ensureChart = async () => {
+  await nextTick()
+  if (!chartRef.value) return null
   if (!chart) chart = echarts.init(chartRef.value)
-  chart.setOption({
+  return chart
+}
+
+const render = async () => {
+  const instance = await ensureChart()
+  if (!instance) return
+
+  instance.setOption({
+    grid: { left: 28, right: 18, top: 26, bottom: 28, containLabel: true },
+    tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: props.items.map((i) => i.label) },
     yAxis: { type: 'value', minInterval: 1 },
     series: [{
@@ -24,14 +36,28 @@ const render = () => {
         show: true,
         position: 'top',
         formatter: '{c}'
-      }
+      },
+      areaStyle: { opacity: 0.08 },
+      lineStyle: { width: 3 },
     }],
   })
+
+  instance.resize()
 }
 
-watch(() => props.items, () => render(), { immediate: true })
+onMounted(() => {
+  render()
+  window.addEventListener('resize', handleResize)
+})
 
-onBeforeUnmount(() => chart?.dispose())
+watch(() => props.items, () => {
+  render()
+}, { deep: true, immediate: true })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chart?.dispose()
+})
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChatSquare, Filter, Search, Check, Close, Monitor, Compass, Clock, View, CircleCheck, TopRight, Delete, TopLeft, Promotion } from '@element-plus/icons-vue';
+import { ChatSquare, Filter, Search, Check, Close, Monitor, Compass, Clock, View, CircleCheck, TopRight, Delete, TopLeft, Promotion, Iphone } from '@element-plus/icons-vue';
  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { AdminMessageItem } from '@/types/admin/message'
 import { formatDate } from '@/utils/formatDate'
@@ -7,6 +7,7 @@ import { ElMessage } from 'element-plus'
 import { useAdminMessages } from '@/composables/useAdminMessages'
 import { siteConfig } from '@/config/site'
 import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
+import { isMobileDeviceLabel } from '@/utils'
 
 const { messages, loadMessages, connect, approve, reject, remove, reply, batchApprove, batchReject, disconnect } = useAdminMessages()
 //对状态数据进行处理
@@ -27,6 +28,7 @@ const replyPayload = ref({
   content: '',
 })
 const qqAvatar = (qq?: string) => qq ? `https://q.qlogo.cn/g?b=qq&nk=${qq}&s=100` : ''
+const deviceIcon = (device?: string) => (isMobileDeviceLabel(device) ? Iphone : Monitor)
 //分页数据
 const pagedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -259,13 +261,13 @@ onBeforeUnmount(disconnect)
          </template>
        </el-table-column>
 
-       <el-table-column label="环境" min-width="110">
-         <template #default="{ row }">
-           <div class="text-xs text-gray-500">
-             <div><el-icon class="mr-1"><Monitor /></el-icon>{{ row.device }}</div>
-             <div><el-icon class="mr-1"><Compass /></el-icon>{{ row.browser }}</div>
-           </div>
-         </template>
+        <el-table-column label="环境" min-width="110">
+          <template #default="{ row }">
+            <div class="text-xs text-gray-500">
+              <div><el-icon class="mr-1"><component :is="deviceIcon(row.device)" /></el-icon>{{ row.device }}</div>
+              <div><el-icon class="mr-1"><Compass /></el-icon>{{ row.browser }}</div>
+            </div>
+          </template>
        </el-table-column>
 
        <el-table-column prop="createdAt" label="时间" min-width="130">
@@ -359,7 +361,7 @@ onBeforeUnmount(disconnect)
       <div class="mx-8 mt-5 grid grid-cols-2 gap-y-3 text-[14px] text-gray-500">
         <div class="flex items-center gap-2"><el-icon><Clock /></el-icon>{{ formatDate(currentMessage.createdAt, 'short') }}</div>
         <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.location || '未知' }}</div>
-        <div class="flex items-center gap-2"><el-icon><Monitor /></el-icon>{{ currentMessage.device || '未知设备' }}</div>
+        <div class="flex items-center gap-2"><el-icon><component :is="deviceIcon(currentMessage.device)" /></el-icon>{{ currentMessage.device || '未知设备' }}</div>
         <div class="flex items-center gap-2"><el-icon><Compass /></el-icon>{{ currentMessage.browser || '未知浏览器' }}</div>
       </div>
 

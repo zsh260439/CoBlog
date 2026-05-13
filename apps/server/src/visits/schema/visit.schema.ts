@@ -6,6 +6,9 @@ export class Visit {
   @Prop({ required: true, trim: true })
   ip: string
 
+  @Prop({ default: '', trim: true })
+  senderId: string
+
   @Prop({ default: '' })
   location: string
 

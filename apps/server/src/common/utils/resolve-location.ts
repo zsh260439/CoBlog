@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { normalizeLocation } from './normalize-location'
 
 export async function resolveLocation(ip: string) {
   const normalized = ip.replace('::ffff:', '').trim()
@@ -7,12 +8,22 @@ export async function resolveLocation(ip: string) {
   }
 
   try {
-    const { data } = await axios.get(`http://ip-api.com/json/${normalized}`, {
+    const { data } = await axios.get('https://uapis.cn/api/v1/network/myip', {
       timeout: 3000,
-      params: { lang: 'zh-CN' },
+      headers: {
+        'X-Forwarded-For': normalized,
+        'X-Real-IP': normalized,
+      },
+      params: { source: 'commercial' },
     })
-    if (!data || data.status !== 'success') return ''
-    return [data.regionName, data.city].filter(Boolean).join(' ')
+
+    if (!data || typeof data.region !== 'string') {
+      return ''
+    }
+
+    const district = typeof data.district === 'string' ? data.district.trim() : ''
+    const base = normalizeLocation(data.region)
+    return normalizeLocation([base, district].filter(Boolean).join(' '))
   } catch {
     return ''
   }

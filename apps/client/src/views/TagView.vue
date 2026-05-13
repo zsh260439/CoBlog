@@ -100,6 +100,10 @@ onMounted(() => {
 
 .tag-state :deep(.el-card__body) {
   padding: 1.15rem;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 
 @media (max-width: 1024px) {

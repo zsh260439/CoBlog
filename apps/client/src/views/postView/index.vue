@@ -343,6 +343,18 @@ watch([y, tocItems], () => {
 }
 
 @media (max-width: 767px) {
+  .status-screen {
+    min-height: calc(100vh - var(--header-height));
+    padding: 1.25rem;
+  }
+
+  .status-card {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+
   .article-view {
     background: #ffffff;
   }

@@ -28,6 +28,7 @@ export interface CreateMessagePayload {
   device?: string
   browser?: string
   enableEmailNotice?: boolean
+  location?: string
 }
 
 export interface CreateAdminReplyPayload {

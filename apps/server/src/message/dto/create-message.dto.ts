@@ -36,4 +36,8 @@ export class CreateMessageDto {
   @IsOptional()
   @IsBoolean()
   enableEmailNotice?: boolean
+
+  @IsOptional()
+  @IsString()
+  location?: string
 }

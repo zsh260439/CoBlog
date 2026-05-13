@@ -107,6 +107,10 @@ onMounted(() => {
 
 .archive-card--state :deep(.el-card__body) {
   padding: 1.15rem;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 
 .archive-card__topline {

@@ -6,6 +6,7 @@ import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
 import { resolveLocation } from '../common/utils/resolve-location'
+import { normalizeLocation } from '../common/utils/normalize-location'
 
 @Injectable()
 export class MessageService {
@@ -58,12 +59,16 @@ export class MessageService {
 
     // 创建留言时：先按 IP 限制 pending 数量，再补 location 并入库。
     async create(createMessageDto:CreateMessageDto, ip: string){
-      const pendingCount = await this.messageModel.countDocuments({ ip, status: 'pending' })
+      const safeIp = ip || '127.0.0.1'
+      const pendingCount = await this.messageModel.countDocuments({
+        senderId: createMessageDto.senderId,
+        status: 'pending',
+      })
       if (pendingCount >= 3) {
         throw new BadRequestException('待审核留言过多，请稍后再试')
       }
 
-      const location = await resolveLocation(ip)
+      const location = normalizeLocation(createMessageDto.location) || await resolveLocation(safeIp)
       const { parentId = '', ...messagePayload } = createMessageDto
 
       // parentId 存在时，沿用根节点并挂到目标留言下面，前台就能还原楼中楼结构。
@@ -77,7 +82,7 @@ export class MessageService {
         const message = await this.messageModel.create({
           _id: id,
           ...messagePayload,
-          ip,
+          ip: safeIp,
           rootId: parent.rootId || parent._id.toString(),
           parentId: parent._id.toString(),
           authorType: 'visitor',
@@ -94,7 +99,7 @@ export class MessageService {
       const message = await this.messageModel.create({
         _id: id,
         ...messagePayload,
-        ip,
+        ip: safeIp,
         rootId: id.toString(),
         parentId: '',
         authorType: 'visitor',
@@ -108,12 +113,13 @@ export class MessageService {
     }
 
     async createAdminReply(parentId: string, dto: CreateAdminReplyDto, ip: string) {
+      const safeIp = ip || '127.0.0.1'
       const parent = await this.messageModel.findById(parentId).lean()
       if (!parent) {
         throw new BadRequestException('父留言不存在')
       }
 
-      const location = await resolveLocation(ip)
+      const location = await resolveLocation(safeIp)
       const id = new Types.ObjectId()
       const message = await this.messageModel.create({
         _id: id,
@@ -122,7 +128,7 @@ export class MessageService {
         email: '',
         qq: '',
         senderId: 'admin',
-        ip,
+        ip: safeIp,
         rootId: parent.rootId || parent._id.toString(),
         parentId: parent._id.toString(),
         authorType: 'admin',

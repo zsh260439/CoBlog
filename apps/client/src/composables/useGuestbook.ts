@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { UAParser } from 'ua-parser-js'
 import { createMessage, getMessageList, getMyMessageList } from '@/servers/message'
 import type { GuestbookEntry, MessageFormData } from '@/types/message'
+import { getClientLocation } from '@/utils'
 
 // senderId 只负责标识"这个浏览器"，用来恢复自己的待审核/被拒绝留言状态。
 const MESSAGE_SENDER_ID_KEY = 'guestbook:sender-id'
@@ -66,6 +67,7 @@ export function useGuestbook() {
     submitLoading.value = true
 
     try {
+      const { location } = await getClientLocation()
       await createMessage({
         senderId,
         author: form.author,
@@ -76,6 +78,7 @@ export function useGuestbook() {
         device: ua.getOS().name || ua.getDevice().type || 'Unknown',
         browser: ua.getBrowser().name || '',
         enableEmailNotice: form.enableEmailNotice,
+        location: location || undefined,
       })
       await loadMessages(true)
       return true

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as echarts from 'echarts'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface DistributionItem { label: string; value: number }
 
@@ -9,35 +9,74 @@ const props = defineProps<{ items: DistributionItem[] }>()
 const chartRef = ref<HTMLElement | null>(null)
 let chart: echarts.ECharts | null = null
 
-const render = () => {
-  if (!chartRef.value) return
+const handleResize = () => chart?.resize()
+
+const ensureChart = async () => {
+  await nextTick()
+  if (!chartRef.value) return null
   if (!chart) chart = echarts.init(chartRef.value)
+  return chart
+}
+
+const render = async () => {
+  const instance = await ensureChart()
+  if (!instance) return
+
   const chartData = props.items.map((item) => ({
     name: item.label,
     value: item.value,
   }))
-  chart.setOption({
+  instance.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: {
+      bottom: 0,
+      left: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: {
+        color: '#4b5563',
+        fontSize: 12,
+      },
+    },
     series: [{
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['42%', '68%'],
+      center: ['50%', '42%'],
       data: chartData,
       label: {
         show: true,
-        formatter: '{b}: {c}'
+        color: '#374151',
+        formatter: '{b}\n{c}',
+        fontSize: 12,
       },
       labelLine: {
-        show: true
-      }
+        show: true,
+        length: 14,
+        length2: 12,
+      },
+      emphasis: {
+        scale: true,
+        scaleSize: 6,
+      },
     }],
   })
+
+  instance.resize()
 }
 
-onMounted(() => render())
+onMounted(() => {
+  render()
+  window.addEventListener('resize', handleResize)
+})
 
-watch(() => props.items, () => render(), { deep: true })
+watch(() => props.items, () => {
+  render()
+}, { deep: true, immediate: true })
 
-onBeforeUnmount(() => chart?.dispose())
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chart?.dispose()
+})
 </script>
 
 <template>

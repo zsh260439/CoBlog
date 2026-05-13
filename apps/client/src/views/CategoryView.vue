@@ -69,6 +69,10 @@ onMounted(() => {
 }
 
 .category-state :deep(.el-card__body) {
+  min-height: 140px;
   padding: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
 }
 </style>

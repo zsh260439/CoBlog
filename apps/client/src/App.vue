@@ -8,6 +8,7 @@ import AppFooter from '@/components/ui/AppFooter.vue'
 import TechCursor from '@/components/ui/TechCursor.vue'
 import { trackVisit } from '@/servers/visit'
 import { useVisitStats } from '@/composables/useVisitStats'
+import { getClientLocation, getVisitorSenderId } from '@/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,10 +25,11 @@ const trackPageVisit = async (path: string, appShell: unknown, routeName: unknow
   if (path === lastTrackedPath) return
 
   try {
-    const res = await trackVisit(path)
+    const { location } = await getClientLocation()
+    const res = await trackVisit(path, getVisitorSenderId(), location)
     lastTrackedPath = path
     if (res.data?.counted) {
-      await loadVisitStats()
+      await loadVisitStats(true)
     }
   } catch {
     // 统计失败不影响页面正常浏览

@@ -17,7 +17,7 @@ export class VisitsService {
     const sessionStart = new Date(now.getTime() - SESSION_TIMEOUT_MS)
 
     const existing = await this.visitModel.findOne({
-      ip,
+      senderId: dto.senderId,
       lastActiveAt: { $gte: sessionStart },
     })
 
@@ -29,9 +29,10 @@ export class VisitsService {
       return { ok: true, counted: false }
     }
 
-    const location = await resolveLocation(ip)
+    const location = dto.location?.trim() || await resolveLocation(ip)
     await this.visitModel.create({
       ip,
+      senderId: dto.senderId,
       userAgent,
       lastPath: dto.path,
       lastActiveAt: now,
@@ -51,7 +52,7 @@ export class VisitsService {
     const [todayViews, totalViews, totalVisitors, onlineVisitors] = await Promise.all([
       this.visitModel.countDocuments({ createdAt: { $gte: todayStart } }),
       this.visitModel.countDocuments(),
-      this.visitModel.distinct('ip').then((items) => items.length),
+      this.visitModel.distinct('senderId').then((items) => items.filter(Boolean).length),
       this.visitModel.countDocuments({ lastActiveAt: { $gte: onlineStart } }),
     ])
 

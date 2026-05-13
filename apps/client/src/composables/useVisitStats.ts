@@ -7,10 +7,15 @@ const trend = ref<VisitTrendItem[]>([])
 const cities = ref<VisitCityItem[]>([])
 const isLoading = ref(false)
 let loadingPromise: Promise<void> | null = null
+let lastLoadedAt = 0
+
+const VISIT_STATS_CACHE_MS = 60 * 1000
 
 export function useVisitStats() {
   const loadVisitStats = async (force = false) => {
-    if (!force && summary.value && trend.value.length && cities.value.length) {
+    const isCacheFresh = Date.now() - lastLoadedAt < VISIT_STATS_CACHE_MS
+
+    if (!force && isCacheFresh && summary.value && trend.value.length && cities.value.length) {
       return
     }
 
@@ -27,6 +32,7 @@ export function useVisitStats() {
         summary.value = payload?.summary ?? null
         trend.value = payload?.trend ?? []
         cities.value = payload?.cities ?? []
+        lastLoadedAt = Date.now()
       } finally {
         isLoading.value = false
         loadingPromise = null
