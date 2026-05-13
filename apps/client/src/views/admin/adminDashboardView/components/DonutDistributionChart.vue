@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import * as echarts from 'echarts'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart } from 'echarts/charts'
+import {
+  LegendComponent,
+  TooltipComponent,
+} from 'echarts/components'
+import { init, use } from 'echarts/core'
+import type { ECharts } from 'echarts/core'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+use([CanvasRenderer, PieChart, LegendComponent, TooltipComponent])
 
 interface DistributionItem { label: string; value: number }
 
 const props = defineProps<{ items: DistributionItem[] }>()
 
 const chartRef = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
+let chart: ECharts | null = null
 
 const handleResize = () => {
   if (chart) {
@@ -18,7 +27,7 @@ const handleResize = () => {
 const ensureChart = async () => {
   await nextTick()
   if (!chartRef.value) return null
-  if (!chart) chart = echarts.init(chartRef.value)
+  if (!chart) chart = init(chartRef.value)
   return chart
 }
 

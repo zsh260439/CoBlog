@@ -8,17 +8,16 @@ export async function resolveLocation(ip: string) {
   }
 
   try {
-    const { data } = await axios.get('https://uapis.cn/api/v1/network/myip', {
+    const { data } = await axios.get('https://uapis.cn/api/v1/network/ipinfo', {
       timeout: 3000,
-      headers: {
-        'X-Forwarded-For': normalized,
-        'X-Real-IP': normalized,
+      params: {
+        ip: normalized,
+        source: 'commercial',
       },
-      params: { source: 'commercial' },
     })
 
-    const district = data.district.trim()
-    const base = normalizeLocation(data.region)
+    const district = typeof data.district === 'string' ? normalizeLocation(data.district) : ''
+    const base = typeof data.region === 'string' ? normalizeLocation(data.region) : ''
     return normalizeLocation([base, district].filter(Boolean).join(' '))
   } catch {
     return ''

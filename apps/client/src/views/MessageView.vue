@@ -9,14 +9,10 @@ import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { useMessage } from '@/composables/useMessage'
 import { aboutProfileCard, siteConfig } from '@/config/site'
-import { useArticles } from '@/composables/useArticles'
 import type { MessageFormData, MessageItem } from '@/types/message'
-//个人信息要用的
-const { articles, loadArticles } = useArticles()
 const { messages, isLoading, error, loadMessages, submitMessage, submitLoading } = useMessage()
 
 onMounted(() => {
-  loadArticles()
   loadMessages()
 })
 
@@ -253,7 +249,7 @@ const handleSubmit = async () => {
 
       <aside class="message-side">
         <ProfileSidebarCard
-          :articles="articles"
+          :articles="[]"
           :image-url="siteConfig.aboutHeroImage"
           :owner-name="siteConfig.ownerName"
           :owner-role="siteConfig.ownerRole"

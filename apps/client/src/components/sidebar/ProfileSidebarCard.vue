@@ -16,7 +16,17 @@ const showTagModal = ref(false)
 const modalRef = ref<HTMLElement | null>(null)
 
 // 卡片顶部的统计值都从文章和分类标签数据里即时计算。
-const articleCount = computed(() => props.articles.length)
+const articleCount = computed(() => {
+  if (typeof props.articleCount === 'number') {
+    return props.articleCount
+  }
+
+  if (!props.articles.length) {
+    return categoryItems.value.reduce((sum, item) => sum + item.count, 0)
+  }
+
+  return props.articles.length
+})
 const categoryItems = computed(() => categories.value)
 const categoryCount = computed(() => categoryItems.value.length)
 const tagItems = computed(() => tags.value)

@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import * as echarts from 'echarts'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import {
+  GridComponent,
+  LegendComponent,
+  TooltipComponent,
+} from 'echarts/components'
+import { init, use } from 'echarts/core'
+import type { ECharts } from 'echarts/core'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+use([CanvasRenderer, LineChart, GridComponent, LegendComponent, TooltipComponent])
 
 interface TrendItem { label: string; value: number }
 
 const props = defineProps<{ items: TrendItem[] }>()
 
 const chartRef = ref<HTMLElement | null>(null)
-let chart: echarts.ECharts | null = null
+let chart: ECharts | null = null
 
 const handleResize = () => {
   if (chart) {
@@ -19,7 +29,7 @@ const handleResize = () => {
 const ensureChart = async () => {
   await nextTick()
   if (!chartRef.value) return null
-  if (!chart) chart = echarts.init(chartRef.value)
+  if (!chart) chart = init(chartRef.value)
   return chart
 }
 

@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { aboutProfileCard, siteConfig } from '@/config/site'
 import MarqueeText from '@/components/ui/MarqueeText.vue'
 import TextParticle from '@/components/ui/TextParticle.vue'
-import LineTrendChart from '@/views/admin/adminDashboardView/components/LineTrendChart.vue'
-import DonutDistributionChart from '@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'
 import { useVisitStats } from '@/composables/useVisitStats'
 import { Message, Monitor, Notebook } from '@element-plus/icons-vue'
 
+const LineTrendChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/LineTrendChart.vue'))
+const DonutDistributionChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'))
+
 const { trend, cities, loadVisitStats } = useVisitStats()
+const statsSectionRef = ref<HTMLElement | null>(null)
+const shouldLoadCharts = ref(false)
+let statsObserver: IntersectionObserver | null = null
 
 const notes = [
   '武汉轻工大学计算机科学与技术 24 级在读',
@@ -17,7 +21,35 @@ const notes = [
 ]
 
 onMounted(() => {
-  loadVisitStats(true)
+  statsObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0]
+      if (!entry?.isIntersecting) {
+        return
+      }
+
+      shouldLoadCharts.value = true
+      loadVisitStats(true)
+      if (statsObserver && statsSectionRef.value) {
+        statsObserver.unobserve(statsSectionRef.value)
+      }
+      statsObserver?.disconnect()
+      statsObserver = null
+    },
+    {
+      rootMargin: '180px 0px',
+      threshold: 0.1,
+    }
+  )
+
+  if (statsSectionRef.value) {
+    statsObserver.observe(statsSectionRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  statsObserver?.disconnect()
+  statsObserver = null
 })
 </script>
 
@@ -150,17 +182,19 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="about-stats page-content-reveal">
+    <section ref="statsSectionRef" class="about-stats page-content-reveal">
       <div class="about-stats__inner">
         <span class="about-stats__kicker">Site Analytics</span>
         <h2 class="about-stats__heading">站点统计</h2>
         <div class="about-stats__grid">
           <div class="about-stats__card">
             <span class="about-stats__card-label">累计浏览趋势（近 7 天）</span>
-            <LineTrendChart :items="trend" />
+            <LineTrendChart v-if="shouldLoadCharts" :items="trend" />
+            <div v-else class="about-stats__placeholder"></div>
           </div>
           <div class="about-stats__card">
-            <DonutDistributionChart :items="cities" />
+            <DonutDistributionChart v-if="shouldLoadCharts" :items="cities" />
+            <div v-else class="about-stats__placeholder"></div>
           </div>
         </div>
       </div>
@@ -241,6 +275,25 @@ onMounted(() => {
 
 .about-stage__marquee {
   padding-top: 3rem;
+}
+
+.about-stats__placeholder {
+  width: 100%;
+  height: 390px;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(241, 245, 249, 0.92) 0%, rgba(226, 232, 240, 0.86) 50%, rgba(241, 245, 249, 0.92) 100%);
+  background-size: 200% 100%;
+  animation: stats-placeholder-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes stats-placeholder-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .about-flow {

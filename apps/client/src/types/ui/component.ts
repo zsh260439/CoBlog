@@ -21,6 +21,7 @@ export interface PageHeroProps {
 // 右侧个人信息卡片参数
 export interface ProfileSidebarCardProps {
   articles: Article[] // 当前页面可用文章数组
+  articleCount?: number // 已知文章总数时可直接传入，避免额外加载文章列表
   ownerName: string // 站点所有者名称
   ownerRole: string // 站点所有者角色
   ownerLocation: string // 站点所有者所在地
