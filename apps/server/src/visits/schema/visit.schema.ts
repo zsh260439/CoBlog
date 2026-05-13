@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose'
 
 @Schema({ timestamps: true })
 export class Visit {
-  @Prop({ required: true, trim: true })
+  @Prop({ default: '', trim: true })
   ip: string
 
   @Prop({ default: '', trim: true })
