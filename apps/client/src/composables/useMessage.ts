@@ -1,31 +1,22 @@
 import { ref } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
 import { UAParser } from 'ua-parser-js'
 import { createMessage, getMessageList, getMyMessageList } from '@/servers/message'
-import type { GuestbookEntry, MessageFormData } from '@/types/message'
-import { getClientLocation } from '@/utils'
+import { useMessageStore, useVisitorLocationStore } from '@/stores'
+import type { MessageFormData, MessageItem } from '@/types/message'
 
-// senderId 只负责标识"这个浏览器"，用来恢复自己的待审核/被拒绝留言状态。
-const MESSAGE_SENDER_ID_KEY = 'guestbook:sender-id'
-
-export function useGuestbook() {
-  const messages = ref<GuestbookEntry[]>([])
+export function useMessage() {
+  const messages = ref<MessageItem[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   let loadingPromise: Promise<void> | null = null
 
   const submitLoading = ref(false)
-
-  // senderId 本地持久化一次即可，刷新后继续沿用。
-  const senderId = localStorage.getItem(MESSAGE_SENDER_ID_KEY) || uuidv4()
-  localStorage.setItem(MESSAGE_SENDER_ID_KEY, senderId)
-
-  // 设备和浏览器信息只在前台采集一次，提交时直接带给后端。
+  const messageStore = useMessageStore()
   const ua = new UAParser(navigator.userAgent)
+  const visitorLocationStore = useVisitorLocationStore()
 
-  // 公开留言 + 自己的 pending/rejected 留言合并后按时间倒序展示。
-  const mergeMessages = (publicMessages: GuestbookEntry[], ownMessages: GuestbookEntry[]) => {
-    const map = new Map<string, GuestbookEntry>()
+  const mergeMessages = (publicMessages: MessageItem[], ownMessages: MessageItem[]) => {
+    const map = new Map<string, MessageItem>()
     ;[...ownMessages, ...publicMessages].forEach((item) => map.set(item.id, item))
     return [...map.values()].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
   }
@@ -46,7 +37,7 @@ export function useGuestbook() {
       try {
         const [publicResult, ownResult] = await Promise.all([
           getMessageList(),
-          getMyMessageList(senderId),
+          getMyMessageList(messageStore.senderId),
         ])
         const publicMessages = Array.isArray(publicResult.data) ? publicResult.data : []
         const ownMessages = Array.isArray(ownResult.data) ? ownResult.data : []
@@ -62,14 +53,14 @@ export function useGuestbook() {
 
     return loadingPromise
   }
-  // 提交留言
+
   const submitMessage = async (form: MessageFormData, parentId = '') => {
     submitLoading.value = true
 
     try {
-      const { location } = await getClientLocation()
+      const location = await visitorLocationStore.ensureLocation()
       await createMessage({
-        senderId,
+        senderId: messageStore.senderId,
         author: form.author,
         content: form.content,
         parentId: parentId || undefined,
@@ -96,6 +87,6 @@ export function useGuestbook() {
     loadMessages,
     submitMessage,
     submitLoading,
-    senderId,
+    senderId: messageStore.senderId,
   }
 }

@@ -11,6 +11,11 @@ const ONLINE_WINDOW_MS = 5 * 60 * 1000
 @Injectable()
 export class VisitsService {
   constructor(@InjectModel(Visit.name) private readonly visitModel: Model<VisitDocument>) {}
+
+  async getLocation(ip: string) {
+    return { location: await resolveLocation(ip) }
+  }
+
   // 记录访问
   async track(dto: TrackVisitDto, ip: string, userAgent: string) {
     const now = new Date()
@@ -29,7 +34,7 @@ export class VisitsService {
       return { ok: true, counted: false }
     }
 
-    const location = dto.location?.trim() || await resolveLocation(ip)
+    const location = (dto.location || '').trim()
     await this.visitModel.create({
       ip,
       senderId: dto.senderId,

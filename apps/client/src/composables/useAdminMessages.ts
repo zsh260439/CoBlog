@@ -9,6 +9,7 @@ import {
   getAdminMessageList,
   rejectMessage,
 } from '@/servers/message'
+import { useVisitorLocationStore } from '@/stores'
 import type { AdminMessageItem } from '@/types/admin'
 
 export function useAdminMessages() {
@@ -16,6 +17,7 @@ export function useAdminMessages() {
   const isLoading = ref(false)
   let source: EventSource | null = null
   const ua = new UAParser(navigator.userAgent)
+  const visitorLocationStore = useVisitorLocationStore()
 
   const loadMessages = async () => {
     isLoading.value = true
@@ -55,11 +57,15 @@ export function useAdminMessages() {
 
    //回复留言
   const reply = (id: string, payload: { author: string; content: string }) =>
-    withAction(id, () => createAdminReply(id, {
-      ...payload,
-      device: ua.getOS().name || ua.getDevice().type || 'Unknown',
-      browser: ua.getBrowser().name || '',
-    }), '回复成功')
+    withAction(id, async () => {
+      const location = await visitorLocationStore.ensureLocation()
+      return createAdminReply(id, {
+        ...payload,
+        device: ua.getOS().name || ua.getDevice().type || 'Unknown',
+        browser: ua.getBrowser().name || '',
+        location: location || undefined,
+      })
+    }, '回复成功')
 
   const connect = () => {
     const token = localStorage.getItem('local-token') || ''

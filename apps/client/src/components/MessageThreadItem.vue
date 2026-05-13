@@ -2,14 +2,14 @@
 import { computed } from 'vue'
 import { ChatLineRound, Clock, Iphone, Location, Monitor } from '@element-plus/icons-vue'
 import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
-import type { GuestbookEntry } from '@/types/message'
+import type { MessageItem } from '@/types/message'
 import { formatDate, isMobileDeviceLabel } from '@/utils'
 
-defineOptions({ name: 'GuestbookThreadItem' })
+defineOptions({ name: 'MessageThreadItem' })
 
 const props = withDefaults(defineProps<{
-  item: GuestbookEntry
-  repliesByParentId: Record<string, GuestbookEntry[]>
+  item: MessageItem
+  repliesByParentId: Record<string, MessageItem[]>
   ownerAvatar: string
   level?: number
   activeReplyId?: string
@@ -19,9 +19,9 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  reply: [item: GuestbookEntry]
+  reply: [item: MessageItem]
 }>()
-//递归实现的子项
+
 const children = computed(() => props.repliesByParentId[props.item.id] ?? [])
 const isAdmin = computed(() => props.item.authorType === 'admin')
 const initials = computed(() => props.item.author.slice(0, 1).toUpperCase())
@@ -42,7 +42,7 @@ const avatarSrc = computed(() => {
 const deviceIcon = computed(() => (isMobileDeviceLabel(props.item.device) ? Iphone : Monitor))
 
 const handleReply = () => emit('reply', props.item)
-const forwardReply = (item: GuestbookEntry) => emit('reply', item)
+const forwardReply = (item: MessageItem) => emit('reply', item)
 </script>
 
 <template>
@@ -76,7 +76,7 @@ const forwardReply = (item: GuestbookEntry) => emit('reply', item)
         </div>
 
         <div class="thread-item__content-wrap">
-          <MarkdownViewer :content="item.content" :editor-id="`guestbook-${item.id}`" />
+          <MarkdownViewer :content="item.content" :editor-id="`message-${item.id}`" />
         </div>
 
         <div class="thread-item__meta">
@@ -100,7 +100,7 @@ const forwardReply = (item: GuestbookEntry) => emit('reply', item)
     </div>
 
     <div v-if="children.length" class="thread-item__children">
-      <GuestbookThreadItem
+      <MessageThreadItem
         v-for="child in children"
         :key="child.id"
         :item="child"
@@ -140,7 +140,7 @@ const forwardReply = (item: GuestbookEntry) => emit('reply', item)
 .thread-item__body {
   min-width: 0;
   max-height: 300px;
-  height: auto;     
+  height: auto;
   overflow-y: auto;
 }
 
@@ -218,38 +218,28 @@ const forwardReply = (item: GuestbookEntry) => emit('reply', item)
   gap: 0.85rem;
   margin-top: 0.1rem;
   color: #8b9098;
-  font-size: 0.9rem;
 }
 
 .thread-item__meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.35rem;
+  font-size: 0.84rem;
 }
 
 .thread-item__children {
-  margin-left: calc(44px + 0.9rem);
-  padding-left: 1.6rem;
-  border-left: 1px solid rgba(17, 17, 17, 0.12);
+  margin-left: 52px;
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(17, 17, 17, 0.08);
 }
 
-@media (max-width: 767px) {
-  .thread-item__main,
-  .thread-item--nested .thread-item__main {
-    grid-template-columns: 1fr;
-  }
-
-  .thread-item__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
+@media (max-width: 768px) {
   .thread-item__children {
     margin-left: 0;
-    padding-left: 1rem;
+    padding-left: 0.85rem;
   }
 }
 </style>

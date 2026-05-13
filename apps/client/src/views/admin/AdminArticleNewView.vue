@@ -11,7 +11,7 @@ import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createArticle, getArticleById, updateArticle } from '@/servers/article'
 import { uploadImage } from '@/servers/upload'
-import { useAppStore } from '@/store'
+import { useArticleDraftStore } from '@/stores'
 import { createSlugFromText } from '@/utils'
 import type { AdminArticleForm } from '@/types/admin'
 import { useDebounce } from '@/composables/useDebounce'
@@ -22,7 +22,7 @@ const router = useRouter()
 defineOptions({
   name: 'AdminArticleNewView'
 })
-const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useAppStore()
+const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useArticleDraftStore()
 const { categories, tags, loadTaxonomies } = useTaxonomies()
 const { articles, loadArticles, setArticles } = useArticles()
 // 创建文章表单的默认值

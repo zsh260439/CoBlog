@@ -5,7 +5,6 @@ import {Model, Types} from 'mongoose'
 import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
-import { resolveLocation } from '../common/utils/resolve-location'
 import { normalizeLocation } from '../common/utils/normalize-location'
 
 @Injectable()
@@ -57,7 +56,7 @@ export class MessageService {
       return this.messageModel.countDocuments({ status: 'pending' })
     }
 
-    // 创建留言时：先按 IP 限制 pending 数量，再补 location 并入库。
+    // 创建留言时：先按 IP 限制 pending 数量，再清洗前端传来的 location。
     async create(createMessageDto:CreateMessageDto, ip: string){
       const safeIp = ip || '127.0.0.1'
       const pendingCount = await this.messageModel.countDocuments({
@@ -68,7 +67,7 @@ export class MessageService {
         throw new BadRequestException('待审核留言过多，请稍后再试')
       }
 
-      const location = normalizeLocation(createMessageDto.location) || await resolveLocation(safeIp)
+      const location = normalizeLocation(createMessageDto.location)
       const { parentId = '', ...messagePayload } = createMessageDto
 
       // parentId 存在时，沿用根节点并挂到目标留言下面，前台就能还原楼中楼结构。
@@ -119,7 +118,7 @@ export class MessageService {
         throw new BadRequestException('父留言不存在')
       }
 
-      const location = await resolveLocation(safeIp)
+      const location = normalizeLocation(dto.location)
       const id = new Types.ObjectId()
       const message = await this.messageModel.create({
         _id: id,

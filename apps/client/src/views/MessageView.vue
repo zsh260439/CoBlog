@@ -3,17 +3,17 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import {  ChatLineRound, Close, Promotion, RefreshRight } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import GuestbookThreadItem from '@/components/GuestbookThreadItem.vue'
+import MessageThreadItem from '@/components/MessageThreadItem.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
-import { useGuestbook } from '@/composables/useGuestbook'
+import { useMessage } from '@/composables/useMessage'
 import { aboutProfileCard, siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
-import type { GuestbookEntry, MessageFormData } from '@/types/message'
+import type { MessageFormData, MessageItem } from '@/types/message'
 //个人信息要用的
 const { articles, loadArticles } = useArticles()
-const { messages, isLoading, error, loadMessages, submitMessage, submitLoading } = useGuestbook()
+const { messages, isLoading, error, loadMessages, submitMessage, submitLoading } = useMessage()
 
 onMounted(() => {
   loadArticles()
@@ -24,7 +24,7 @@ const formRef = ref<FormInstance>()
   //要跳转到的元素位置
 const composerAnchorRef = ref<HTMLElement | null>(null)
   //点击回复的那个item
-const replyTarget = ref<GuestbookEntry | null>(null)
+const replyTarget = ref<MessageItem | null>(null)
 
 const form = reactive<MessageFormData>({
   author: '',
@@ -60,7 +60,7 @@ const resetForm = () => {
   formRef.value?.clearValidate()
 }
 
-const beginReply = async (item: GuestbookEntry) => {
+const beginReply = async (item: MessageItem) => {
   //标记当前的回复目标为 item
   replyTarget.value = item
   await nextTick()
@@ -72,10 +72,10 @@ const cancelReply = () => {
   replyTarget.value = null
 }
 
-// 留言接口返回扁平数组，按 parentId 分桶，由 GuestbookThreadItem 递归渲染楼中楼。
+// 留言接口返回扁平数组，按 parentId 分桶，由 MessageThreadItem 递归渲染楼中楼。
 const threadBuckets = computed(() => {
-  const replyMap = new Map<string, GuestbookEntry[]>()
-  const roots: GuestbookEntry[] = []
+  const replyMap = new Map<string, MessageItem[]>()
+  const roots: MessageItem[] = []
   const ordered = [...messages.value].sort((left, right) => +new Date(left.createdAt) - +new Date(right.createdAt))
 
   ordered.forEach((item) => {
@@ -220,17 +220,17 @@ const handleSubmit = async () => {
             </div>
           </template>
 
-          <section v-loading="isLoading" class="guestbook-list">
-            <div v-if="error" class="guestbook-state">
+          <section v-loading="isLoading" class="message-list">
+            <div v-if="error" class="message-state">
               <el-alert :title="error" type="error" :closable="false" show-icon />
             </div>
 
-            <div v-else-if="!messages.length" class="guestbook-state">
+            <div v-else-if="!messages.length" class="message-state">
               <el-empty description="还没有留言，来留下第一条吧。" :image-size="88" />
             </div>
 
-            <div v-else class="guestbook-thread-list">
-              <GuestbookThreadItem
+            <div v-else class="message-thread-list">
+              <MessageThreadItem
                 v-for="item in rootMessages"
                 :key="item.id"
                 :item="item"
@@ -484,30 +484,30 @@ const handleSubmit = async () => {
   padding-top: 0.9rem;
 }
 
-.guestbook-list {
+.message-list {
   min-height: 180px;
 }
 
-.guestbook-state {
+.message-state {
   padding: 0.3rem 0;
 }
 
-.guestbook-thread-list {
+.message-thread-list {
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
 }
 
-.guestbook-thread-list > * + * {
+.message-thread-list > * + * {
   padding-top: 1.8rem;
   border-top: 1px solid rgba(17, 17, 17, 0.08);
 }
 
-.guestbook-list :deep(.el-loading-spinner .path) {
+.message-list :deep(.el-loading-spinner .path) {
   stroke: #111111;
 }
 
-.guestbook-list :deep(.el-loading-spinner .el-loading-text) {
+.message-list :deep(.el-loading-spinner .el-loading-text) {
   color: #6b7280;
 }
 

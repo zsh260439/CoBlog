@@ -9,7 +9,3 @@ export {
   resolveMarkdownHeadingId,
 } from './markdown'
 export { createSlugFromText } from './slug'
-export {
-  getClientLocation,
-  getVisitorSenderId,
-} from './visitor'

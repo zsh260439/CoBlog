@@ -1,5 +1,5 @@
 // 留言页渲染的单条消息结构。
-export interface GuestbookEntry {
+export interface MessageItem {
   id: string
   author: string
   authorType?: 'visitor' | 'admin'
@@ -36,6 +36,7 @@ export interface CreateAdminReplyPayload {
   content: string
   device?: string
   browser?: string
+  location?: string
 }
 
 // 留言表单本地状态。

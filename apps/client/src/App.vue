@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import ScrollProgress from '@/components/ScrollProgress.vue'
 import BackToTopButton from '@/components/ui/BackToTopButton.vue'
 import AppHeader from '@/components/ui/AppHeader.vue'
 import AppFooter from '@/components/ui/AppFooter.vue'
 import TechCursor from '@/components/ui/TechCursor.vue'
 import { trackVisit } from '@/servers/visit'
+import { useVisitorLocationStore, useVistorStore } from '@/stores'
 import { useVisitStats } from '@/composables/useVisitStats'
-import { getClientLocation, getVisitorSenderId } from '@/utils'
 
 const route = useRoute()
 const router = useRouter()
 const { loadVisitStats } = useVisitStats()
+const visitorLocationStore = useVisitorLocationStore()
+const vistorStore = useVistorStore()
+const { location } = storeToRefs(visitorLocationStore)
 
 const isOverlayLayout = computed(() => route.meta.headerStyle === 'overlay')
 const isAdminShell = computed(() => route.meta.appShell === 'admin')
@@ -25,8 +29,8 @@ const trackPageVisit = async (path: string, appShell: unknown, routeName: unknow
   if (path === lastTrackedPath) return
 
   try {
-    const { location } = await getClientLocation()
-    const res = await trackVisit(path, getVisitorSenderId(), location)
+    await visitorLocationStore.ensureLocation()
+    const res = await trackVisit(path, vistorStore.senderId, location.value || undefined)
     lastTrackedPath = path
     if (res.data?.counted) {
       await loadVisitStats(true)

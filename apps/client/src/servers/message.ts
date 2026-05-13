@@ -1,21 +1,21 @@
 import { request } from '@/http-utils'
 import { API_BASE_URL } from '@/config/http'
-import type { CreateAdminReplyPayload, CreateMessagePayload, GuestbookEntry } from '@/types/message'
+import type { CreateAdminReplyPayload, CreateMessagePayload, MessageItem } from '@/types/message'
 import type { AdminMessageItem } from '@/types/admin'
 
 // 公开留言：只返回已通过审核的留言
 export const getMessageList = () => {
-  return request<GuestbookEntry[]>('/messages', 'GET')
+  return request<MessageItem[]>('/messages', 'GET')
 }
 
 // 当前浏览器自己的留言：返回 pending / rejected，用来跨刷新恢复状态。
 export const getMyMessageList = (senderId: string) => {
-  return request<GuestbookEntry[]>(`/messages/mine/${encodeURIComponent(senderId)}`, 'GET')
+  return request<MessageItem[]>(`/messages/mine/${encodeURIComponent(senderId)}`, 'GET')
 }
 
 // 创建留言
 export const createMessage = (data: CreateMessagePayload) => {
-  return request<GuestbookEntry>('/messages', 'POST', data)
+  return request<MessageItem>('/messages', 'POST', data)
 }
 
 export const getAdminMessageList = () => {

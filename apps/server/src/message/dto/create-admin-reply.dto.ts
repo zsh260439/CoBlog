@@ -16,4 +16,8 @@ export class CreateAdminReplyDto {
   @IsOptional()
   @IsString()
   browser?: string
+
+  @IsOptional()
+  @IsString()
+  location?: string
 }

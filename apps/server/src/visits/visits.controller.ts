@@ -9,6 +9,13 @@ import { VisitsService } from './visits.service'
 export class VisitsController {
   constructor(private readonly visitsService: VisitsService) {}
 
+  @Get('location')
+  async location(@Req() req: Request) {
+    const ip = getClientIp(req)
+    const data = await this.visitsService.getLocation(ip)
+    return ApiResponse.success(data, '获取访客位置成功')
+  }
+
   @Post('track')
   async track(@Body() dto: TrackVisitDto, @Req() req: Request) {
     const ip = getClientIp(req)

@@ -1,28 +1,17 @@
 import { ref } from 'vue'
+import { defineStore } from 'pinia'
 import type { ArticleDraftState } from '@/types/admin'
 
 const ARTICLE_DRAFT_STORAGE_KEY = 'admin:article-draft'
 
-function loadDraftFromSession(): ArticleDraftState | null {
-  try {
-    const raw = sessionStorage.getItem(ARTICLE_DRAFT_STORAGE_KEY)
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw) as ArticleDraftState
-    // 只要有数据就返回，不需要检查字段是否为空
-    if (!parsed) {
-      return null
-    }
-
-    return parsed
-  } catch {
-    return null
-  }
+function loadArticleDraft() {
+  const raw = sessionStorage.getItem(ARTICLE_DRAFT_STORAGE_KEY)
+  return raw ? JSON.parse(raw) as ArticleDraftState : null
 }
 
-const articleDraft = ref<ArticleDraftState | null>(loadDraftFromSession())
+export const useArticleDraftStore = defineStore('article-draft', () => {
+  const articleDraft = ref<ArticleDraftState | null>(loadArticleDraft())
 
-export function useAppStore() {
   const saveArticleDraft = (draft: ArticleDraftState) => {
     articleDraft.value = { ...draft, tags: [...draft.tags] }
     sessionStorage.setItem(ARTICLE_DRAFT_STORAGE_KEY, JSON.stringify(articleDraft.value))
@@ -41,4 +30,4 @@ export function useAppStore() {
     getArticleDraft,
     clearArticleDraft,
   }
-}
+})
