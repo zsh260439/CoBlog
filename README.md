@@ -1,13 +1,12 @@
 # CoBlog
 
-![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square\&logo=vuedotjs\&logoColor=white)
+     ![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square\&logo=vuedotjs\&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square\&logo=typescript\&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square\&logo=vite\&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?style=flat-square\&logo=nestjs\&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?style=flat-square\&logo=mongodb\&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-Workspace-F69220?style=flat-square\&logo=pnpm\&logoColor=white)
 ![Turbo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?style=flat-square\&logo=turborepo\&logoColor=white)
-![License](https://img.shields.io/badge/License-UNLICENSED-6B7280?style=flat-square)
 
 CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，包含前台内容站点、后台管理端、留言与访客统计、文章管理、图片上传以及 AI 助写能力。项目使用 `pnpm workspace + turbo` 组织为 monorepo，适合作为个人博客、作品集项目或全栈项目实践参考。
 
@@ -16,6 +15,34 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，
 - 站点首页：`https://coblog.top/`
 - 关于页面：`https://coblog.top/about`
 - 接口示例：`https://coblog.top/visits/stats`
+
+## 效果预览
+
+   详细效果可看screen-\*文件，下面是随机选择的展示页面
+
+### 前台页面
+
+<p align="center">
+  <img src="./screen-front/Home.png" alt="Home" width="45%" />
+  <img src="./screen-front/Blog.png" alt="Blog" width="45%" />
+</p>
+
+<p align="center">
+  <img src="./screen-front/About.png" alt="About" width="45%" />
+  <img src="./screen-front/Message.png" alt="Message" width="45%" />
+</p>
+
+### 后台页面
+
+<p align="center">
+  <img src="./screen-back/Login.png" alt="Admin Login" width="45%" />
+  <img src="./screen-back/Layout.png" alt="Admin Layout" width="45%" />
+</p>
+
+<p align="center">
+  <img src="./screen-back/article.png" alt="Article Manage" width="45%" />
+  <img src="./screen-back/newArticle.png" alt="New Article" width="45%" />
+</p>
 
 ## 功能特性
 
@@ -51,48 +78,15 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，
 - 支持摘要生成
 - 支持流式对话式助写
 
-## 第三方服务与可替代项
+<br />
 
-项目主体功能以前后端自有实现为主，但有少量能力会调用第三方服务。这里单独说明，方便二次使用时判断哪些可以直接沿用、哪些需要替换成你自己的方案。
+# 第三方接口声明
 
-### 图片相关
+   **本项目多处地方使用了第三方接口，包括但不限于ai对话，访客位置查询，博客页面图片生成等等，详细可以自行阅览API-detail.**
 
-- 文章正文上传图片：不是第三方图床
-  后台上传的文章图片会先上传到你自己的后端，再保存到 MongoDB，由接口 `/uploads/images/:id` 提供访问。这部分不依赖外部图片托管服务，部署后即可自给自足。
-- 随机封面图：当前使用第三方图片接口
-  后端的随机封面图能力当前会请求 `https://t.alcy.cc/fj`。这个更像是一个现成可用的公共图片 API，适合个人项目快速接入，但不建议把它当作唯一长期依赖。
-- 可替代方案
-  如果你不想依赖外部封面接口，可以改成以下任一方案：
-  - 使用你自己的本地静态图片库
-  - 使用自己维护的封面图集合或数据库字段
-  - 接入自己的对象存储（如 OSS、COS、S3 兼容存储）
-  - 改成固定默认封面，而不是随机获取
+- 详细说明文档：[`API-detail/README.md`](./API-detail/README.md)
 
-### AI 接口相关
-
-- 当前使用 `DeepSeek Chat Completions API`
-  AI 助写、摘要与内容优化能力依赖外部模型接口，不是本地模型推理。
-- 费用说明
-  这类接口是否免费，通常取决于平台当前政策、你的账户额度、活动赠送额度或套餐情况，不应默认认为永久免费。你现在的实现只要兼容 OpenAI 风格的聊天补全接口，就可以较容易替换。
-- 可替代方案
-  - 其他兼容 OpenAI 风格的模型服务
-  - 自建模型网关
-  - 关闭 AI 能力，仅保留普通博客功能
-
-### IP 与访客信息相关
-
-- 当前使用第三方 IP 信息查询接口
-  后端归属地解析里调用了 `https://uapis.cn/api/v1/network/ipinfo` 来补充访客 IP 信息。
-- 费用与稳定性说明
-  这类接口很多提供免费额度或公共调用方式，但免费接口通常不保证长期稳定、速率和可用性，适合作为轻量项目的默认方案，不建议在高依赖场景中完全绑定。
-- 可替代方案
-  - 使用你自己的 IP 库
-  - 使用其他地理位置查询服务
-  - 直接关闭归属地展示，只保留基础访问统计
-
-如果你想把这个项目作为自己的博客长期维护，建议把“第三方公共 API”理解为默认可跑通的起步方案，而不是不可替换的硬依赖。图片、AI、IP 归属地这三类能力都可以按自己的预算、稳定性要求和运维习惯替换成别的实现。
-
-## 技术栈
+<br />
 
 ### 前端（apps/client）
 
