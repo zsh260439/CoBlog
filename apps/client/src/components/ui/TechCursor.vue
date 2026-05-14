@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { getTechIconUrl } from '@/utils/tech-icons'
 
 interface TechImage {
   name: string
@@ -24,12 +25,12 @@ const props = withDefaults(defineProps<{
 })
 
 const iconSources: { name: string; src: string }[] = [
-  { name: 'JavaScript', src: 'https://cdn.simpleicons.org/javascript/F7DF1E' },
-  { name: 'TypeScript', src: 'https://cdn.simpleicons.org/typescript/3178C6' },
-  { name: 'Vue', src: 'https://cdn.simpleicons.org/vuedotjs/42B883' },
-  { name: 'Nuxt', src: 'https://cdn.simpleicons.org/nuxt/00DC82' },
-  { name: 'NestJS', src: 'https://cdn.simpleicons.org/nestjs/E0234E' },
-  { name: 'Node.js', src: 'https://cdn.simpleicons.org/nodedotjs/5FA04E' },
+  { name: 'JavaScript', src: getTechIconUrl('javascript') },
+  { name: 'TypeScript', src: getTechIconUrl('typescript') },
+  { name: 'Vue', src: getTechIconUrl('vuedotjs') },
+  { name: 'Nuxt', src: getTechIconUrl('nuxt') },
+  { name: 'NestJS', src: getTechIconUrl('nestjs') },
+  { name: 'Node.js', src: getTechIconUrl('nodedotjs') },
 ]
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)

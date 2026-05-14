@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { Lock, User } from '@element-plus/icons-vue'
 import { login } from '@/servers/auth'
 import { siteConfig } from '@/config/site'
+import { getTechIconUrl } from '@/utils/tech-icons'
 
 const router = useRouter()
 
@@ -17,12 +18,12 @@ const loading = ref(false)
 const errorText = ref('')
 
 const orbitIcons = [
-  'https://cdn.simpleicons.org/vuedotjs/42B883',
-  'https://cdn.simpleicons.org/typescript/3178C6',
-  'https://cdn.simpleicons.org/nodedotjs/5FA04E',
-  'https://cdn.simpleicons.org/nestjs/E0234E',
-  'https://cdn.simpleicons.org/vite/646CFF',
-  'https://cdn.simpleicons.org/element/409EFF',
+  getTechIconUrl('vuedotjs'),
+  getTechIconUrl('typescript'),
+  getTechIconUrl('nodedotjs'),
+  getTechIconUrl('nestjs'),
+  getTechIconUrl('vite'),
+  getTechIconUrl('element'),
 ]
 
 const outerOrbitIcons = orbitIcons.slice(0, 3).map((src, index) => ({
