@@ -33,6 +33,8 @@ const statusLabel = computed(() => props.item.status === 'pending'
     ? '已拒绝'
     : '')
 
+const statusTagType = computed(() => props.item.status === 'rejected' ? 'danger' : 'warning')
+
 const qqAvatar = (qq?: string) => qq ? `https://q.qlogo.cn/g?b=qq&nk=${qq}&s=100` : ''
 
 const avatarSrc = computed(() => {
@@ -59,7 +61,7 @@ const forwardReply = (item: MessageItem) => emit('reply', item)
             <strong class="thread-item__author">{{ item.author }}</strong>
             <span v-if="isAdmin" class="thread-item__badge">博主</span>
             <span v-if="item.replyToAuthor" class="thread-item__reply-to">回复 {{ item.replyToAuthor }}</span>
-            <el-tag v-if="statusLabel" size="small" type="warning" round>
+            <el-tag v-if="statusLabel" size="small" :type="statusTagType" round>
               {{ statusLabel }}
             </el-tag>
           </div>

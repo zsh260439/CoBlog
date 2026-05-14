@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { UAParser } from 'ua-parser-js'
+import axios from 'axios'
 import { createMessage, getMessageList, getMyMessageList } from '@/servers/message'
 import { useMessageStore, useVisitorLocationStore } from '@/stores'
 import type { MessageFormData, MessageItem } from '@/types/message'
@@ -8,6 +9,7 @@ export function useMessage() {
   const messages = ref<MessageItem[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const submitError = ref<string | null>(null)
   let loadingPromise: Promise<void> | null = null
 
   const submitLoading = ref(false)
@@ -54,9 +56,10 @@ export function useMessage() {
 
   const submitMessage = async (form: MessageFormData, parentId = '') => {
     submitLoading.value = true
+    submitError.value = null
 
     try {
-      const location = await visitorLocationStore.ensureLocation()
+      const location = await visitorLocationStore.ensureLocation(true)
       await createMessage({
         senderId: messageStore.senderId,
         author: form.author,
@@ -71,7 +74,12 @@ export function useMessage() {
       })
       await loadMessages(true)
       return true
-    } catch {
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        submitError.value = err.response?.data?.message || err.message || '留言提交失败'
+      } else {
+        submitError.value = '留言提交失败'
+      }
       return false
     } finally {
       submitLoading.value = false
@@ -82,6 +90,7 @@ export function useMessage() {
     messages,
     isLoading,
     error,
+    submitError,
     loadMessages,
     submitMessage,
     submitLoading,

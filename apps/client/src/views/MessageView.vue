@@ -10,7 +10,7 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { useMessage } from '@/composables/useMessage'
 import { aboutProfileCard, siteConfig } from '@/config/site'
 import type { MessageFormData, MessageItem } from '@/types/message'
-const { messages, isLoading, error, loadMessages, submitMessage, submitLoading } = useMessage()
+const { messages, isLoading, error, submitError, loadMessages, submitMessage, submitLoading } = useMessage()
 
 onMounted(() => {
   loadMessages()
@@ -121,7 +121,7 @@ const handleSubmit = async () => {
 
   const ok = await submitMessage(form, replyTargetId.value)
   if (!ok) {
-    ElMessage.error(isReplyMode.value ? '回复提交失败' : '留言提交失败')
+    ElMessage.error(submitError.value || (isReplyMode.value ? '回复提交失败' : '留言提交失败'))
     return
   }
 
