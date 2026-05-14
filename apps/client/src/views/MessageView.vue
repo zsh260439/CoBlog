@@ -10,7 +10,15 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { useMessage } from '@/composables/useMessage'
 import { aboutProfileCard, siteConfig } from '@/config/site'
 import type { MessageFormData, MessageItem } from '@/types/message'
+import { useSeo } from '@/utils/seo'
 const { messages, isLoading, error, submitError, loadMessages, submitMessage, submitLoading } = useMessage()
+
+useSeo({
+  title: '留言板',
+  description: '在 CoBlog 留言板留下你的想法、建议或交流内容，和作者保持互动。',
+  path: '/message',
+  image: '/images/MESSAGE.webp',
+})
 
 onMounted(() => {
   loadMessages()

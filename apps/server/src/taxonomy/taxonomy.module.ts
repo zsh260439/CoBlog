@@ -16,5 +16,6 @@ import { Tag, TagSchema } from './schema/tag.schema'
   ],
   controllers: [TaxonomyController],
   providers: [TaxonomyService],
+  exports: [TaxonomyService],
 })
 export class TaxonomyModule {}

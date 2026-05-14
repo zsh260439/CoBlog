@@ -8,6 +8,7 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { useCategory } from '@/composables/useCategory'
 import { useArticles } from '@/composables/useArticles'
 import { siteConfig } from '@/config/site'
+import { useSeo } from '@/utils/seo'
 
 const route = useRoute()
 const currentSlug = computed(() => String(route.params.slug || ''))
@@ -16,6 +17,13 @@ const currentCategoryLabel = computed(() => currentCategory.value ? currentCateg
 const { currentCategory, articles, isLoading, error } = useCategory(currentSlug)
 // 全站文章数量
 const { articles: allArticles, loadArticles } = useArticles()
+
+useSeo({
+  title: computed(() => currentCategory.value ? `${currentCategory.value.label} 分类` : '分类'),
+  description: computed(() => currentCategory.value ? `${currentCategory.value.label} 分类下的文章整理与内容汇总。` : '查看 CoBlog 中按分类归档的文章内容。'),
+  path: computed(() => currentSlug.value ? `/category/${currentSlug.value}` : '/blog'),
+  image: '/images/CATEGORY.webp',
+})
 
 onMounted(() => {
   loadArticles()

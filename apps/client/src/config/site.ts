@@ -2,6 +2,7 @@ import type {  SiteNavItem } from '@/types/site'
 
 export const siteConfig = {
   name: 'CoBlog',
+  siteUrl: 'https://coblog.top',
   ownerName: 'Zsint',
   ownerRole: '全栈开发',
   ownerLocation: '湖北武汉',

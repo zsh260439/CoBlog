@@ -7,10 +7,18 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
+import { useSeo } from '@/utils/seo'
 
 const { articles, isLoading, error, loadArticles } = useArticles()
 const { categories } = useTaxonomies()
 const categoryCount = computed(() => categories.value.length)
+
+useSeo({
+  title: '博客',
+  description: '浏览 CoBlog 的全部文章内容，包含技术记录、学习心得、工程实践与日常思考。',
+  path: '/blog',
+  image: '/images/BLOG.webp',
+})
 
 onMounted(() => {
   loadArticles()

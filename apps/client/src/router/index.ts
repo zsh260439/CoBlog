@@ -4,6 +4,7 @@ import HomeView from '@/views/homeView/index.vue'
 import { ElMessage } from 'element-plus'
 import { useAuth } from '@/composables/useAuth'
 import { refreshAccessToken } from '@/utils/auth'
+import { siteConfig } from '@/config/site'
 const routes: RouteRecordRaw[] = [
   {
     path:'/login',
@@ -152,6 +153,13 @@ const router = createRouter({
   routes,
   scrollBehavior() {
     return { top: 0 }
+  }
+})
+
+router.afterEach((to) => {
+  if (to.path.startsWith('/admin') || to.path === '/login') {
+    const metaTitle = typeof to.meta.title === 'string' ? to.meta.title : ''
+    document.title = metaTitle ? `${metaTitle} - ${siteConfig.name}` : `${siteConfig.name} Admin`
   }
 })
 // 只有后台路由需要 token；公开页面直接放行，后台页面在这里统一处理刷新。

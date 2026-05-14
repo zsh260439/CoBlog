@@ -10,6 +10,7 @@ export interface Article {
   tags: string[] // 文章标签数组
   coverImage?: string // 封面图地址
   createdAt: string // 创建时间
+  updatedAt?: string // 更新时间
   views: number // 浏览量
   wordCount: number // 字数统计
   previous?: { slug: string; title: string } | null

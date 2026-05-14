@@ -15,6 +15,7 @@ import { ImageModule } from "src/utils/image.module";
    ImageModule
   ],
    controllers:[ArticlesController],
-   providers:[ArticlesService],
-})
+    providers:[ArticlesService],
+    exports:[ArticlesService],
+ })
 export class ArticlesModule {}

@@ -5,6 +5,14 @@ import MarqueeText from '@/components/ui/MarqueeText.vue'
 import TextParticle from '@/components/ui/TextParticle.vue'
 import { useVisitStats } from '@/composables/useVisitStats'
 import { Message, Monitor, Notebook } from '@element-plus/icons-vue'
+import { useSeo } from '@/utils/seo'
+
+useSeo({
+  title: '关于',
+  description: '了解 CoBlog 作者的学习方向、技术兴趣、个人介绍与站点背景。',
+  path: '/about',
+  image: siteConfig.aboutHeroImage,
+})
 
 const LineTrendChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/LineTrendChart.vue'))
 const DonutDistributionChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'))

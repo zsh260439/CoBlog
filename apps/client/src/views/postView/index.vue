@@ -8,6 +8,8 @@ import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 import { useArticleDetail } from '@/composables/useArticleDetail'
 import type { MarkdownHeading } from '@/types/content'
 import { MagicStick } from '@element-plus/icons-vue'
+import { useSeo } from '@/utils/seo'
+import { siteConfig } from '@/config/site'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,6 +31,41 @@ const relatedArticles = computed(() => {
   }
 
   return article.value.related
+})
+
+useSeo({
+  title: computed(() => article.value?.title || '文章'),
+  description: computed(() => article.value?.excerpt || '查看 CoBlog 的文章详情内容。'),
+  path: computed(() => currentSlug.value ? `/article/${currentSlug.value}` : '/blog'),
+  image: computed(() => article.value?.coverImage || '/images/BLOG.webp'),
+  type: 'article',
+  robots: computed(() => error.value ? 'noindex,nofollow' : 'index,follow'),
+  structuredData: computed(() => {
+    if (!article.value) {
+      return null
+    }
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: article.value.title,
+      description: article.value.excerpt,
+      datePublished: article.value.createdAt,
+      dateModified: article.value.updatedAt || article.value.createdAt,
+      author: {
+        '@type': 'Person',
+        name: siteConfig.ownerName,
+      },
+      publisher: {
+        '@type': 'Person',
+        name: siteConfig.ownerName,
+      },
+      image: article.value.coverImage ? [article.value.coverImage.startsWith('http') ? article.value.coverImage : `${siteConfig.siteUrl}${article.value.coverImage}`] : [`${siteConfig.siteUrl}/images/BLOG.webp`],
+      mainEntityOfPage: `${siteConfig.siteUrl}/article/${article.value.slug}`,
+      articleSection: article.value.category,
+      keywords: article.value.tags.join(', '),
+    }
+  }),
 })
 
 // 根据正文滚动位置刷新当前高亮标题。

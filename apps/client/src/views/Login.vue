@@ -6,8 +6,17 @@ import { Lock, User } from '@element-plus/icons-vue'
 import { login } from '@/servers/auth'
 import { siteConfig } from '@/config/site'
 import { getTechIconUrl } from '@/utils/tech-icons'
+import { useSeo } from '@/utils/seo'
 
 const router = useRouter()
+
+useSeo({
+  title: '后台登录',
+  description: '登录 CoBlog 后台管理系统，进行文章、分类、留言与站点内容管理。',
+  path: '/login',
+  image: siteConfig.aboutHeroImage,
+  robots: 'noindex,nofollow',
+})
 
 const form = reactive({
   username: '',

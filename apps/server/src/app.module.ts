@@ -8,6 +8,7 @@ import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { VisitsModule } from './visits/visits.module';
+import { SeoModule } from './seo/seo.module';
 @Module({
    imports:[
       ConfigModule.forRoot({
@@ -21,7 +22,8 @@ import { VisitsModule } from './visits/visits.module';
      TaxonomyModule,
      AuthModule,
      UploadsModule,
-     VisitsModule,
+      VisitsModule,
+      SeoModule,
     ],
 })
 export class AppModule {}

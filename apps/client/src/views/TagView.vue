@@ -8,12 +8,21 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { useTag } from '@/composables/useTag'
 import { useArticles } from '@/composables/useArticles'
 import { siteConfig } from '@/config/site'
+import { useSeo } from '@/utils/seo'
 
 const route = useRoute()
 const currentTag = computed(() => String(route.params.tag || ''))
 
 const { articles, isLoading, error } = useTag(currentTag)
 const { articles: allArticles, loadArticles } = useArticles()
+
+useSeo({
+  title: computed(() => currentTag.value ? `标签 ${currentTag.value}` : '标签'),
+  description: computed(() => currentTag.value ? `查看标签「${currentTag.value}」下的全部文章内容。` : '查看 CoBlog 中按标签整理的文章内容。'),
+  path: computed(() => currentTag.value ? `/tag/${currentTag.value}` : '/blog'),
+  image: '/images/TAG.webp',
+  robots: computed(() => currentTag.value ? 'index,follow' : 'noindex,nofollow'),
+})
 
 onMounted(() => {
   loadArticles()

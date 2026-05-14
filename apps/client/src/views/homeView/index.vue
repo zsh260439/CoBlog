@@ -4,6 +4,15 @@ import { siteConfig } from '@/config/site'
 import InkHero from '@/components/ui/InkHero.vue'
 import SgnlTransition from '@/components/ui/SgnlTransition.vue'
 import { consumeHomeIntroPlayback } from './introState'
+import { createPersonStructuredData, createWebsiteStructuredData, useSeo } from '@/utils/seo'
+
+useSeo({
+  title: siteConfig.name,
+  description: 'CoBlog 是一个记录学习过程、技术实践、个人博客内容与全栈项目思考的网站。',
+  path: '/',
+  image: siteConfig.aboutHeroImage,
+  structuredData: [createWebsiteStructuredData(), createPersonStructuredData()],
+})
 
 const shouldPlayIntro = ref(consumeHomeIntroPlayback())
 let previousBodyOverflow = ''

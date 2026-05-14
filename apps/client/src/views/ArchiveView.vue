@@ -7,9 +7,17 @@ import PageHero from '@/components/ui/PageHero.vue'
 import { siteConfig } from '@/config/site'
 import { useArchive } from '@/composables/useArchive'
 import { useArticles } from '@/composables/useArticles'
+import { useSeo } from '@/utils/seo'
 
 const { articles, loadArticles } = useArticles()
 const { archiveGroups, isLoading, error, loadArchiveGroups, formatArchiveDate } = useArchive()
+
+useSeo({
+  title: '归档',
+  description: '按时间轴查看 CoBlog 已发布的文章内容，快速回顾每个阶段的写作记录。',
+  path: '/archive',
+  image: '/images/ARCHIVE.webp',
+})
 
 onMounted(() => {
   loadArticles()
