@@ -5,7 +5,7 @@ import {Model, Types} from 'mongoose'
 import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
-import { normalizeLocation } from '../common/utils/normalize-location'
+import { isMainlandLocation, normalizeLocation } from '../common/utils/normalize-location'
 
 @Injectable()
 export class MessageService {
@@ -18,10 +18,13 @@ export class MessageService {
         return message
       }
 
+      const location = normalizeLocation(message.location || '')
+
       return {
         ...message,
         id: String(message._id),
         _id: undefined,
+        location: isMainlandLocation(location) ? location : '',
         createdAt: message.createdAt ? new Date(message.createdAt).toISOString() : message.createdAt,
         updatedAt: message.updatedAt ? new Date(message.updatedAt).toISOString() : message.updatedAt,
         reviewedAt: message.reviewedAt ? new Date(message.reviewedAt).toISOString() : message.reviewedAt,
