@@ -1,5 +1,5 @@
 // 技术图标使用本地 SVG 文件，放在 public/icons/ 下
-// 图标来源：simple-icons (MIT License)，通过 jsdelivr 下载
+// 图标来源与配色保持和原 simpleicons 链接一致
 
 const ICON_MAP: Record<string, string> = {
   javascript: 'javascript',
@@ -20,4 +20,3 @@ export function getTechIconUrl(name: string): string {
   }
   return `/icons/${file}.svg`
 }
-
