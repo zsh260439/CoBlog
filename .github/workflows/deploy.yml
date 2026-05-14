@@ -127,4 +127,4 @@ jobs:
             -i ~/.ssh/id_rsa \
             "$DEPLOY_USER"@"$DEPLOY_HOST" \
             -p 22 \
-            "set -e; sudo cp /tmp/coblog.conf /etc/nginx/conf.d/coblog.conf; cd '$DEPLOY_ROOT/apps/server'; if [ ! -e .env ] && [ -f '$DEPLOY_ROOT/.env' ]; then cp '$DEPLOY_ROOT/.env' .env; fi; npm install --omit=dev; if pm2 describe coblog-api >/dev/null 2>&1; then pm2 restart coblog-api --update-env; else pm2 start '$DEPLOY_ROOT/apps/server/dist/main.js' --name coblog-api; fi; pm2 save; sudo nginx -t && sudo systemctl reload nginx"
+            "set -e; sudo cp /tmp/coblog.conf /etc/nginx/conf.d/coblog.conf; cd '$DEPLOY_ROOT/apps/server'; if [ ! -e .env ] && [ -f '$DEPLOY_ROOT/.env' ]; then cp '$DEPLOY_ROOT/.env' .env; fi; rm -rf node_modules package-lock.json; pnpm install --prod --no-frozen-lockfile; if pm2 describe coblog-api >/dev/null 2>&1; then pm2 restart coblog-api --update-env; else pm2 start '$DEPLOY_ROOT/apps/server/dist/main.js' --name coblog-api; fi; pm2 save; sudo nginx -t && sudo systemctl reload nginx"
