@@ -200,11 +200,15 @@ pnpm install
 
 ### 3. 配置环境变量
 
-在仓库根目录创建 `.env.development.local`，可以先按下面的最小示例填写：
+后端配置统一放在仓库根目录 `.env`。可以直接复制 `.env.example`：
+
+```bash
+cp .env.example .env
+```
+
+后端最小示例如下：
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000
-
 PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017/coblog
 JWT_SECRET=your_jwt_secret
@@ -216,6 +220,12 @@ INIT_ADMIN_PASSWORD=123456
 DEEPSEEK_API_KEY=your_deepseek_api_key
 DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
 DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+前端开发环境专用的 `VITE_*` 变量再放到 `.env.development.local`，例如：
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
 ```
 
 ### 4. 启动开发环境
