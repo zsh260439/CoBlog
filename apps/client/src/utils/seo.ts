@@ -1,16 +1,6 @@
-import { watchEffect, type MaybeRefOrGetter, toValue } from 'vue'
+import { watchEffect, toValue } from 'vue'
 import { siteConfig } from '@/config/site'
-import type { StructuredDataNode } from '@/types/seo'
-
-interface SeoOptions {
-  title: MaybeRefOrGetter<string>
-  description?: MaybeRefOrGetter<string>
-  path?: MaybeRefOrGetter<string>
-  image?: MaybeRefOrGetter<string>
-  type?: MaybeRefOrGetter<string>
-  robots?: MaybeRefOrGetter<string>
-  structuredData?: MaybeRefOrGetter<StructuredDataNode | StructuredDataNode[] | null | undefined>
-}
+import type {  SeoOptions } from '@/types/seo'
 
 const SITE_URL = 'https://coblog.top'
 const DEFAULT_DESCRIPTION = siteConfig.description

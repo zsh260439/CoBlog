@@ -13,6 +13,6 @@ export const useMessageStore = defineStore('message', () => {
   localStorage.setItem(MESSAGE_SENDER_ID_KEY, senderId.value)
 
   return {
-    senderId,
+    senderId
   }
 })

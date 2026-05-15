@@ -6,8 +6,9 @@ const playlist: Track[] = [
   { id: 1, title: '晴天', artist: '周杰伦', src: '/audio/周杰伦-晴天.mp3', lrcSrc: '/audio/晴天-周杰伦-歌词.lrc' },
   { id: 2, title: '花海', artist: '周杰伦', src: '/audio/周杰伦-花海.mp3', lrcSrc: '/audio/花海-周杰伦-歌词.lrc' },
   { id: 3, title: '等你下课', artist: '周杰伦', src: '/audio/等你下课 - 周杰伦.mp3', lrcSrc: '/audio/等你下课-周杰伦-歌词.lrc' },
-  { id: 4, title: '发如雪', artist: '周杰伦', src: '/audio/周杰伦 - 发如雪.mp3', lrcSrc: '/audio/发如雪-周杰伦-歌词.lrc' },
-  { id: 5, title: '你听得到', artist: '周杰伦', src: '/audio/周杰伦 - 你听得到.mp3', lrcSrc: '/audio/你听得到-周杰伦-歌词.lrc' },
+  { id: 4, title: '有何不可', artist: '许嵩', src: '/audio/许嵩 - 有何不可.mp3', lrcSrc: '/audio/有何不可-许嵩-歌词.lrc' },
+  { id: 5, title: '发如雪', artist: '周杰伦', src: '/audio/周杰伦 - 发如雪.mp3', lrcSrc: '/audio/发如雪-周杰伦-歌词.lrc' },
+  { id: 6, title: '你听得到', artist: '周杰伦', src: '/audio/周杰伦 - 你听得到.mp3', lrcSrc: '/audio/你听得到-周杰伦-歌词.lrc' },
 ]
 
 // 是否正在播放

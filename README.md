@@ -220,6 +220,13 @@ INIT_ADMIN_PASSWORD=123456
 DEEPSEEK_API_KEY=your_deepseek_api_key
 DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
 DEEPSEEK_MODEL=deepseek-v4-flash
+
+MAIL_HOST=smtp.qq.com
+MAIL_PORT=465
+MAIL_SECURE=true
+MAIL_USER=your_mail_account@qq.com
+MAIL_PASS=your_smtp_authorization_code
+MAIL_FROM=your_mail_account@qq.com
 ```
 
 前端开发环境专用的 `VITE_*` 变量再放到 `.env.development.local`，例如：
@@ -236,6 +243,8 @@ pnpm dev:client
 ```
 
 首次启动时，如果 `login` 集合为空，并且环境变量里提供了 `INIT_ADMIN_USERNAME` 与 `INIT_ADMIN_PASSWORD`，后端会自动创建一个管理员账号。创建完成后，后续重启不会重复覆盖已有管理员数据。
+
+如果你希望在站长回复留言后给访客发送提醒邮件，还需要额外配置 `MAIL_*` 这组 SMTP 变量。只有当访客留言时填写了邮箱，并勾选“邮箱通知”后，系统才会在站长回复时发送通知。
 
 默认访问地址：
 

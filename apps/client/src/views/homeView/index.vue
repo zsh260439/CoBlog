@@ -47,8 +47,8 @@ const skillGroups: SkillGroup[] = [
     title: '前端开发',
     subtitle: 'Vue 3 · TypeScript · 组件工程',
     skills: [
-      { name: 'Vue 3 组件化开发', level: '精通' },
-      { name: 'TypeScript 类型约束', level: '精通' },
+      { name: 'Vue 3 组件化开发', level: '熟练' },
+      { name: 'TypeScript 类型约束', level: '熟练' },
       { name: 'Vue Router', level: '熟练' },
       { name: 'UnoCSS / 原子化样式', level: '熟练' },
       { name: 'Element Plus', level: '熟练' },
@@ -61,8 +61,8 @@ const skillGroups: SkillGroup[] = [
     title: '工程实践',
     subtitle: '构建链路 · 请求架构 · 可维护性',
     skills: [
-      { name: 'Vite 工程化构建', level: '精通' },
-      { name: 'Axios 请求封装', level: '精通' },
+      { name: 'Vite 工程化构建', level: '熟练' },
+      { name: 'Axios 请求封装', level: '熟练' },
       { name: 'pnpm + Turbo', level: '熟练' },
       { name: '组合式 Hooks', level: '熟练' },
       { name: '响应式 / 双端适配', level: '熟练' },
@@ -118,14 +118,14 @@ const setupReveal = () => {
   document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
   return observer
 }
-
+// 锁定页面滚动
 const lockPageScroll = () => {
   previousBodyOverflow = document.body.style.overflow
   previousHtmlOverflow = document.documentElement.style.overflow
   document.body.style.overflow = 'hidden'
   document.documentElement.style.overflow = 'hidden'
 }
-
+// 解锁页面滚动
 const unlockPageScroll = () => {
   document.body.style.overflow = previousBodyOverflow
   document.documentElement.style.overflow = previousHtmlOverflow

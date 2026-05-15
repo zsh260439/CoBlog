@@ -23,6 +23,7 @@ useSeo({
   description: computed(() => currentCategory.value ? `${currentCategory.value.label} 分类下的文章整理与内容汇总。` : '查看 CoBlog 中按分类归档的文章内容。'),
   path: computed(() => currentSlug.value ? `/category/${currentSlug.value}` : '/blog'),
   image: '/images/CATEGORY.webp',
+  robots: computed(() => currentCategory.value ? 'index,follow' : 'noindex,nofollow'),
 })
 
 onMounted(() => {

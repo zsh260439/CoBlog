@@ -6,12 +6,16 @@ import {CreateMessageDto} from './dto/create-message.dto'
 import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
 import { Subject } from 'rxjs'
 import { isMainlandLocation, normalizeLocation } from '../common/utils/normalize-location'
+import { MessageMailService } from './message-mail.service'
 
 @Injectable()
 export class MessageService {
     private readonly stream$ = new Subject<{ type: string; data?: unknown }>()
 
-    constructor(@InjectModel(Message.name) private readonly messageModel:Model<MessageDocument>){}
+    constructor(
+      @InjectModel(Message.name) private readonly messageModel:Model<MessageDocument>,
+      private readonly messageMailService: MessageMailService,
+    ){}
 
     private serialize(message: Record<string, any> | null) {
       if (!message) {
@@ -70,6 +74,7 @@ export class MessageService {
       }
 
       const location = normalizeLocation(createMessageDto.location)
+      //有parentId是回复,否则是新留言
       const { parentId = '', ...messagePayload } = createMessageDto
 
       // parentId 存在时，沿用根节点并挂到目标留言下面，前台就能还原楼中楼结构。
@@ -95,7 +100,7 @@ export class MessageService {
         this.stream$.next({ type: 'created', data: { pendingCount: pendingCount + 1 } })
         return this.serialize(message.toObject())
       }
-
+      // 无 parentId 时，创建新留言
       const id = new Types.ObjectId()
       const message = await this.messageModel.create({
         _id: id,
@@ -140,6 +145,8 @@ export class MessageService {
         status: 'approved',
         reviewedAt: new Date(),
       })
+
+      await this.messageMailService.sendAdminReplyNotice(parent, message.toObject())
 
       const pendingCount = await this.pendingCount()
       this.stream$.next({ type: 'admin-replied', data: { pendingCount } })

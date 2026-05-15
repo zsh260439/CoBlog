@@ -4,6 +4,7 @@ import { MessageController } from "./message.controller";
 import { MongooseModule } from "@nestjs/mongoose";
 import { Message, MessageSchema } from "./schema/message.schema";
 import { AuthModule } from "src/auth/auth.module";
+import { MessageMailService } from "./message-mail.service";
 @Module({
     imports:[
         MongooseModule.forFeature([{
@@ -13,7 +14,7 @@ import { AuthModule } from "src/auth/auth.module";
         AuthModule,
     ],
     controllers:[MessageController],
-    providers:[MessageService],
+    providers:[MessageService, MessageMailService],
 })
 
 export class MessageModule {}
