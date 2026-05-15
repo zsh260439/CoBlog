@@ -15,10 +15,11 @@ import type { AdminMessageItem } from '@/types/admin'
 export function useAdminMessages() {
   const messages = ref<AdminMessageItem[]>([])
   const isLoading = ref(false)
+  // 事件源
   let source: EventSource | null = null
   const ua = new UAParser(navigator.userAgent)
   const visitorLocationStore = useVisitorLocationStore()
-
+  //默认走sse，没有sse时走loadMessages
   const loadMessages = async () => {
     isLoading.value = true
     try {
@@ -32,7 +33,9 @@ export function useAdminMessages() {
   const withAction = async (id: string, action: () => Promise<unknown>, success: string) => {
     try {
       await action()
-      await loadMessages()
+      if (!source) {
+        await loadMessages()
+      }
       ElMessage.success(success)
     } finally {}
   }
@@ -44,14 +47,18 @@ export function useAdminMessages() {
   const batchApprove = async (ids: string[]) => {
     if (!ids.length) return
     await Promise.all(ids.map((id) => approveMessage(id)))
-    await loadMessages()
+    if (!source) {
+      await loadMessages()
+    }
     ElMessage.success('批量通过成功')
   }
 
   const batchReject = async (ids: string[]) => {
     if (!ids.length) return
     await Promise.all(ids.map((id) => rejectMessage(id)))
-    await loadMessages()
+    if (!source) {
+      await loadMessages()
+    }
     ElMessage.success('批量拒绝成功')
   }
 
@@ -68,6 +75,10 @@ export function useAdminMessages() {
     }, '回复成功')
 
   const connect = () => {
+    if (source) {
+      return
+    }
+
     const token = localStorage.getItem('local-token')
     if (!token) return
     //创建事件源

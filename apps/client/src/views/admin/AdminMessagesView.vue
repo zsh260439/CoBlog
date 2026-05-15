@@ -5,7 +5,7 @@ import type { AdminMessageItem } from '@/types/admin/message'
 import { formatDate } from '@/utils/formatDate'
 import { ElMessage } from 'element-plus'
 import { useAdminMessages } from '@/composables/useAdminMessages'
-import { siteConfig } from '@/config/site'
+import { aboutProfileCard, siteConfig } from '@/config/site'
 import MarkdownViewer from '@/views/postView/components/MarkdownViewer.vue'
 import { isMobileDeviceLabel } from '@/utils'
 
@@ -27,7 +27,13 @@ const replyPayload = ref({
   author: siteConfig.ownerName,
   content: '',
 })
-const qqAvatar = (qq?: string) => qq ? `https://q.qlogo.cn/g?b=qq&nk=${qq}&s=100` : ''
+const resolveAvatar = (row: Pick<AdminMessageItem, 'authorType' | 'qq'>) => {
+  if (row.authorType === 'admin') {
+    return aboutProfileCard.avatar
+  }
+
+  return row.qq ? `https://q.qlogo.cn/g?b=qq&nk=${row.qq}&s=100` : ''
+}
 const deviceIcon = (device?: string) => (isMobileDeviceLabel(device) ? Iphone : Monitor)
 //分页数据
 const pagedData = computed(() => {
@@ -228,7 +234,7 @@ onBeforeUnmount(disconnect)
         <el-table-column prop="author" label="留言者" min-width="150">
           <template #default="{ row }">
             <div class="author-info flex gap-1">
-              <el-avatar :src="qqAvatar(row.qq)" :size="40" />
+              <el-avatar :src="resolveAvatar(row)" :size="40" />
               <div class="author-detail">
                 <p class="text-sm font-bold m-0 text-black">{{ row.author }}</p>
                 <p class="text-[11px] text-gray-500 m-0">{{ row.location }}</p>
@@ -327,7 +333,7 @@ onBeforeUnmount(disconnect)
 
     <div v-if="currentMessage" class="visitor-info ml-8">
       <div class="author-info flex gap-1">
-        <el-avatar :src="qqAvatar(currentMessage.qq)" :size="40" />
+        <el-avatar :src="resolveAvatar(currentMessage)" :size="40" />
         <div class="author-detail">
           <div class="flex items-center gap-2">
             <p class="text-sm font-bold m-0 text-black">{{ currentMessage.author }}</p>
