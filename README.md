@@ -95,6 +95,7 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，
 - 路由：`Vue Router`
 - UI 组件：`Element Plus`、`@element-plus/icons-vue`
 - 样式方案：`UnoCSS`、`Sass`
+- 状态管理：`Pinia`
 - 组合式工具：`VueUse`
 - 网络请求：`Axios`
 - 图表：`ECharts`
@@ -110,7 +111,8 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，
 - 参数校验与转换：`class-validator`、`class-transformer`
 - 文件上传：`multer`
 - 配置管理：`@nestjs/config`
-- 实时消息：`rxjs`
+- 实时通信：`SSE`（基于 `rxjs`）
+- 第三方请求：`Axios`
 - 基础设施：`cookie-parser`、`reflect-metadata`
 - 开发与规范：`ESLint`、`Prettier`、`typescript-eslint`
 
