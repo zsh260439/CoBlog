@@ -127,7 +127,6 @@ const submitReply = async () => {
     author: replyPayload.value.author,
     content: replyPayload.value.content.trim(),
   })
-  ElMessage({ message: '回复成功', type: 'success' })
   closeDialog()
 }
 
