@@ -2,67 +2,95 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { Document } from '@element-plus/icons-vue'
 import type { ArticleTocProps } from '@/types/article'
+import type { MarkdownHeading } from '@/types/content'
 
-const props = withDefaults(defineProps<ArticleTocProps>(), {
-  activeId: ''
-})
-
-// 目录容器的滚动由组件自己维护，高亮项变化后只滚动这个容器，不影响整页。
-const listRef = ref<HTMLElement | null>(null)
-
-// 目录优先把 h2 视为根节点；如果文章没有 h2，就退回到最小标题层级。
-const getRootLevel = () => {
-  const levels = props.items.map((item) => item.level)
-
-  if (levels.includes(2)) {
-    return 2
-  }
-
-  return Math.min(...levels)
+interface TocNode extends MarkdownHeading {
+  children: TocNode[]
 }
 
-// 给每个目录项补充所属根节点，后面就能做“根标题 + 当前分组子标题”的裁剪展示。
-const normalizedItems = computed(() => {
-  if (!props.items.length) {
+const props = withDefaults(defineProps<ArticleTocProps>(), {
+  activeId: '',
+})
+
+const listRef = ref<HTMLElement | null>(null)
+
+const buildHeadingTree = (items: MarkdownHeading[]) => {
+  const roots: TocNode[] = []
+  const stack: TocNode[] = []
+
+  items.forEach((item) => {
+    const node: TocNode = {
+      ...item,
+      children: [],
+    }
+
+    while (stack.length && stack[stack.length - 1].level >= item.level) {
+      stack.pop()
+    }
+
+    const parent = stack[stack.length - 1]
+    if (parent) {
+      parent.children.push(node)
+    } else {
+      roots.push(node)
+    }
+
+    stack.push(node)
+  })
+
+  return roots
+}
+
+const tree = computed(() => buildHeadingTree(props.items))
+
+const activePath = computed(() => {
+  const path: string[] = []
+
+  const walk = (nodes: TocNode[], trail: string[]) => {
+    for (const node of nodes) {
+      const nextTrail = [...trail, node.id]
+      if (node.id === props.activeId) {
+        path.push(...nextTrail)
+        return true
+      }
+
+      if (walk(node.children, nextTrail)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  if (props.activeId) {
+    walk(tree.value, [])
+  }
+
+  return path
+})
+
+const activeRootId = computed(() => {
+  if (activePath.value.length) {
+    return activePath.value[0]
+  }
+
+  return ''
+})
+
+const visibleRoots = computed(() => {
+  if (!tree.value.length) {
     return []
   }
 
-  const rootLevel = getRootLevel()
-  let currentRootId = ''
-
-  return props.items.map((item) => {
-    if (item.level === rootLevel) {
-      currentRootId = item.id
-    }
-
-    return {
-      ...item,
-      isRoot: item.level === rootLevel,
-      rootId: currentRootId || item.id,
-    }
-  })
-})
-
-// 当前激活标题属于哪个根分组，右侧目录就聚焦显示这个分组。
-const activeRootId = computed(() => {
-  const activeItem = normalizedItems.value.find((item) => item.id === props.activeId)
-
-  if (activeItem) {
-    return activeItem.rootId
-  }
-
-  const rootItem = normalizedItems.value.find((item) => item.isRoot)
-  return rootItem ? rootItem.id : ''
-})
-
-// 目录始终保留所有根标题，同时展示当前根标题下面的子标题。
-const visibleItems = computed(() => {
   const rootId = activeRootId.value
-  return normalizedItems.value.filter((item) => item.isRoot || item.rootId === rootId)
+  return tree.value.map((node) => ({
+    ...node,
+    children: node.id === rootId ? node.children : [],
+  }))
 })
 
-// 点击目录项时滚动到正文标题，并同步更新地址栏 hash。
-// 这里依赖 MarkdownViewer 产出的 heading id 与目录项 id 保持一致。
+const isInActivePath = (id: string) => activePath.value.includes(id)
+
 const scrollToHeading = (id: string) => {
   const element = document.getElementById(id)
 
@@ -77,8 +105,6 @@ const scrollToHeading = (id: string) => {
   window.history.replaceState(null, '', `#${id}`)
 }
 
-// 激活项变化后，把右侧目录滚动到可视区域内。
-// 这样当前高亮标题不会因为列表太长而滚出可见范围。
 const syncActiveItemIntoView = () => {
   const container = listRef.value
   const activeItem = container?.querySelector<HTMLElement>('.article-toc__item.active')
@@ -87,7 +113,6 @@ const syncActiveItemIntoView = () => {
     return
   }
 
-  // 只同步目录容器自身的滚动位置，避免在小屏时把整页强制拉到目录区域。
   const itemTop = activeItem.offsetTop
   const itemBottom = itemTop + activeItem.offsetHeight
   const visibleTop = container.scrollTop
@@ -102,19 +127,18 @@ const syncActiveItemIntoView = () => {
   if (itemBottom > visibleBottom - padding) {
     container.scrollTo({
       top: itemBottom - container.clientHeight + padding,
-      behavior: 'smooth'
+      behavior: 'smooth',
     })
   }
 }
 
 watch(
-  () => [props.activeId, visibleItems.value.length],
+  () => [props.activeId, visibleRoots.value.length, activeRootId.value],
   async () => {
-    // 先等 DOM 根据新的目录项渲染完成，再滚动到高亮项。
     await nextTick()
     syncActiveItemIntoView()
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -127,22 +151,67 @@ watch(
       </div>
 
       <div ref="listRef" class="article-toc__scroll">
-        <TransitionGroup name="toc-slide" tag="ul" class="article-toc__list">
+        <ul class="article-toc__list">
           <li
-            v-for="item in visibleItems"
-            :key="item.id"
-            class="article-toc__item"
-            :class="{
-              active: activeId === item.id,
-              root: item.isRoot,
-              [`level-${item.level}`]: true,
-            }"
-            :title="item.text"
-            @click="scrollToHeading(item.id)"
+            v-for="root in visibleRoots"
+            :key="root.id"
+            class="article-toc__group"
+            :class="{ 'is-open': root.id === activeRootId }"
           >
-            {{ item.text }}
+            <button
+              type="button"
+              class="article-toc__item article-toc__item--root"
+              :class="{
+                active: isInActivePath(root.id),
+                [`level-${root.level}`]: true,
+              }"
+              :title="root.text"
+              @click="scrollToHeading(root.id)"
+            >
+              <span class="article-toc__text">{{ root.text }}</span>
+            </button>
+
+            <ul
+              v-if="root.children.length && isInActivePath(root.id)"
+              class="article-toc__children"
+            >
+              <li v-for="child in root.children" :key="child.id" class="article-toc__child">
+                <button
+                  type="button"
+                  class="article-toc__item"
+                  :class="{
+                    active: isInActivePath(child.id),
+                    [`level-${child.level}`]: true,
+                  }"
+                  :title="child.text"
+                  @click="scrollToHeading(child.id)"
+                >
+                  <span class="article-toc__text">{{ child.text }}</span>
+                </button>
+
+                <ul
+                  v-if="child.children.length && isInActivePath(child.id)"
+                  class="article-toc__children article-toc__children--nested"
+                >
+                  <li v-for="grandchild in child.children" :key="grandchild.id" class="article-toc__child">
+                    <button
+                      type="button"
+                      class="article-toc__item"
+                      :class="{
+                        active: isInActivePath(grandchild.id),
+                        [`level-${grandchild.level}`]: true,
+                      }"
+                      :title="grandchild.text"
+                      @click="scrollToHeading(grandchild.id)"
+                    >
+                      <span class="article-toc__text">{{ grandchild.text }}</span>
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ul>
           </li>
-        </TransitionGroup>
+        </ul>
       </div>
     </el-card>
   </aside>
@@ -190,12 +259,6 @@ watch(
   scrollbar-gutter: stable;
 }
 
-.article-toc__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
 .article-toc__scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -205,19 +268,45 @@ watch(
   background: rgba(129, 140, 158, 0.32);
 }
 
+.article-toc__list,
+.article-toc__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-toc__group + .article-toc__group {
+  margin-top: 0.3rem;
+}
+
+.article-toc__children {
+  margin-top: 0.3rem;
+}
+
+.article-toc__children--nested {
+  margin-top: 0.18rem;
+}
+
+.article-toc__child + .article-toc__child {
+  margin-top: 0.14rem;
+}
+
 .article-toc__item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   font-size: 0.83rem;
   color: #6b7280;
   cursor: pointer;
-  padding: 0.32rem 0.55rem;
+  padding: 0.34rem 0.55rem;
   border-radius: 6px;
   border-left: 2px solid transparent;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease,
-    transform 0.2s ease;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   line-height: 1.55;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .article-toc__item:hover {
@@ -227,56 +316,42 @@ watch(
 
 .article-toc__item.active {
   color: #111827;
-  font-weight: 500;
   border-left-color: #111827;
   background: #f5f7fa;
 }
 
-.article-toc__item.root {
+.article-toc__item--root {
   font-size: 0.96rem;
   font-weight: 600;
   color: #4b5563;
 }
 
-.article-toc__item.level-2 {
-  padding-left: 0.5rem;
+.article-toc__text {
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.article-toc__item--root .article-toc__text {
+  max-width: 100%;
+}
+
+.article-toc__children .article-toc__item {
+  font-size: 0.8rem;
 }
 
 .article-toc__item.level-3 {
-  padding-left: 1.25rem;
-  font-size: 0.8rem;
+  padding-left: 1.2rem;
 }
 
 .article-toc__item.level-4 {
-  padding-left: 2rem;
-  font-size: 0.8rem;
+  padding-left: 1.9rem;
 }
 
-.toc-slide-enter-active,
-.toc-slide-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.22s ease,
-    margin 0.22s ease, padding 0.22s ease;
-}
-
-.toc-slide-enter-from,
-.toc-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-  max-height: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.toc-slide-enter-to,
-.toc-slide-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-  max-height: 36px;
-}
-
-.toc-slide-move {
-  transition: transform 0.2s ease;
+.article-toc__item.level-5,
+.article-toc__item.level-6 {
+  padding-left: 2.5rem;
 }
 </style>
