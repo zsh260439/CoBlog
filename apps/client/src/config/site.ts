@@ -1,4 +1,4 @@
-import type {  SiteNavItem } from '@/types/site'
+import type { SiteNavItem } from '@/types/site'
 
 export const siteConfig = {
   name: 'CoBlog',
@@ -8,14 +8,19 @@ export const siteConfig = {
   ownerLocation: '湖北武汉',
   description: '一个记录学习过程的博客网站',
   aboutHeroImage: '/images/about-hero.png',
-  footerVersion: 'Hello World!',
   footerLicense: '共同学习!',
+  beian: {
+    icpNumber: '鄂ICP备2026024086号-1',
+    icpUrl: 'https://beian.miit.gov.cn/',
+    publicSecurityNumber: '',
+    publicSecurityUrl: '',
+  },
   siteStatsSnapshot: {
     onlineUsers: 0,
     todayViews: 0,
     totalViews: 0,
-    totalVisitors: 0
-  }
+    totalVisitors: 0,
+  },
 }
 
 export const primaryNav: SiteNavItem[] = [
@@ -23,9 +28,8 @@ export const primaryNav: SiteNavItem[] = [
   { label: '博客', path: '/blog', routeNames: ['blog', 'article', 'category'] },
   { label: '归档', path: '/archive', routeNames: ['archive'] },
   { label: '留言', path: '/message', routeNames: ['message'] },
-  { label: '关于', path: '/about', routeNames: ['about'] }
+  { label: '关于', path: '/about', routeNames: ['about'] },
 ]
-
 
 export const aboutProfileCard = {
   avatar: '/images/about-hero.png',

@@ -161,7 +161,7 @@ export class MessageService {
         { new: true },
       ).lean()
       const pendingCount = await this.pendingCount()
-      this.stream$.next({ type: 'updated', data: { id, status: 'approved', pendingCount } })
+      this.stream$.next({ type: 'updated', data: { status: 'approved', pendingCount } })
       return message ? this.serialize(message) : null
     }
 
@@ -173,7 +173,7 @@ export class MessageService {
         { new: true },
       ).lean()
       const pendingCount = await this.pendingCount()
-      this.stream$.next({ type: 'updated', data: { id, status: 'rejected', pendingCount } })
+      this.stream$.next({ type: 'updated', data: { status: 'rejected', pendingCount } })
       return message ? this.serialize(message) : null
     }
 
@@ -181,7 +181,7 @@ export class MessageService {
     async remove(id: string) {
       const message = await this.messageModel.findByIdAndDelete(id).lean()
       const pendingCount = await this.pendingCount()
-      this.stream$.next({ type: 'deleted', data: { id, pendingCount } })
+      this.stream$.next({ type: 'deleted', data: { pendingCount } })
       return message ? this.serialize(message) : null
     }
 }
