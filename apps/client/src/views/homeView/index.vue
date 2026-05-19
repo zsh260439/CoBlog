@@ -1,295 +1,403 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useMouse, usePreferredReducedMotion, useRafFn, useWindowSize } from '@vueuse/core'
+import HomeProjectCard from '@/views/homeView/components/HomeProjectCard.vue'
+import HomeSkillCard from '@/views/homeView/components/HomeSkillCard.vue'
 import { siteConfig } from '@/config/site'
-import InkHero from '@/components/ui/InkHero.vue'
-import { consumeHomeIntroPlayback } from './introState'
-import { createPersonStructuredData, createWebsiteStructuredData, useSeo } from '@/utils/seo'
+import type { HomeProjectItem, HomeSkillGroup } from '@/types/ui'
 
-type RequestIdleCallbackHandle = number
-type RequestIdleCallbackDeadline = {
-  didTimeout: boolean
-  timeRemaining: () => number
-}
-
-type WindowWithIdleCallback = Window & typeof globalThis & {
-  requestIdleCallback?: (
-    callback: (deadline: RequestIdleCallbackDeadline) => void,
-    options?: { timeout: number }
-  ) => RequestIdleCallbackHandle
-  cancelIdleCallback?: (handle: RequestIdleCallbackHandle) => void
-}
-
-const SgnlTransition = defineAsyncComponent(() => import('@/components/ui/SgnlTransition.vue'))
-
-useSeo({
-  title: siteConfig.name,
-  description: 'CoBlog 是一个记录学习过程、技术实践、个人博客内容与全栈项目思考的网站。',
-  path: '/',
-  image: siteConfig.aboutHeroImage,
-  structuredData: [createWebsiteStructuredData(), createPersonStructuredData()],
-})
-
-const shouldPlayIntro = ref(consumeHomeIntroPlayback())
-const shouldRenderOverlay = ref(false)
-let previousBodyOverflow = ''
-let previousHtmlOverflow = ''
-let overlayIdleHandle: RequestIdleCallbackHandle | null = null
-let overlayTimeoutHandle: number | null = null
-
-interface SkillItem {
-  name: string
-  level: string
-}
-
-interface SkillGroup {
-  id: string
-  badge: string
-  title: string
-  subtitle: string
-  skills: SkillItem[]
-}
-
-interface Project {
-  id: string
-  title: string
-  summary: string
-  year: string
-  tags: string[]
-  href: string
-}
-
-const skillGroups: SkillGroup[] = [
+const skillGroups: HomeSkillGroup[] = [
   {
     id: 'frontend',
-    badge: '01',
+    badge: 'FE',
     title: '前端开发',
-    subtitle: 'Vue 3 · TypeScript · 组件工程',
-    skills: [
-      { name: 'Vue 3 组件化开发', level: '熟练' },
-      { name: 'TypeScript 类型约束', level: '熟练' },
-      { name: 'Vue Router', level: '熟练' },
-      { name: 'UnoCSS / 原子化样式', level: '熟练' },
-      { name: 'Element Plus', level: '熟练' },
-      { name: 'Markdown 内容呈现', level: '熟练' },
+    subtitle: 'Vue 3、Vite 与管理端/博客前台页面实现',
+    metrics: [
+      { label: '核心模块', value: '6+' },
+      { label: '页面类型', value: '3' },
+      { label: '主要方向', value: 'UI' },
+    ],
+    details: [
+      { name: 'Vue 3 页面与组件开发', level: '熟练' },
+      { name: 'TypeScript 基础类型约束', level: '熟练' },
+      { name: 'Vue Router 路由组织', level: '熟练' },
+      { name: 'Markdown 内容展示', level: '熟练' },
+      { name: 'Element Plus 管理端界面', level: '熟练' },
+      { name: 'ECharts 基础数据可视化', level: '了解' },
     ],
   },
   {
     id: 'engineering',
-    badge: '02',
+    badge: 'EG',
     title: '工程实践',
-    subtitle: '构建链路 · 请求架构 · 可维护性',
-    skills: [
-      { name: 'Vite 工程化构建', level: '熟练' },
+    subtitle: '请求封装、状态管理与 Monorepo 开发流程',
+    metrics: [
+      { label: '工程工具', value: '5+' },
+      { label: '复用模块', value: '10+' },
+      { label: '开发方式', value: '模块化' },
+    ],
+    details: [
       { name: 'Axios 请求封装', level: '熟练' },
-      { name: 'pnpm + Turbo', level: '熟练' },
-      { name: '组合式 Hooks', level: '熟练' },
-      { name: '响应式 / 双端适配', level: '熟练' },
-      { name: '后台管理系统', level: '熟练' },
+      { name: 'Pinia 状态管理', level: '熟练' },
+      { name: 'pnpm Monorepo 管理', level: '熟练' },
+      { name: 'Turbo 构建流程', level: '熟练' },
+      { name: '公共组件与类型抽离', level: '熟练' },
+      { name: '响应式布局适配', level: '熟练' },
     ],
   },
   {
     id: 'backend',
-    badge: '03',
-    title: '服务端能力',
-    subtitle: 'NestJS · MongoDB · 实时通信',
-    skills: [
-      { name: 'NestJS 模块化服务', level: '熟练' },
-      { name: 'MongoDB / Mongoose', level: '熟练' },
-      { name: 'SSE 实时推送', level: '熟练' },
-      { name: 'RESTful 接口设计', level: '熟练' },
-      { name: '图片上传与静态资源', level: '熟练' },
-      { name: '访客统计与 IP 定位', level: '了解' },
+    badge: 'BE',
+    title: '服务端联调',
+    subtitle: 'NestJS、MongoDB 与博客后台接口能力',
+    metrics: [
+      { label: '接口模块', value: '6+' },
+      { label: '数据能力', value: 'MongoDB' },
+      { label: '主要场景', value: '博客' },
+    ],
+    details: [
+      { name: 'NestJS 模块化接口开发', level: '熟练' },
+      { name: 'MongoDB Schema 设计', level: '熟练' },
+      { name: 'Multer 图片上传链路', level: '熟练' },
+      { name: '分类与标签接口设计', level: '熟练' },
+      { name: '留言审核与邮件通知', level: '熟练' },
+      { name: '本地部署与接口联调', level: '了解' },
     ],
   },
 ]
 
-const projects: Project[] = [
+const projects: HomeProjectItem[] = [
   {
     id: 'coblog',
-    title: 'CoBlog',
+    title: 'CoBlog 个人博客系统',
     summary: '围绕内容发布、文章详情、目录联动、留言板和后台管理搭建的一套博客系统，重点在界面表达和工程结构的持续迭代。',
     year: '2026',
-    tags: ['Vue 3', 'TypeScript', 'Vite', 'Element Plus', 'ECharts', 'NestJS'],
+    tags: ['Vue 3', 'TypeScript', 'Markdown', 'ECharts', 'NestJS'],
     href: '/blog',
+    internal: true,
   },
   {
     id: 'consult',
-    title: '优医问诊',
+    title: '优医问诊移动端项目',
     summary: '覆盖问诊下单、支付、问诊室、药品订单与物流跟踪的移动端业务项目，强调真实流程联调和状态流转体验。',
     year: '2026',
-    tags: ['Vue 3', 'Vant 4', 'Pinia', 'Socket.IO', 'Express', 'MongoDB'],
+    tags: ['Vue 3', 'Vant', 'Pinia', 'Axios', 'Express', 'MongoDB'],
     href: 'https://github.com/zsh260439/consult-patient',
+    internal: false,
   },
 ]
 
-const setupReveal = () => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('reveal--visible')
-        }
-      })
-    },
-    { threshold: 0.15 }
-  )
-  document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
-  return observer
-}
-// 锁定页面滚动
-const lockPageScroll = () => {
-  previousBodyOverflow = document.body.style.overflow
-  previousHtmlOverflow = document.documentElement.style.overflow
-  document.body.style.overflow = 'hidden'
-  document.documentElement.style.overflow = 'hidden'
-}
-// 解锁页面滚动
-const unlockPageScroll = () => {
-  document.body.style.overflow = previousBodyOverflow
-  document.documentElement.style.overflow = previousHtmlOverflow
+const heroRef = ref<HTMLElement | null>(null)
+const heroInnerRef = ref<HTMLElement | null>(null)
+const isPointerInside = ref(false)
+const isHeroHovered = ref(false)
+
+const { x: mouseX, y: mouseY } = useMouse({ type: 'client' })
+const { width, height } = useWindowSize()
+const preferredReducedMotion = usePreferredReducedMotion()
+
+const cursorRing = reactive({ x: 0, y: 0, opacity: 0, scale: 1 })
+const cursorRingTarget = reactive({ scale: 1 })
+const heroOrb = reactive({ x: 0, y: 0, size: 320, opacity: 1 })
+const heroOrbTarget = reactive({ x: 0, y: 0, size: 320, opacity: 1 })
+const heroMask = reactive({ x: 0, y: 0 })
+const heroMotion = reactive({
+  badgeX: 0,
+  badgeY: 0,
+  titleX: 0,
+  titleY: 0,
+  titleRotate: -4,
+  subtitleX: 0,
+  subtitleY: 0,
+  descX: 0,
+  descY: 0,
+})
+
+const projectTransforms = reactive<Record<string, { rotateX: number; rotateY: number; x: number; y: number }>>(
+  Object.fromEntries(projects.map((project) => [project.id, { rotateX: 0, rotateY: 0, x: 0, y: 0 }]))
+)
+
+const isCursorEnabled = computed(() => width.value >= 1024 && preferredReducedMotion.value !== 'reduce')
+const heroHintText = computed(() => (
+  width.value <= 767
+    ? '滑动屏幕查看技能栈与项目经历。'
+    : '移动鼠标开启探索吧。向下滚动查看技能栈与项目经历。'
+))
+
+const cursorRingStyle = computed(() => ({
+  opacity: String(cursorRing.opacity),
+  transform: `translate3d(${cursorRing.x - 14}px, ${cursorRing.y - 14}px, 0) scale(${cursorRing.scale})`,
+}))
+
+const heroOrbStyle = computed(() => ({
+  width: `${heroOrb.size}px`,
+  height: `${heroOrb.size}px`,
+  opacity: String(heroOrb.opacity),
+  transform: `translate3d(${heroOrb.x - heroOrb.size / 2}px, ${heroOrb.y - heroOrb.size / 2}px, 0)`,
+}))
+
+const heroHeadingMaskStyle = computed(() => ({
+  opacity: String(heroOrb.opacity),
+  clipPath: `circle(${heroOrb.size / 2}px at ${heroMask.x}px ${heroMask.y}px)`,
+}))
+
+const heroBadgeStyle = computed(() => ({
+  transform: `translate3d(${heroMotion.badgeX}px, ${heroMotion.badgeY}px, 0)`,
+}))
+
+const heroTitleStyle = computed(() => ({
+  transform: `translate3d(${heroMotion.titleX}px, ${heroMotion.titleY}px, 0) rotate(${heroMotion.titleRotate}deg)`,
+}))
+
+const heroSubtitleStyle = computed(() => ({
+  transform: `translate3d(${heroMotion.subtitleX}px, ${heroMotion.subtitleY}px, 0)`,
+}))
+
+const heroDescStyle = computed(() => ({
+  transform: `translate3d(${heroMotion.descX}px, ${heroMotion.descY}px, 0)`,
+}))
+
+const enterHomeStage = () => {
+  isPointerInside.value = true
 }
 
-const handleHeroReady = () => {
-  if (!shouldPlayIntro.value) return
-
-  shouldPlayIntro.value = false
-  unlockPageScroll()
-  scheduleOverlayRender()
+const leaveHomeStage = () => {
+  isPointerInside.value = false
+  isHeroHovered.value = false
 }
 
-const canRenderOverlay = () => {
-  const nav = navigator as Navigator & { deviceMemory?: number }
-  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4
-  const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 6
-
-  return !coarsePointer
-    && !reducedMotion
-    && !lowMemory
-    && !lowCpu
-    && window.innerWidth >= 1280
+const enterHeroStage = () => {
+  isHeroHovered.value = true
+  if (!isCursorEnabled.value) return
+  const heroElement = heroRef.value
+  if (heroElement) {
+    const rect = heroElement.getBoundingClientRect()
+    const localX = mouseX.value - rect.left
+    const localY = mouseY.value - rect.top
+    heroOrb.x = localX
+    heroOrb.y = localY
+    heroOrbTarget.x = localX
+    heroOrbTarget.y = localY
+  }
+  cursorRingTarget.scale = 0.88
 }
 
-const scheduleOverlayRender = () => {
-  if (shouldRenderOverlay.value || !canRenderOverlay()) {
+const leaveHeroStage = () => {
+  isHeroHovered.value = false
+  cursorRingTarget.scale = 1
+}
+
+const focusCardCursor = () => {
+  if (!isCursorEnabled.value) return
+  cursorRingTarget.scale = 1.28
+}
+
+const resetCursor = () => {
+  if (!isCursorEnabled.value) return
+  cursorRingTarget.scale = isHeroHovered.value ? 0.88 : 1
+}
+
+const updateHeroTargets = () => {
+  const heroElement = heroRef.value
+  if (!heroElement) return
+  const rect = heroElement.getBoundingClientRect()
+  if (!isCursorEnabled.value) {
+    heroOrbTarget.opacity = 0
     return
   }
+  heroOrbTarget.opacity = isPointerInside.value && isHeroHovered.value ? 1 : 0
+  if (!isPointerInside.value || !isHeroHovered.value) {
+    heroMotion.badgeX += (0 - heroMotion.badgeX) * 0.12
+    heroMotion.badgeY += (0 - heroMotion.badgeY) * 0.12
+    heroMotion.titleX += (0 - heroMotion.titleX) * 0.12
+    heroMotion.titleY += (0 - heroMotion.titleY) * 0.12
+    heroMotion.titleRotate += (-4 - heroMotion.titleRotate) * 0.12
+    heroMotion.subtitleX += (0 - heroMotion.subtitleX) * 0.12
+    heroMotion.subtitleY += (0 - heroMotion.subtitleY) * 0.12
+    heroMotion.descX += (0 - heroMotion.descX) * 0.12
+    heroMotion.descY += (0 - heroMotion.descY) * 0.12
+    return
+  }
+  const localX = mouseX.value - rect.left
+  const localY = mouseY.value - rect.top
+  const ratioX = (localX - rect.width / 2) / rect.width
+  const ratioY = (localY - rect.height / 2) / rect.height
+  heroOrbTarget.x = localX
+  heroOrbTarget.y = localY
+  heroMotion.badgeX += (ratioX * 16 - heroMotion.badgeX) * 0.12
+  heroMotion.badgeY += (ratioY * 10 - heroMotion.badgeY) * 0.12
+  heroMotion.titleX += (ratioX * 46 - heroMotion.titleX) * 0.12
+  heroMotion.titleY += (ratioY * 28 - heroMotion.titleY) * 0.12
+  heroMotion.titleRotate += (-4 + ratioX * 8 - heroMotion.titleRotate) * 0.12
+  heroMotion.subtitleX += (ratioX * 18 - heroMotion.subtitleX) * 0.12
+  heroMotion.subtitleY += (ratioY * 12 - heroMotion.subtitleY) * 0.12
+  heroMotion.descX += (ratioX * 10 - heroMotion.descX) * 0.12
+  heroMotion.descY += (ratioY * 8 - heroMotion.descY) * 0.12
+}
 
-  const enableOverlay = () => {
-    shouldRenderOverlay.value = true
-    overlayIdleHandle = null
-    if (overlayTimeoutHandle !== null) {
-      window.clearTimeout(overlayTimeoutHandle)
-      overlayTimeoutHandle = null
+const getProjectStyle = (id: string) => {
+  const motion = projectTransforms[id]
+  return {
+    transform: `perspective(1400px) translate3d(${motion.x}px, ${motion.y}px, 0) rotateX(${motion.rotateX}deg) rotateY(${motion.rotateY}deg)`,
+  }
+}
+
+const handleProjectMove = (id: string, event: MouseEvent) => {
+  if (!isCursorEnabled.value) return
+  const element = event.currentTarget as HTMLElement
+  const rect = element.getBoundingClientRect()
+  const ratioX = (event.clientX - rect.left) / rect.width
+  const ratioY = (event.clientY - rect.top) / rect.height
+  projectTransforms[id] = {
+    rotateX: (0.5 - ratioY) * 4.5,
+    rotateY: (ratioX - 0.5) * 7,
+    x: (ratioX - 0.5) * 18,
+    y: (ratioY - 0.5) * 16,
+  }
+  focusCardCursor()
+}
+
+const resetProjectTransform = (id: string) => {
+  projectTransforms[id] = { rotateX: 0, rotateY: 0, x: 0, y: 0 }
+  resetCursor()
+}
+
+const { pause, resume } = useRafFn(
+  () => {
+    const ringOpacityTarget = isPointerInside.value && isCursorEnabled.value ? 1 : 0
+    updateHeroTargets()
+    cursorRing.x += (mouseX.value - cursorRing.x) * 0.22
+    cursorRing.y += (mouseY.value - cursorRing.y) * 0.22
+    cursorRing.opacity += (ringOpacityTarget - cursorRing.opacity) * 0.2
+    cursorRing.scale += (cursorRingTarget.scale - cursorRing.scale) * 0.18
+    heroOrb.x += (heroOrbTarget.x - heroOrb.x) * 0.11
+    heroOrb.y += (heroOrbTarget.y - heroOrb.y) * 0.11
+    heroOrb.size += (heroOrbTarget.size - heroOrb.size) * 0.1
+    heroOrb.opacity += (heroOrbTarget.opacity - heroOrb.opacity) * 0.16
+    const heroElement = heroRef.value
+    const innerElement = heroInnerRef.value
+    if (heroElement && innerElement) {
+      const heroRect = heroElement.getBoundingClientRect()
+      const innerRect = innerElement.getBoundingClientRect()
+      heroMask.x = heroOrb.x - (innerRect.left - heroRect.left)
+      heroMask.y = heroOrb.y - (innerRect.top - heroRect.top)
     }
-  }
+  },
+  { immediate: false }
+)
 
-  const idleWindow = window as WindowWithIdleCallback
+watch(
+  isCursorEnabled,
+  (enabled) => {
+    if (!enabled) {
+      cursorRing.opacity = 0
+      heroOrb.opacity = 0
+      pause()
+      return
+    }
+    resume()
+  },
+  { immediate: true }
+)
 
-  if (idleWindow.requestIdleCallback) {
-    overlayIdleHandle = idleWindow.requestIdleCallback(() => {
-      enableOverlay()
-    }, { timeout: 1500 })
-    return
-  }
-
-  overlayTimeoutHandle = window.setTimeout(enableOverlay, 900)
-}
-
-onMounted(() => {
-  setupReveal()
-
-  if (shouldPlayIntro.value) {
-    lockPageScroll()
-  } else {
-    scheduleOverlayRender()
+watch([width, height], () => {
+  if (!isHeroHovered.value) {
+    heroOrbTarget.x = heroOrb.x
+    heroOrbTarget.y = heroOrb.y
   }
 })
 
-onUnmounted(() => {
-  unlockPageScroll()
-  const idleWindow = window as WindowWithIdleCallback
-  if (overlayIdleHandle !== null && idleWindow.cancelIdleCallback) {
-    idleWindow.cancelIdleCallback(overlayIdleHandle)
-  }
-  if (overlayTimeoutHandle !== null) {
-    window.clearTimeout(overlayTimeoutHandle)
-  }
+onMounted(() => {
+  heroOrb.x = width.value / 2
+  heroOrb.y = height.value / 2
+  heroOrbTarget.x = heroOrb.x
+  heroOrbTarget.y = heroOrb.y
+  cursorRing.x = width.value / 2
+  cursorRing.y = height.value / 2
 })
 </script>
 
 <template>
-  <div class="home">
-    <div class="hero-fusion">
-      <InkHero :skip-intro="!shouldPlayIntro" @ready="handleHeroReady">
-        <p class="hero__subtitle">{{ siteConfig.ownerRole }} · {{ siteConfig.ownerLocation }}</p>
-        <div class="hero__actions">
-          <router-link to="/blog" class="hero__btn hero__btn--outline " >进入博客</router-link>
-          <router-link to="/about" class="hero__btn hero__btn--outline">了解我</router-link>
-          <a href="https://github.com/zsh260439" target="_blank" class="hero__btn hero__btn--outline">GitHub</a>
-        </div>
-      </InkHero>
+  <div class="home" @mouseenter="enterHomeStage" @mouseleave="leaveHomeStage">
+    <div class="home__dot-grid"></div>
+    <div class="home__noise"></div>
+    <div v-if="isCursorEnabled" class="home__cursor-ring" :style="cursorRingStyle"></div>
 
-      <div v-if="shouldRenderOverlay" class="hero-fusion__overlay">
-        <SgnlTransition :show-ui="false" transparent overlay-mask :seed="2026" />
-      </div>
-    </div>
+    <section ref="heroRef" class="home__hero" @mouseenter="enterHeroStage" @mouseleave="leaveHeroStage">
+      <div class="home__hero-orbit home__hero-orbit--large"></div>
+      <div class="home__hero-orbit home__hero-orbit--small"></div>
+      <div class="home__hero-line home__hero-line--left"></div>
+      <div class="home__hero-line home__hero-line--right"></div>
+      <div v-if="isCursorEnabled" class="home__hero-orb" :style="heroOrbStyle"></div>
 
-    <section class="section section--skills">
-      <div class="section__inner">
-        <div class="section__header">
-          <span class="section__label">01</span>
-          <h2 class="section__title">技能栈</h2>
-        </div>
+      <div ref="heroInnerRef" class="home__hero-inner">
+        <div class="home__hero-heading">
+          <div class="home__hero-heading-copy">
+            <div class="home__hero-badge" :style="heroBadgeStyle">Front-end / Interaction / Content</div>
+            <h1 class="home__hero-title" :style="heroTitleStyle">
+              <span>HELLO, I'M</span>
+              <em>{{ siteConfig.ownerName }}</em>
+            </h1>
+            <p class="home__hero-subtitle" :style="heroSubtitleStyle">{{ siteConfig.ownerRole }} / {{ siteConfig.ownerLocation }}</p>
+          </div>
 
-        <div class="skills-grid">
-          <div
-            v-for="group in skillGroups"
-            :key="group.id"
-            class="skill-card reveal"
-          >
-            <div class="skill-card__head">
-              <span class="skill-card__badge">{{ group.badge }}</span>
-              <div>
-                <h3 class="skill-card__title">{{ group.title }}</h3>
-                <p class="skill-card__subtitle">{{ group.subtitle }}</p>
-              </div>
-            </div>
-            <div class="skill-card__tags">
-              <span v-for="skill in group.skills" :key="skill.name" class="skill-card__tag">
-                {{ skill.name }}
-              </span>
-            </div>
+          <div class="home__hero-heading-copy home__hero-heading-copy--mask" :style="heroHeadingMaskStyle" aria-hidden="true">
+            <div class="home__hero-badge" :style="heroBadgeStyle">Front-end / Interaction / Content</div>
+            <h1 class="home__hero-title" :style="heroTitleStyle">
+              <span>HELLO, I'M</span>
+              <em>{{ siteConfig.ownerName }}</em>
+            </h1>
+            <p class="home__hero-subtitle" :style="heroSubtitleStyle">{{ siteConfig.ownerRole }} / {{ siteConfig.ownerLocation }}</p>
           </div>
         </div>
+
+        <p class="home__hero-desc" :style="heroDescStyle">{{ siteConfig.description }}</p>
+
+        <div class="home__hero-actions">
+          <router-link to="/blog" class="home__hero-action home__hero-action--solid">进入博客</router-link>
+          <router-link to="/about" class="home__hero-action">了解我</router-link>
+          <a href="https://github.com/zsh260439" target="_blank" rel="noreferrer" class="home__hero-action">GitHub</a>
+        </div>
+      </div>
+
+      <p class="home__hero-hint">{{ heroHintText }}</p>
+    </section>
+
+    <section class="home__skills-section">
+      <div class="home__section-header">
+        <span class="home__section-kicker">Skill Stack</span>
+        <h2>技能栈</h2>
+      </div>
+
+      <div class="home__skills-list">
+        <HomeSkillCard
+          v-for="group in skillGroups"
+          :key="group.id"
+          :group="group"
+          @card-enter="focusCardCursor"
+          @card-leave="resetCursor"
+        />
       </div>
     </section>
 
-    <section class="section section--projects">
-      <div class="section__inner">
-        <div class="section__header">
-          <span class="section__label">02</span>
-          <h2 class="section__title">项目经历</h2>
+    <section class="home__projects-section">
+      <div class="home__projects-shell">
+        <div class="home__projects-side">
+          <span class="home__section-kicker">Selected Work</span>
+          <h2>项目经历</h2>
         </div>
 
-        <div class="projects-grid">
-          <a
-            v-for="project in projects"
+        <div class="home__projects-list">
+          <HomeProjectCard
+            v-for="(project, index) in projects"
             :key="project.id"
-            :href="project.href"
-            target="_blank"
-            class="project-card reveal"
-          >
-            <div class="project-card__top">
-              <span class="project-card__year">{{ project.year }}</span>
-              <h3 class="project-card__title">{{ project.title }}</h3>
-            </div>
-            <p class="project-card__desc">{{ project.summary }}</p>
-            <div class="project-card__tags">
-              <span v-for="tag in project.tags" :key="tag" class="project-card__tag">{{ tag }}</span>
-            </div>
-          </a>
+            :project="project"
+            :index="index"
+            :card-style="getProjectStyle(project.id)"
+            @card-move="handleProjectMove(project.id, $event)"
+            @card-enter="focusCardCursor"
+            @card-leave="resetProjectTransform(project.id)"
+          />
         </div>
       </div>
     </section>
@@ -297,317 +405,438 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal--visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── Hero ── */
-.hero__subtitle {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.82rem;
-  color: rgba(240, 240, 238, 0.6);
-  margin: 1.5rem 0 2rem;
-  letter-spacing: 0.06em;
-}
-
-.hero__actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.hero__btn {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  padding: 0.7rem 1.4rem;
-  border-radius: 999px;
-  text-decoration: none;
-  color: #e8e8e5;
-  transition: all 0.25s ease;
-}
-
-.hero__btn--outline {
-  background: transparent;
-  color: rgba(240, 240, 238, 0.7);
-  border: 1px solid rgba(240, 240, 238, 0.2);
-}
-
-.hero__btn--outline:hover {
-  background: rgba(240, 240, 238, 0.06);
-}
-
-.hero-fusion {
+.home {
   position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  color: #171512;
 }
 
-.hero-fusion__overlay {
-  position: absolute;
+.home__dot-grid,
+.home__noise {
+  position: fixed;
   inset: 0;
-  z-index: 6;
   pointer-events: none;
+  z-index: 0;
 }
 
-.hero-fusion :deep(.ink-title) {
-  z-index: 20;
+.home__dot-grid {
+  background-image: radial-gradient(circle, rgba(145, 145, 145, 0.7) 0 1.25px, rgba(145, 145, 145, 0.18) 1.25px 2.4px, transparent 2.5px);
+  background-size: 54px 54px;
+  background-position: 0 0;
+  opacity: 1;
 }
 
-.hero-fusion :deep(.ink-meta) {
-  z-index: 20;
+.home__noise {
+  display: none;
 }
 
-.hero-fusion :deep(.blog-content) {
-  z-index: 20;
-}
-
-.hero-fusion :deep(.crosshair) {
-  z-index: 20;
-}
-
-.hero-fusion__overlay :deep(.sgnl-stage) {
-  min-height: 100%;
-  height: 100%;
-}
-
-
-/* ── Section ── */
-.section {
-  position: relative;
-  padding: 3rem 1.5rem;
-}
-
-.section--skills {
-  padding-top: 8rem;
-  background: linear-gradient(
-    to bottom,
-    #000000 0%,
-    #050505 10%,
-    #161616 20%,
-    #3b3b39 36%,
-    #7a7a76 54%,
-    #b9b9b4 70%,
-    #dcdcd9 84%,
-    #e5e5e2 100%
-  );
-}
-
-.section--skills::before {
-  content: '';
-  position: absolute;
+.home__cursor-ring {
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  height: 220px;
   pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.02) 18%,
-    rgba(220, 220, 217, 0.14) 48%,
-    rgba(220, 220, 217, 0.45) 72%,
-    rgba(220, 220, 217, 0.92) 100%
-  );
-  filter: blur(18px);
+  z-index: 40;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(17, 17, 17, 0.34);
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  will-change: transform, opacity, width, height;
 }
 
-.section--projects {
-  padding-top: 5rem;
-  background: linear-gradient(
-    to bottom,
-     #e5e5e2 100%
-  );
+.home__hero,
+.home__skills-section,
+.home__projects-section {
+  position: relative;
+  z-index: 1;
 }
 
-
-.section__inner {
-  max-width: 60rem;
-  margin: 0 auto;
-}
-
-.section__header {
+.home__hero {
+  min-height: 100vh;
+  padding: calc(var(--header-height) + 4rem) 2rem 5rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid rgba(5, 5, 5, 0.12);
-  padding-bottom: 1rem;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.home__hero-inner {
   position: relative;
+  width: min(100%, 1120px);
+  text-align: center;
   z-index: 2;
 }
 
-.section__label {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
-  color: rgba(5, 5, 5, 0.35);
-  letter-spacing: 0.1em;
+.home__hero-badge,
+.home__section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #777777;
 }
 
-.section__title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.6rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+.home__hero-badge::before,
+.home__section-kicker::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: rgba(17, 17, 17, 0.16);
+}
+
+.home__hero-heading {
+  position: relative;
+}
+
+.home__hero-heading-copy {
+  position: relative;
+}
+
+.home__hero-heading-copy--mask {
+  position: absolute;
+  inset: 0;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.home__hero-heading-copy--mask .home__hero-badge,
+.home__hero-heading-copy--mask .home__hero-subtitle {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.home__hero-heading-copy--mask .home__hero-badge::before {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.home__hero-title {
+  margin: 1.4rem 0 0.9rem;
+  font-size: clamp(3.8rem, 11vw, 8.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+  transform-origin: center center;
+}
+
+.home__hero-title span,
+.home__hero-title em {
+  display: inline-block;
+}
+
+.home__hero-title em {
+  margin-left: 0.55rem;
+  font-style: normal;
+  font-weight: 300;
+}
+
+.home__hero-subtitle {
   margin: 0;
-  color: #050505;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  color: #6f6f6f;
 }
 
-/* ── Skills ── */
-.skills-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.25rem;
+.home__hero-desc {
+  width: min(100%, 44rem);
+  margin: 1.2rem auto 0;
+  color: #767676;
+  font-size: 0.98rem;
+  line-height: 1.9;
 }
 
-.skill-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.62));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
-  padding: 1.25rem;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+.home__hero-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 2rem;
 }
 
-.skill-card:hover {
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.12);
-  border-color: rgba(255, 255, 255, 0.24);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.72));
+.home__hero-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #1f2937;
+  padding: 0.88rem 1.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.home__hero-action--solid,
+.home__hero-action:hover {
+  background: #111111;
+  border-color: #111111;
+  color: #ffffff;
   transform: translateY(-2px);
 }
 
-.skill-card__head {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.skill-card__badge {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.55rem;
-  color: rgba(5, 5, 5, 0.35);
-  width: 1.6rem;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.skill-card__title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.15rem;
-  font-weight: 900;
+.home__hero-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1.6rem;
   margin: 0;
-  color: #050505;
+  transform: translateX(-50%);
+  color: rgba(120, 120, 120, 0.86);
+  font-size: 0.82rem;
+  animation: heroHintBounce 2.3s ease-in-out infinite;
 }
 
-.skill-card__subtitle {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.62rem;
-  color: rgba(5, 5, 5, 0.45);
-  margin: 0.15rem 0 0;
+@keyframes heroHintBounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-10px);
+    opacity: 1;
+  }
 }
 
-.skill-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
+.home__hero-orbit,
+.home__hero-line {
+  position: absolute;
+  pointer-events: none;
 }
 
-.skill-card__tag {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.58rem;
-  color: rgba(5, 5, 5, 0.55);
-  padding: 0.2rem 0.5rem;
-  border: 1px solid rgba(5, 5, 5, 0.08);
-  border-radius: 4px;
+.home__hero-orb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: #090909;
+  box-shadow: 0 28px 66px rgba(0, 0, 0, 0.14);
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
 }
 
-/* ── Projects ── */
-.projects-grid {
+.home__hero-orbit {
+  border-radius: 50%;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.home__hero-orbit--large {
+  top: 20%;
+  left: 18%;
+  width: 96px;
+  height: 96px;
+}
+
+.home__hero-orbit--small {
+  top: 18%;
+  right: 22%;
+  width: 46px;
+  height: 46px;
+}
+
+.home__hero-line {
+  height: 1px;
+  background: rgba(17, 17, 17, 0.07);
+}
+
+.home__hero-line--left {
+  left: 10%;
+  bottom: 26%;
+  width: 78px;
+  transform: rotate(-12deg);
+}
+
+.home__hero-line--right {
+  right: 14%;
+  top: 30%;
+  width: 92px;
+  transform: rotate(24deg);
+}
+
+.home__skills-section,
+.home__projects-section {
+  padding: 4rem 2rem 6rem;
+}
+
+.home__section-header,
+.home__projects-shell {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.home__section-header h2,
+.home__projects-side h2 {
+  margin: 1rem 0 0;
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+
+.home__skills-list {
+  width: min(100%, 1180px);
+  margin: 2rem auto 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: 1.6rem;
 }
 
-.project-card {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.68));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 16px;
-  padding: 1.5rem;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+.home__projects-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 2rem;
 }
 
-.project-card:hover {
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
-  border-color: rgba(255, 255, 255, 0.24);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.76));
-  transform: translateY(-3px);
+.home__projects-list {
+  display: grid;
+  gap: 1.6rem;
 }
 
-.project-card__top {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+@media (max-width: 1023px) {
+  .home__cursor-ring {
+    display: none;
+  }
+
+  .home__projects-shell {
+    grid-template-columns: 1fr;
+  }
 }
-
-.project-card__year {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.6rem;
-  color: rgba(5, 5, 5, 0.4);
-  flex-shrink: 0;
-}
-
-.project-card__title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  margin: 0;
-  color: #050505;
-}
-
-.project-card__desc {
-  font-size: 0.78rem;
-  color: rgba(5, 5, 5, 0.55);
-  line-height: 1.65;
-  margin: 0 0 0.75rem;
-}
-
-.project-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.project-card__tag {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.55rem;
-  color: rgba(5, 5, 5, 0.5);
-  padding: 0.15rem 0.45rem;
-  border: 1px solid rgba(5, 5, 5, 0.08);
-  border-radius: 3px;
-}
-
-
-
 
 @media (max-width: 767px) {
-  .hero__title {
-    font-size: clamp(3rem, 18vw, 6rem);
+  .home__hero,
+  .home__skills-section,
+  .home__projects-section {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .home__hero {
+    min-height: auto;
+    padding-top: calc(var(--header-height) + 2.25rem);
+    padding-bottom: 3rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home__hero-inner {
+    width: 100%;
+    text-align: center;
+  }
+
+  .home__hero-badge {
+    display: inline-flex;
+    max-width: 16rem;
+    font-size: 0.68rem;
+    line-height: 1.6;
+    letter-spacing: 0.16em;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .home__hero-title {
+    margin: 1rem 0 0.75rem;
+    font-size: clamp(3.6rem, 22vw, 5.8rem);
+    line-height: 0.88;
+    transform: none !important;
+  }
+
+  .home__hero-title em {
+    display: block;
+    margin-left: 0;
+    margin-top: 0.35rem;
+  }
+
+  .home__hero-subtitle {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+    transform: none !important;
+  }
+
+  .home__hero-desc {
+    width: min(100%, 20rem);
+    margin-top: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    text-align: center;
+    transform: none !important;
+  }
+
+  .home__hero-actions {
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    flex-wrap: nowrap;
+  }
+
+  .home__hero-action {
+    min-width: auto;
+    padding: 0.78rem 0.9rem;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .home__hero-action--solid {
+    min-width: auto;
+  }
+
+  .home__hero-orbit--large {
+    top: 16%;
+    left: auto;
+    right: 12%;
+    width: 82px;
+    height: 82px;
+    opacity: 0.5;
+  }
+
+  .home__hero-orbit--small {
+    top: 10%;
+    right: 24%;
+    width: 32px;
+    height: 32px;
+    opacity: 0.5;
+  }
+
+  .home__hero-line--left {
+    left: auto;
+    right: 12%;
+    bottom: auto;
+    top: 34%;
+    width: 64px;
+  }
+
+  .home__hero-line--right {
+    display: none;
+  }
+
+  .home__hero-hint {
+    position: static;
+    margin-top: 1.25rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 18rem;
+    color: rgba(120, 120, 120, 0.88);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    text-align: center;
+    animation: heroHintMobileBounce 2.3s ease-in-out infinite;
+  }
+
+  @keyframes heroHintMobileBounce {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.7;
+    }
+
+    50% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
   }
 }
 </style>
