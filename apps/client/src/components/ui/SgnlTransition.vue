@@ -1,5 +1,6 @@
 <template>
   <section
+    ref="stageRef"
     class="sgnl-stage"
     :class="{
       'sgnl-stage--transparent': transparent,
@@ -24,6 +25,18 @@ const props = withDefaults(defineProps<{
   seed: 2026,
 })
 
+interface RenderProfile {
+  numLines: number
+  segmentsPerLine: number
+  pixelRatio: number
+  targetFps: number
+}
+
+type NavigatorWithDeviceMemory = Navigator & {
+  deviceMemory?: number
+}
+
+const stageRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 let scene: THREE.Scene | null = null
@@ -31,8 +44,13 @@ let camera: THREE.PerspectiveCamera | null = null
 let renderer: THREE.WebGLRenderer | null = null
 let linesMesh: THREE.LineSegments | null = null
 let material: THREE.LineBasicMaterial | null = null
-let timer: THREE.Timer | null = null
+let clock: THREE.Clock | null = null
 let animationId = 0
+let frameInterval = 1000 / 30
+let lastFrameAt = 0
+let isStageVisible = true
+let stageObserver: IntersectionObserver | null = null
+let resizeObserver: ResizeObserver | null = null
 
 function createSeededRandom(seed: number) {
   let value = seed % 2147483647
@@ -40,45 +58,83 @@ function createSeededRandom(seed: number) {
   return () => ((value = (value * 16807) % 2147483647) - 1) / 2147483646
 }
 
-const handleResize = () => {
-  if (!camera || !renderer) return
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
-  renderer.setSize(window.innerWidth, window.innerHeight)
+function createRenderProfile(): RenderProfile {
+  const nav = navigator as NavigatorWithDeviceMemory
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4
+  const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 6
+  const smallViewport = window.innerWidth < 1280
+  const lowPower = coarsePointer || reducedMotion || lowMemory || lowCpu || smallViewport
+
+  return {
+    numLines: lowPower ? 1200 : 1800,
+    segmentsPerLine: lowPower ? 22 : 28,
+    pixelRatio: lowPower ? 1 : Math.min(window.devicePixelRatio || 1, 1.25),
+    targetFps: lowPower ? 24 : 30,
+  }
 }
 
-const animate = () => {
-  animationId = requestAnimationFrame(animate)
-  if (!timer || !linesMesh || !material || !renderer || !scene || !camera) return
+const handleResize = () => {
+  if (!stageRef.value || !camera || !renderer) return
+  const width = stageRef.value.clientWidth
+  const height = stageRef.value.clientHeight
+  if (!width || !height) return
 
-  timer.update()
-  const elapsedTime = timer.getElapsed()
+  camera.aspect = width / height
+  camera.updateProjectionMatrix()
+  renderer.setSize(width, height, false)
+}
+
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    lastFrameAt = 0
+  }
+}
+
+const animate = (timestamp = performance.now()) => {
+  animationId = requestAnimationFrame(animate)
+  if (!clock || !linesMesh || !material || !renderer || !scene || !camera) return
+  if (document.hidden || !isStageVisible) return
+  if (timestamp - lastFrameAt < frameInterval) return
+
+  lastFrameAt = timestamp
+
+  const elapsedTime = clock.getElapsedTime()
   linesMesh.rotation.y = elapsedTime * 0.05
-  material.opacity = 0.012 + Math.sin(elapsedTime * 0.5) * 0.003
+  material.opacity = 0.011 + Math.sin(elapsedTime * 0.45) * 0.002
   renderer.render(scene, camera)
 }
 
 onMounted(() => {
   const canvas = canvasRef.value
-  if (!canvas) return
+  const stage = stageRef.value
+  if (!canvas || !stage) return
+
+  const profile = createRenderProfile()
+  frameInterval = 1000 / profile.targetFps
 
   scene = new THREE.Scene()
   if (!props.transparent) {
     scene.background = new THREE.Color(0x000000)
   }
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
+  camera = new THREE.PerspectiveCamera(45, 1, 1, 1000)
   camera.position.set(0, 0, 60)
 
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: props.transparent })
+  renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: false,
+    alpha: props.transparent,
+    powerPreference: 'high-performance',
+  })
   renderer.setClearAlpha(props.transparent ? 0 : 1)
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(profile.pixelRatio)
+  handleResize()
 
   const rand = createSeededRandom(props.seed)
 
-  const numLines = 12000
-  const segmentsPerLine = 80
+  const { numLines, segmentsPerLine } = profile
   const positions = new Float32Array(numLines * segmentsPerLine * 3)
   let pIndex = 0
 
@@ -117,20 +173,22 @@ onMounted(() => {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 
-  const indices: number[] = []
+  const indices = new Uint16Array(numLines * (segmentsPerLine - 1) * 2)
+  let indexPointer = 0
   for (let i = 0; i < numLines; i++) {
     for (let j = 0; j < segmentsPerLine - 1; j++) {
       const start = i * segmentsPerLine + j
       const end = i * segmentsPerLine + j + 1
-      indices.push(start, end)
+      indices[indexPointer++] = start
+      indices[indexPointer++] = end
     }
   }
-  geometry.setIndex(indices)
+  geometry.setIndex(new THREE.BufferAttribute(indices, 1))
 
   material = new THREE.LineBasicMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: 0.015,
+    opacity: 0.011,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   })
@@ -140,15 +198,34 @@ onMounted(() => {
   linesMesh.position.x = -5
   scene.add(linesMesh)
 
-  timer = new THREE.Timer()
+  clock = new THREE.Clock()
   animate()
 
-  window.addEventListener('resize', handleResize)
+  stageObserver = new IntersectionObserver(
+    (entries) => {
+      isStageVisible = entries.some((entry) => entry.isIntersecting)
+      if (isStageVisible) {
+        lastFrameAt = 0
+      }
+    },
+    { threshold: 0.05 }
+  )
+  stageObserver.observe(stage)
+
+  resizeObserver = new ResizeObserver(() => {
+    handleResize()
+    lastFrameAt = 0
+  })
+  resizeObserver.observe(stage)
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 onUnmounted(() => {
   cancelAnimationFrame(animationId)
-  window.removeEventListener('resize', handleResize)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  stageObserver?.disconnect()
+  resizeObserver?.disconnect()
   if (renderer) renderer.dispose()
   if (linesMesh) linesMesh.geometry.dispose()
   if (material) material.dispose()

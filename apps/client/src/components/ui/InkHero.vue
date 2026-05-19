@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
-import { useMouse, useRafFn, useWindowSize } from '@vueuse/core'
+import { useMouse, useRafFn } from '@vueuse/core'
 
 const props = withDefaults(defineProps<{
   skipIntro?: boolean
@@ -45,13 +45,16 @@ const counterRef = ref<HTMLElement | null>(null)
 const isHovered = ref(false)
 
 const { x: mouseX, y: mouseY } = useMouse({ type: 'client' })
-const { width, height } = useWindowSize()
 
 const heroMotion = reactive({
   titleX: 0,
   titleY: 0,
   titleRotate: -4,
 })
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+const coarsePointer = window.matchMedia('(pointer: coarse)')
+const motionEnabled = !prefersReducedMotion.matches && !coarsePointer.matches
 
 let gl: WebGLRenderingContext | null = null
 let program: WebGLProgram | null = null
@@ -61,6 +64,10 @@ let targetProgress = 0
 let hasEmittedReady = false
 const sequenceTimeouts: number[] = []
 let lastRenderTime = 0
+let pixelRatio = 1
+let shouldRenderFrame = true
+let isHeroVisible = true
+let visibilityObserver: IntersectionObserver | null = null
 
 const heroTitleStyle = computed(() => ({
   transform: `translate(-50%, -50%) translate3d(${heroMotion.titleX}px, ${heroMotion.titleY}px, 0) rotate(${heroMotion.titleRotate}deg)`,
@@ -173,14 +180,21 @@ function initWebGL() {
   if (!canvasRef.value || !wrapRef.value) return
 
   const canvas = canvasRef.value
-  gl = canvas.getContext('webgl', { alpha: true, antialias: false })
+  gl = canvas.getContext('webgl', {
+    alpha: true,
+    antialias: false,
+    powerPreference: 'high-performance',
+    preserveDrawingBuffer: false,
+  })
   if (!gl) return
 
-  const w = wrapRef.value.clientWidth
-  const h = wrapRef.value.clientHeight
-  canvas.width = w
-  canvas.height = h
-  gl.viewport(0, 0, w, h)
+  const lowPower = prefersReducedMotion.matches
+    || coarsePointer.matches
+    || window.innerWidth < 1280
+    || ((navigator.hardwareConcurrency || 8) <= 6)
+
+  pixelRatio = lowPower ? 1 : Math.min(window.devicePixelRatio || 1, 1.25)
+  applyCanvasSize()
 
   const vs = compileShader(gl.VERTEX_SHADER, vertexShaderSource)
   const fs = compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource)
@@ -208,16 +222,45 @@ function initWebGL() {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 }
 
-function render() {
-  if (!gl || !program) return
+function applyCanvasSize() {
+  if (!canvasRef.value || !wrapRef.value || !gl) return
+  const width = Math.max(1, Math.floor(wrapRef.value.clientWidth * pixelRatio))
+  const height = Math.max(1, Math.floor(wrapRef.value.clientHeight * pixelRatio))
 
-  const time = performance.now() * 0.001
-  const now = performance.now()
-  if (!lastRenderTime) lastRenderTime = now
-  const deltaMs = now - lastRenderTime
-  lastRenderTime = now
+  if (gl.canvas.width === width && gl.canvas.height === height) return
+
+  gl.canvas.width = width
+  gl.canvas.height = height
+  gl.viewport(0, 0, width, height)
+}
+
+function queueRender() {
+  if (animationId) return
+  animationId = requestAnimationFrame(render)
+}
+
+function render(timestamp = performance.now()) {
+  animationId = 0
+  if (!gl || !program || document.hidden || !isHeroVisible) return
+
+  if (!lastRenderTime) lastRenderTime = timestamp
+  const deltaMs = timestamp - lastRenderTime
+  const progressDelta = Math.abs(targetProgress - progress)
+  const shouldAnimateMotion = isHovered.value
+    || Math.abs(heroMotion.titleX) > 0.1
+    || Math.abs(heroMotion.titleY) > 0.1
+    || Math.abs(heroMotion.titleRotate + 4) > 0.1
+  const shouldThrottle = progressDelta < 0.002 && !shouldAnimateMotion
+
+  if (shouldThrottle && !shouldRenderFrame) {
+    return
+  }
+
+  shouldRenderFrame = false
+  lastRenderTime = timestamp
   const frameIndependentLerp = 1 - Math.pow(1 - 0.05, deltaMs / (1000 / 60))
   progress += (targetProgress - progress) * frameIndependentLerp
+  const time = timestamp * 0.001
 
   const timeLoc = gl.getUniformLocation(program, 'u_time')
   const progressLoc = gl.getUniformLocation(program, 'u_progress')
@@ -236,7 +279,17 @@ function render() {
     emitReadyOnce()
   }
 
-  animationId = requestAnimationFrame(render)
+  const nextProgressDelta = Math.abs(targetProgress - progress)
+  const shouldContinue = nextProgressDelta >= 0.002
+    || isHovered.value
+    || Math.abs(heroMotion.titleX) > 0.1
+    || Math.abs(heroMotion.titleY) > 0.1
+    || Math.abs(heroMotion.titleRotate + 4) > 0.1
+    || shouldRenderFrame
+
+  if (shouldContinue) {
+    queueRender()
+  }
 }
 
 function syncDisplayState() {
@@ -269,23 +322,32 @@ function completeDiffusion() {
   targetProgress = 1
   syncDisplayState()
   emitReadyOnce()
+  shouldRenderFrame = true
+  queueRender()
 }
 
 function handleResize() {
-  if (!wrapRef.value || !gl) return
-  const w = wrapRef.value.clientWidth
-  const h = wrapRef.value.clientHeight
-  gl.canvas.width = w
-  gl.canvas.height = h
-  gl.viewport(0, 0, w, h)
+  applyCanvasSize()
+  shouldRenderFrame = true
+  queueRender()
 }
 
 function handleMouseEnter() {
   isHovered.value = true
+  shouldRenderFrame = true
+  queueRender()
+  if (motionEnabled) {
+    resume()
+  }
 }
 
 function handleMouseLeave() {
   isHovered.value = false
+  shouldRenderFrame = true
+  queueRender()
+  if (motionEnabled) {
+    resume()
+  }
 }
 
 const { pause, resume } = useRafFn(() => {
@@ -307,6 +369,20 @@ const { pause, resume } = useRafFn(() => {
     heroMotion.titleY += (0 - heroMotion.titleY) * 0.12
     heroMotion.titleRotate += (-4 - heroMotion.titleRotate) * 0.12
   }
+
+  shouldRenderFrame = true
+  queueRender()
+
+  const isSettled = Math.abs(heroMotion.titleX) < 0.1
+    && Math.abs(heroMotion.titleY) < 0.1
+    && Math.abs(heroMotion.titleRotate + 4) < 0.1
+
+  if (!isHovered.value && isSettled) {
+    heroMotion.titleX = 0
+    heroMotion.titleY = 0
+    heroMotion.titleRotate = -4
+    pause()
+  }
 }, { immediate: false })
 
 onMounted(() => {
@@ -326,14 +402,31 @@ onMounted(() => {
     sequence.forEach(step => {
       const timeoutId = window.setTimeout(() => {
         targetProgress = step.target
+        shouldRenderFrame = true
+        queueRender()
       }, step.time)
       sequenceTimeouts.push(timeoutId)
     })
   }
 
-  render()
-  resume()
+  queueRender()
   window.addEventListener('resize', handleResize)
+
+  visibilityObserver = new IntersectionObserver(
+    (entries) => {
+      isHeroVisible = entries.some((entry) => entry.isIntersecting)
+      if (isHeroVisible) {
+        shouldRenderFrame = true
+        lastRenderTime = 0
+        queueRender()
+      }
+    },
+    { threshold: 0.05 }
+  )
+
+  if (wrapRef.value) {
+    visibilityObserver.observe(wrapRef.value)
+  }
 })
 
 onUnmounted(() => {
@@ -342,6 +435,7 @@ onUnmounted(() => {
   lastRenderTime = 0
   clearSequenceTimeouts()
   window.removeEventListener('resize', handleResize)
+  visibilityObserver?.disconnect()
   if (gl && program) {
     gl.deleteProgram(program)
   }

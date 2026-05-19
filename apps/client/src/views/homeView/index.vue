@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { siteConfig } from '@/config/site'
 import InkHero from '@/components/ui/InkHero.vue'
-import SgnlTransition from '@/components/ui/SgnlTransition.vue'
 import { consumeHomeIntroPlayback } from './introState'
 import { createPersonStructuredData, createWebsiteStructuredData, useSeo } from '@/utils/seo'
+
+type RequestIdleCallbackHandle = number
+type RequestIdleCallbackDeadline = {
+  didTimeout: boolean
+  timeRemaining: () => number
+}
+
+type WindowWithIdleCallback = Window & typeof globalThis & {
+  requestIdleCallback?: (
+    callback: (deadline: RequestIdleCallbackDeadline) => void,
+    options?: { timeout: number }
+  ) => RequestIdleCallbackHandle
+  cancelIdleCallback?: (handle: RequestIdleCallbackHandle) => void
+}
+
+const SgnlTransition = defineAsyncComponent(() => import('@/components/ui/SgnlTransition.vue'))
 
 useSeo({
   title: siteConfig.name,
@@ -15,8 +30,11 @@ useSeo({
 })
 
 const shouldPlayIntro = ref(consumeHomeIntroPlayback())
+const shouldRenderOverlay = ref(false)
 let previousBodyOverflow = ''
 let previousHtmlOverflow = ''
+let overlayIdleHandle: RequestIdleCallbackHandle | null = null
+let overlayTimeoutHandle: number | null = null
 
 interface SkillItem {
   name: string
@@ -136,6 +154,47 @@ const handleHeroReady = () => {
 
   shouldPlayIntro.value = false
   unlockPageScroll()
+  scheduleOverlayRender()
+}
+
+const canRenderOverlay = () => {
+  const nav = navigator as Navigator & { deviceMemory?: number }
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4
+  const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 6
+
+  return !coarsePointer
+    && !reducedMotion
+    && !lowMemory
+    && !lowCpu
+    && window.innerWidth >= 1280
+}
+
+const scheduleOverlayRender = () => {
+  if (shouldRenderOverlay.value || !canRenderOverlay()) {
+    return
+  }
+
+  const enableOverlay = () => {
+    shouldRenderOverlay.value = true
+    overlayIdleHandle = null
+    if (overlayTimeoutHandle !== null) {
+      window.clearTimeout(overlayTimeoutHandle)
+      overlayTimeoutHandle = null
+    }
+  }
+
+  const idleWindow = window as WindowWithIdleCallback
+
+  if (idleWindow.requestIdleCallback) {
+    overlayIdleHandle = idleWindow.requestIdleCallback(() => {
+      enableOverlay()
+    }, { timeout: 1500 })
+    return
+  }
+
+  overlayTimeoutHandle = window.setTimeout(enableOverlay, 900)
 }
 
 onMounted(() => {
@@ -143,11 +202,20 @@ onMounted(() => {
 
   if (shouldPlayIntro.value) {
     lockPageScroll()
+  } else {
+    scheduleOverlayRender()
   }
 })
 
 onUnmounted(() => {
   unlockPageScroll()
+  const idleWindow = window as WindowWithIdleCallback
+  if (overlayIdleHandle !== null && idleWindow.cancelIdleCallback) {
+    idleWindow.cancelIdleCallback(overlayIdleHandle)
+  }
+  if (overlayTimeoutHandle !== null) {
+    window.clearTimeout(overlayTimeoutHandle)
+  }
 })
 </script>
 
@@ -163,7 +231,7 @@ onUnmounted(() => {
         </div>
       </InkHero>
 
-      <div class="hero-fusion__overlay">
+      <div v-if="shouldRenderOverlay" class="hero-fusion__overlay">
         <SgnlTransition :show-ui="false" transparent overlay-mask :seed="2026" />
       </div>
     </div>

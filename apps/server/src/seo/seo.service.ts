@@ -40,7 +40,7 @@ export class SeoService {
     }
   }
 
-  async getSitemapXml() {
+  private async buildSitemapXml() {
     const data = await this.getSitemapData()
     const staticUrls = ['/', '/blog', '/archive', '/message', '/about']
     const articleUrls = (data.articles as Array<{ slug?: string } | null>)
@@ -53,5 +53,13 @@ export class SeoService {
     const entries = urls.map((path) => `  <url>\n    <loc>${escapeXml(`${SITE_URL}${path}`)}</loc>\n  </url>`)
 
     return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>`
+  }
+
+  async refreshSitemapCache() {
+    return this.buildSitemapXml()
+  }
+
+  async getSitemapXml() {
+    return this.refreshSitemapCache()
   }
 }
