@@ -15,7 +15,7 @@ useSeo({
 })
 
 const LineTrendChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/LineTrendChart.vue'))
-const DonutDistributionChart = defineAsyncComponent(() => import('@/views/admin/adminDashboardView/components/DonutDistributionChart.vue'))
+const VisitorChinaMapChart = defineAsyncComponent(() => import('@/views/aboutView/components/VisitorChinaMapChart.vue'))
 
 const { trend, cities, loadVisitStats } = useVisitStats()
 const statsSectionRef = ref<HTMLElement | null>(null)
@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
             <div v-else class="about-stats__placeholder"></div>
           </div>
           <div class="about-stats__card">
-            <DonutDistributionChart v-if="shouldLoadCharts" :items="cities" />
+            <VisitorChinaMapChart v-if="shouldLoadCharts" :items="cities" />
             <div v-else class="about-stats__placeholder"></div>
           </div>
         </div>
