@@ -146,7 +146,7 @@ export class MessageService {
         reviewedAt: new Date(),
       })
 
-      await this.messageMailService.enqueueAdminReplyNotice(parent, message.toObject())
+      await this.messageMailService.sendAdminReplyNotice(parent, message.toObject())
 
       const pendingCount = await this.pendingCount()
       this.stream$.next({ type: 'admin-replied', data: { pendingCount } })

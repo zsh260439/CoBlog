@@ -16,8 +16,8 @@ export class Message {
 
   @Prop({ required: true, trim: true })
   senderId: string
-
-  @Prop({ required: true, trim: true })
+ //本地测试ip可为空
+  @Prop({trim: true })
   ip: string
 
   @Prop({ default: '' })

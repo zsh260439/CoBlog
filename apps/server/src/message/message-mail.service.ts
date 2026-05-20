@@ -46,10 +46,6 @@ export class MessageMailService {
     })
   }
 
-  async enqueueAdminReplyNotice(parent: MessageDocument | Record<string, any>, reply: MessageDocument | Record<string, any>) {
-    await this.sendAdminReplyNotice(parent, reply)
-  }
-
   async sendAdminReplyNotice(parent: MessageDocument | Record<string, any>, reply: MessageDocument | Record<string, any>) {
     const targetEmail = typeof parent.email === 'string' ? parent.email.trim() : ''
     //没有邮箱或未勾选邮箱通知，不发送通知
