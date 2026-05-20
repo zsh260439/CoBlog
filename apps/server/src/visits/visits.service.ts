@@ -112,14 +112,15 @@ export class VisitsService {
     const citiesRaw = await this.visitModel.aggregate<{ _id: string; count: number }>([
       { $match: { location: { $ne: '' } } },
       { $group: { _id: '$location', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 8 },
+      { $sort: { count: -1, _id: 1 } },
     ])
 
-    const cities = citiesRaw.map((item) => ({
-      label: item._id,
-      value: item.count,
-    })).filter((item) => isMainlandLocation(item.label))
+    const cities = citiesRaw
+      .filter((item) => isMainlandLocation(item._id))
+      .map((item) => ({
+        label: item._id,
+        value: item.count,
+      }))
 
     return { trend, cities }
   }
