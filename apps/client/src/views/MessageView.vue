@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import {  ChatLineRound, Close, Promotion, RefreshRight } from '@element-plus/icons-vue'
+import { ChatLineRound, Close, Promotion, RefreshRight } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import MessageThreadItem from '@/components/MessageThreadItem.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
@@ -9,10 +9,11 @@ import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
 import PageHero from '@/components/ui/PageHero.vue'
 import { useMessage } from '@/composables/useMessage'
 import { aboutProfileCard, siteConfig } from '@/config/site'
+import VirtualList from '@/components/ui/VirtualList.vue'
 import type { MessageFormData, MessageItem } from '@/types/message'
 import { useSeo } from '@/utils/seo'
 const { messages, isLoading, error, submitError, loadMessages, submitMessage, submitLoading } = useMessage()
-
+const getRootMessageKey = (item: MessageItem) => item.id
 useSeo({
   title: '留言板',
   description: '在 CoBlog 留言板留下你的想法、建议或交流内容，和作者保持互动。',
@@ -25,9 +26,9 @@ onMounted(() => {
 })
 
 const formRef = ref<FormInstance>()
-  //要跳转到的元素位置
+//要跳转到的元素位置
 const composerAnchorRef = ref<HTMLElement | null>(null)
-  //点击回复的那个item
+//点击回复的那个item
 const replyTarget = ref<MessageItem | null>(null)
 
 const form = reactive<MessageFormData>({
@@ -150,7 +151,9 @@ const handleSubmit = async () => {
           <template #header>
             <div class="section-title">
               <span class="section-title__icon_promotion">
-                <el-icon><Promotion /></el-icon>
+                <el-icon>
+                  <Promotion />
+                </el-icon>
               </span>
               <div>
                 <h3>{{ isReplyMode ? `回复 ${replyTargetAuthor}` : '发表留言' }}</h3>
@@ -159,11 +162,14 @@ const handleSubmit = async () => {
             </div>
           </template>
 
-          <el-form ref="formRef" :model="form" :rules="formRules" class="composer-form plain-form" @submit.prevent="handleSubmit">
+          <el-form ref="formRef" :model="form" :rules="formRules" class="composer-form plain-form"
+            @submit.prevent="handleSubmit">
             <div v-if="replyTarget" class="reply-banner">
               <span>回复 @{{ replyTarget.author }}</span>
               <el-button link class="reply-banner__cancel" @click="cancelReply">
-                <el-icon><Close /></el-icon>
+                <el-icon>
+                  <Close />
+                </el-icon>
                 <span>取消</span>
               </el-button>
             </div>
@@ -200,18 +206,22 @@ const handleSubmit = async () => {
               <span class="captcha-chip">{{ captcha.question }}</span>
               <el-input v-model="captchaAnswer" class="captcha-answer" clearable placeholder="计算结果" />
               <el-button class="captcha-refresh" circle plain @click="refreshCaptcha">
-                <el-icon><RefreshRight /></el-icon>
+                <el-icon>
+                  <RefreshRight />
+                </el-icon>
               </el-button>
             </div>
 
             <div class="composer-flags">
-             
-              <el-checkbox v-model="form.enableEmailNotice"  label="回复邮箱通知" />
+
+              <el-checkbox v-model="form.enableEmailNotice" label="回复邮箱通知" />
             </div>
 
             <div class="composer-actions">
               <el-button class="composer-submit" type="primary" native-type="submit" :loading="submitLoading">
-                <el-icon><Promotion /></el-icon>
+                <el-icon>
+                  <Promotion />
+                </el-icon>
                 <span>{{ submitLoading ? '提交中...' : isReplyMode ? '提交回复' : '提交留言' }}</span>
               </el-button>
               <el-button v-if="isReplyMode" plain @click="cancelReply">取消</el-button>
@@ -223,7 +233,9 @@ const handleSubmit = async () => {
           <template #header>
             <div class="section-title">
               <span class="section-title__icon">
-                <el-icon><ChatLineRound /></el-icon>
+                <el-icon>
+                  <ChatLineRound />
+                </el-icon>
               </span>
               <div>
                 <h3>全部留言 <span class="section-title__count">({{ totalCount }})</span></h3>
@@ -240,29 +252,20 @@ const handleSubmit = async () => {
               <el-empty description="还没有留言，来留下第一条吧。" :image-size="88" />
             </div>
 
-            <div v-else class="message-thread-list">
-              <MessageThreadItem
-                v-for="item in rootMessages"
-                :key="item.id"
-                :item="item"
-                :owner-avatar="aboutProfileCard.avatar"
-                :replies-by-parent-id="repliesByParentId"
-                :active-reply-id="replyTargetId"
-                @reply="beginReply"
-              />
-            </div>
+            <VirtualList v-else class="message-thread-list" :items="rootMessages" :get-item-key="getRootMessageKey"
+              :estimated-height="380" :overscan="4" height="min(72vh, 760px)" v-slot="{ item, index }">
+              <div class="message-thread-row" :class="{ 'message-thread-row--separated': index > 0 }">
+                <MessageThreadItem :item="item" :owner-avatar="aboutProfileCard.avatar"
+                  :replies-by-parent-id="repliesByParentId" :active-reply-id="replyTargetId" @reply="beginReply" />
+              </div>
+            </VirtualList>
           </section>
         </el-card>
       </div>
 
       <aside class="message-side">
-        <ProfileSidebarCard
-          :articles="[]"
-          :image-url="siteConfig.aboutHeroImage"
-          :owner-name="siteConfig.ownerName"
-          :owner-role="siteConfig.ownerRole"
-          :owner-location="siteConfig.ownerLocation"
-        />
+        <ProfileSidebarCard :articles="[]" :image-url="siteConfig.aboutHeroImage" :owner-name="siteConfig.ownerName"
+          :owner-role="siteConfig.ownerRole" :owner-location="siteConfig.ownerLocation" />
         <SiteStatsCard />
       </aside>
     </section>
@@ -334,9 +337,9 @@ const handleSubmit = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom:2rem;
+  margin-bottom: 2rem;
   padding-left: 1rem;
-   flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .section-title h2 {
@@ -504,12 +507,15 @@ const handleSubmit = async () => {
 }
 
 .message-thread-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
+  width: 100%;
+  border-radius: 16px;
 }
 
-.message-thread-list > * + * {
+.message-thread-row {
+  padding-bottom: 1.75rem;
+}
+
+.message-thread-row--separated {
   padding-top: 1.8rem;
   border-top: 1px solid rgba(17, 17, 17, 0.08);
 }
