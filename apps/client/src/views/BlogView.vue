@@ -8,11 +8,17 @@ import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { useSeo } from '@/utils/seo'
+import { ref } from 'vue'
 
 const { articles, isLoading, error, loadArticles } = useArticles()
 const { categories } = useTaxonomies()
 const categoryCount = computed(() => categories.value.length)
-
+const currentPage = ref(1)
+const pageSize = 6
+const pagedArticles = computed(()=>{
+   const start = (currentPage.value-1) * pageSize
+   return articles.value.slice(start, start+pageSize)
+})
 useSeo({
   title: '博客',
   description: '浏览 CoBlog 的全部文章内容，包含技术记录、学习心得、工程实践与日常思考。',
@@ -47,9 +53,24 @@ onMounted(() => {
         <el-card v-else-if="error" class="blog-state blog-state--error" shadow="never">{{ error }}</el-card>
         <el-card v-else-if="!articles.length" class="blog-state" shadow="never">还没有文章，后续内容会先落在这里。</el-card>
 
-        <PostCard v-for="article in articles" v-else :key="article.slug" :article="article" />
+       <template v-else>
+  <PostCard
+    v-for="article in pagedArticles"
+    :key="article.slug"
+    :article="article"
+  />
+  <el-pagination
+   v-if="articles.length > pageSize"
+   v-model:current-page="currentPage"
+   class="blog-pagination"
+   layout="prev,pager,next"
+   :page-size="pageSize"
+   :total="articles.length"
+  >
+  </el-pagination>
+  
+</template>
       </div>
-
       <aside class="blog-side">
         <ProfileSidebarCard
           :articles="articles"
@@ -58,7 +79,6 @@ onMounted(() => {
           :owner-role="siteConfig.ownerRole"
           :owner-location="siteConfig.ownerLocation"
         />
-
         <SiteStatsCard />
       </aside>
     </section>
@@ -69,7 +89,21 @@ onMounted(() => {
 .blog-view {
   background: linear-gradient(180deg, #f6f6f6 0%, #ffffff 30%, #ffffff 100%);
 }
+.blog-pagination {
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+/* 改分页默认文字颜色 */
+:deep(.el-pagination .el-pager li) {
+  color: #333 !important; /* 你想要的颜色 */
+}
 
+
+
+/* 改上一页、下一页文字颜色 */
+:deep(.el-pagination .btn-prev, .el-pagination .btn-next) {
+  color: #333 !important;
+}
 .blog-shell {
   position: relative;
   z-index: 2;
