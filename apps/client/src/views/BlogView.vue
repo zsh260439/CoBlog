@@ -52,7 +52,6 @@ onMounted(() => {
         <el-card v-if="isLoading" class="blog-state" shadow="never">正在整理文章列表...</el-card>
         <el-card v-else-if="error" class="blog-state blog-state--error" shadow="never">{{ error }}</el-card>
         <el-card v-else-if="!articles.length" class="blog-state" shadow="never">还没有文章，后续内容会先落在这里。</el-card>
-
        <template v-else>
   <PostCard
     v-for="article in pagedArticles"

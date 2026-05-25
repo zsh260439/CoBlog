@@ -92,7 +92,7 @@ const handleSendAiMessage = async () => {
 
   const assistantIndex = aiMessages.value.length - 1
   let hasReceivedChunk = false
-  scrollAiMessagesToBottom()
+  scrollAiMessagesToBottom(true)
 
   try {
     await streamChatWithArticleAi({

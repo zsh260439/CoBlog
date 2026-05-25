@@ -31,6 +31,7 @@ export class VisitsService {
       await this.visitModel.updateOne(
         { _id: existing._id },
         { $set: { lastActiveAt: now } },
+        { upsert: true }
       )
       return { ok: true, counted: false }
     }
