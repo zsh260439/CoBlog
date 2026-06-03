@@ -13,6 +13,8 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
 })
 
 const listRef = ref<HTMLElement | null>(null)
+const prefersReducedMotion = typeof window !== 'undefined'
+  && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const buildHeadingTree = (items: MarkdownHeading[]) => {
   const roots: TocNode[] = []
@@ -77,18 +79,6 @@ const activeRootId = computed(() => {
   return ''
 })
 
-const visibleRoots = computed(() => {
-  if (!tree.value.length) {
-    return []
-  }
-
-  const rootId = activeRootId.value
-  return tree.value.map((node) => ({
-    ...node,
-    children: node.id === rootId ? node.children : [],
-  }))
-})
-
 const isInActivePath = (id: string) => activePath.value.includes(id)
 
 const scrollToHeading = (id: string) => {
@@ -132,8 +122,92 @@ const syncActiveItemIntoView = () => {
   }
 }
 
+const clearBranchAnimation = (element: Element) => {
+  const el = element as HTMLElement
+  el.style.height = ''
+  el.style.opacity = ''
+  el.style.transform = ''
+  el.style.overflow = ''
+  el.style.transition = ''
+  el.style.willChange = ''
+}
+
+const applyBranchTransition = (element: HTMLElement) => {
+  element.style.transition = [
+    'height 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+    'opacity 0.22s ease',
+    'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+  ].join(', ')
+  element.style.overflow = 'hidden'
+  element.style.willChange = 'height, opacity, transform'
+}
+
+const handleBranchBeforeEnter = (element: Element) => {
+  const el = element as HTMLElement
+  if (prefersReducedMotion) {
+    clearBranchAnimation(el)
+    return
+  }
+
+  el.style.height = '0'
+  el.style.opacity = '0'
+  el.style.transform = 'translateY(-6px)'
+  el.style.overflow = 'hidden'
+}
+
+const handleBranchEnter = (element: Element) => {
+  const el = element as HTMLElement
+  if (prefersReducedMotion) {
+    clearBranchAnimation(el)
+    syncActiveItemIntoView()
+    return
+  }
+
+  applyBranchTransition(el)
+  void el.offsetHeight
+  el.style.height = `${el.scrollHeight}px`
+  el.style.opacity = '1'
+  el.style.transform = 'translateY(0)'
+}
+
+const handleBranchAfterEnter = (element: Element) => {
+  clearBranchAnimation(element)
+  syncActiveItemIntoView()
+}
+
+const handleBranchBeforeLeave = (element: Element) => {
+  const el = element as HTMLElement
+  if (prefersReducedMotion) {
+    clearBranchAnimation(el)
+    return
+  }
+
+  el.style.height = `${el.scrollHeight}px`
+  el.style.opacity = '1'
+  el.style.transform = 'translateY(0)'
+  el.style.overflow = 'hidden'
+}
+
+const handleBranchLeave = (element: Element) => {
+  const el = element as HTMLElement
+  if (prefersReducedMotion) {
+    clearBranchAnimation(el)
+    return
+  }
+
+  applyBranchTransition(el)
+  void el.offsetHeight
+  el.style.height = '0'
+  el.style.opacity = '0'
+  el.style.transform = 'translateY(-6px)'
+}
+
+const handleBranchAfterLeave = (element: Element) => {
+  clearBranchAnimation(element)
+}
+
 watch(
-  () => [props.activeId, visibleRoots.value.length, activeRootId.value],
+  () => [props.activeId, tree.value.length, activeRootId.value],
   async () => {
     await nextTick()
     syncActiveItemIntoView()
@@ -153,7 +227,7 @@ watch(
       <div ref="listRef" class="article-toc__scroll">
         <ul class="article-toc__list">
           <li
-            v-for="root in visibleRoots"
+            v-for="root in tree"
             :key="root.id"
             class="article-toc__group"
             :class="{ 'is-open': root.id === activeRootId }"
@@ -171,45 +245,63 @@ watch(
               <span class="article-toc__text">{{ root.text }}</span>
             </button>
 
-            <ul
-              v-if="root.children.length && isInActivePath(root.id)"
-              class="article-toc__children"
+            <Transition
+              @before-enter="handleBranchBeforeEnter"
+              @enter="handleBranchEnter"
+              @after-enter="handleBranchAfterEnter"
+              @before-leave="handleBranchBeforeLeave"
+              @leave="handleBranchLeave"
+              @after-leave="handleBranchAfterLeave"
             >
-              <li v-for="child in root.children" :key="child.id" class="article-toc__child">
-                <button
-                  type="button"
-                  class="article-toc__item"
-                  :class="{
-                    active: isInActivePath(child.id),
-                    [`level-${child.level}`]: true,
-                  }"
-                  :title="child.text"
-                  @click="scrollToHeading(child.id)"
-                >
-                  <span class="article-toc__text">{{ child.text }}</span>
-                </button>
+              <ul
+                v-if="root.children.length && isInActivePath(root.id)"
+                class="article-toc__children"
+              >
+                <li v-for="child in root.children" :key="child.id" class="article-toc__child">
+                  <button
+                    type="button"
+                    class="article-toc__item"
+                    :class="{
+                      active: isInActivePath(child.id),
+                      [`level-${child.level}`]: true,
+                    }"
+                    :title="child.text"
+                    @click="scrollToHeading(child.id)"
+                  >
+                    <span class="article-toc__text">{{ child.text }}</span>
+                  </button>
 
-                <ul
-                  v-if="child.children.length && isInActivePath(child.id)"
-                  class="article-toc__children article-toc__children--nested"
-                >
-                  <li v-for="grandchild in child.children" :key="grandchild.id" class="article-toc__child">
-                    <button
-                      type="button"
-                      class="article-toc__item"
-                      :class="{
-                        active: isInActivePath(grandchild.id),
-                        [`level-${grandchild.level}`]: true,
-                      }"
-                      :title="grandchild.text"
-                      @click="scrollToHeading(grandchild.id)"
+                  <Transition
+                    @before-enter="handleBranchBeforeEnter"
+                    @enter="handleBranchEnter"
+                    @after-enter="handleBranchAfterEnter"
+                    @before-leave="handleBranchBeforeLeave"
+                    @leave="handleBranchLeave"
+                    @after-leave="handleBranchAfterLeave"
+                  >
+                    <ul
+                      v-if="child.children.length && isInActivePath(child.id)"
+                      class="article-toc__children article-toc__children--nested"
                     >
-                      <span class="article-toc__text">{{ grandchild.text }}</span>
-                    </button>
-                  </li>
-                </ul>
-              </li>
-            </ul>
+                      <li v-for="grandchild in child.children" :key="grandchild.id" class="article-toc__child">
+                        <button
+                          type="button"
+                          class="article-toc__item"
+                          :class="{
+                            active: isInActivePath(grandchild.id),
+                            [`level-${grandchild.level}`]: true,
+                          }"
+                          :title="grandchild.text"
+                          @click="scrollToHeading(grandchild.id)"
+                        >
+                          <span class="article-toc__text">{{ grandchild.text }}</span>
+                        </button>
+                      </li>
+                    </ul>
+                  </Transition>
+                </li>
+              </ul>
+            </Transition>
           </li>
         </ul>
       </div>
@@ -281,6 +373,7 @@ watch(
 
 .article-toc__children {
   margin-top: 0.3rem;
+  transform-origin: top;
 }
 
 .article-toc__children--nested {
