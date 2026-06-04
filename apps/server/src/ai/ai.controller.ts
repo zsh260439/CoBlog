@@ -33,7 +33,9 @@ export class AiController {
   @Post('chat/stream')
   async streamChat(@Body() dto: ArticleChatDto, @Res() response: Response) {
     response.setHeader('Content-Type', 'text/plain; charset=utf-8')
-    response.setHeader('Cache-Control', 'no-cache')
+    response.setHeader('Cache-Control', 'no-cache, no-transform')
+    response.setHeader('Connection', 'keep-alive')
+    response.setHeader('X-Accel-Buffering', 'no')
     response.flushHeaders()
 
     await this.aiService.streamArticleAssistant(dto, (chunk) => {
