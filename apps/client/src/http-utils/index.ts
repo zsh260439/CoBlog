@@ -1,11 +1,16 @@
 import axios from 'axios'
-import type { AxiosInstance, Method } from 'axios'
+import type { AxiosError, AxiosInstance, AxiosRequestConfig, Method } from 'axios'
 import type { ApiResult, SubmitData } from '@/types/http'
 import { API_BASE_URL } from '@/config/http'
 import { ElMessage } from 'element-plus'
 import { refreshAccessToken } from '@/utils/auth'
+
 interface RequestOptions {
   timeout?: number
+}
+
+interface RetryableAxiosRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean
 }
 
 // 创建 普通axios 实例
@@ -13,17 +18,31 @@ const httpInstance = axios.create({
   baseURL: `${API_BASE_URL}/`,
   timeout: 10000,
   //允许前端携带cookie
-  withCredentials:true
+  withCredentials: true,
 })
 //登录刷新实例
 const authHttpInstance = axios.create({
   baseURL: `${API_BASE_URL}/`,
   timeout: 10000,
   //允许前端携带cookie
-  withCredentials:true
+  withCredentials: true,
 })
 
-
+const statusMessageMap: Record<number, string> = {
+  400: '请求参数错误',
+  401: '未登录或登录已过期',
+  403: '没有权限执行该操作',
+  404: '请求的资源不存在',
+  405: '请求方法不被允许',
+  408: '请求超时，请稍后重试',
+  409: '数据冲突，请刷新后重试',
+  413: '提交内容过大',
+  429: '请求过于频繁，请稍后再试',
+  500: '服务器内部错误',
+  502: '上游服务响应异常',
+  503: '服务暂时不可用',
+  504: '网关超时，请稍后重试',
+}
 
 // 统一 request 封装
 const baseRequest = <T>(
@@ -36,7 +55,7 @@ const baseRequest = <T>(
   return http.request<any, ApiResult<T>>({
     url,
     method,
-    timeout: options ? options.timeout : undefined,
+    timeout: options?.timeout,
     [method.toUpperCase() === 'GET' ? 'params' : 'data']: submitData,
   })
 }
@@ -44,8 +63,8 @@ const baseRequest = <T>(
 export const request = <T>(url: string, method: Method = 'GET', submitData?: SubmitData) => {
   return baseRequest<T>(httpInstance, url, method, submitData)
 }
-export const authRequest = <T>(url : string , method:Method = 'GET',submitData?:SubmitData) =>{
-   return baseRequest<T>(authHttpInstance,url,method,submitData)
+export const authRequest = <T>(url: string, method: Method = 'GET', submitData?: SubmitData) => {
+  return baseRequest<T>(authHttpInstance, url, method, submitData)
 }
 //给ai使用的request 可以单独设置超时时间
 export const requestWithOptions = <T>(
@@ -57,83 +76,109 @@ export const requestWithOptions = <T>(
   return baseRequest<T>(httpInstance, url, method, submitData, options)
 }
 
+const getErrorMessage = (error: AxiosError<ApiResult<unknown>>) => {
+  const status = error.response?.status
+  const serverMessage = error.response?.data?.message
+
+  if (typeof serverMessage === 'string' && serverMessage.trim()) {
+    return serverMessage
+  }
+
+  if (status && statusMessageMap[status]) {
+    return statusMessageMap[status]
+  }
+
+  if (error.code === 'ECONNABORTED') {
+    return '请求超时，请稍后重试'
+  }
+
+  if (!error.response) {
+    return '网络异常，无法连接服务器'
+  }
+
+  return error.message || '请求失败'
+}
 
 // 普通请求拦截器
 httpInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('local-token')
-    if(token){
+    if (token) {
       //如果有token 就添加到请求头
-       config.headers = config.headers || {}
-       config.headers.Authorization = `Bearer ${token}`
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 )
-
 
 // 普通响应拦截器
 // 刷新锁保证同一时间只发起一次 refresh，其余 401 请求进入队列等待新 token。
-let isRefreshing  =  false
-let requestQueue:Array<(token:string)=> void > = []
-  httpInstance.interceptors.response.use(
+let isRefreshing = false
+let requestQueue: Array<(token: string) => void> = []
+httpInstance.interceptors.response.use(
   //正常请求不用管
-  (res)=>{
-     // 第一层：取 axios 的 data（得到 ApiResponse）
-       return res.data
-       //还有第二层 这里我们都取.data来获取数据    
+  (res) => {
+    // 第一层：取 axios 的 data（得到 ApiResponse）
+    return res.data
+    //还有第二层 这里我们都取.data来获取数据
   },
   //失败回调可能有登录401的问题
- async (error)=>{
-    const originalRequest = error.config
+  async (error: AxiosError<ApiResult<unknown>>) => {
+    const originalRequest = error.config as RetryableAxiosRequestConfig | undefined
     const status = error.response?.status
 
     //只处理401错误
-    if(status === 401 && originalRequest && !originalRequest._retry) {
-       //场景1:正在刷新token 加入请求队列
-       if(isRefreshing) {
-         //把这个请求推入队列
-          return new Promise((resolve)=>{
-             requestQueue.push((token:string)=>{
-               originalRequest.headers = originalRequest.headers || {}
-               originalRequest.headers.Authorization = `Bearer ${token}`
-               resolve(httpInstance(originalRequest))
-             })
+    if (status === 401 && originalRequest && !originalRequest._retry) {
+      //场景1:正在刷新token 加入请求队列
+      if (isRefreshing) {
+        //把这个请求推入队列
+        return new Promise((resolve) => {
+          requestQueue.push((token: string) => {
+            originalRequest.headers = originalRequest.headers || {}
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            resolve(httpInstance(originalRequest))
           })
-       }
-
+        })
+      }
 
       //场景2:第一次401 开始刷新token 防止上面的无限循环
-       originalRequest._retry = true
-       //上锁 表示正在请求
-       isRefreshing = true
-       try {
-          const result = await refreshAccessToken()
-          const newToken = result.data.accessToken
-         localStorage.setItem('local-token',newToken)
-         requestQueue.forEach((callback)=>callback(newToken))
-         requestQueue = []
+      originalRequest._retry = true
+      //上锁 表示正在请求
+      isRefreshing = true
+      try {
+        const result = await refreshAccessToken()
+        const newToken = result.data.accessToken
+        localStorage.setItem('local-token', newToken)
+        requestQueue.forEach((callback) => callback(newToken))
+        requestQueue = []
         originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return httpInstance(originalRequest)
-      } 
+      }
       //refreshToken也过期了
-      catch(refreshError){
-          localStorage.removeItem('local-token')
-          ElMessage.warning('登陆状态失效,请重新登录')
-          window.location.href = '/login'
-          return Promise.reject(refreshError)
+      catch (refreshError) {
+        localStorage.removeItem('local-token')
+        requestQueue = []
+        ElMessage.warning('登录状态失效,请重新登录')
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
       } finally {
         //解锁状态
-         isRefreshing = false
+        isRefreshing = false
       }
     }
+
+    error.message = getErrorMessage(error)
     return Promise.reject(error)
- }
+  },
 )
 //登录响应拦截器
 authHttpInstance.interceptors.response.use(
   (res) => res.data,
-  (error) => Promise.reject(error)
+  (error: AxiosError<ApiResult<unknown>>) => {
+    error.message = getErrorMessage(error)
+    return Promise.reject(error)
+  },
 )

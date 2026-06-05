@@ -20,7 +20,7 @@ export class VisitsController {
   async track(@Body() dto: TrackVisitDto, @Req() req: Request) {
     const ip = getClientIp(req)
     const data = await this.visitsService.track(dto, ip, req.headers['user-agent'] || '')
-    return ApiResponse.success(data, '记录访问成功')
+    return ApiResponse.success(data, '记录访问成功', 201)
   }
 
   @Get('stats')
@@ -30,10 +30,13 @@ export class VisitsController {
       this.visitsService.getAboutStats(),
     ])
 
-    return ApiResponse.success({
-      summary,
-      trend: about.trend,
-      cities: about.cities,
-    }, '获取访问统计成功')
+    return ApiResponse.success(
+      {
+        summary,
+        trend: about.trend,
+        cities: about.cities,
+      },
+      '获取访问统计成功',
+    )
   }
 }

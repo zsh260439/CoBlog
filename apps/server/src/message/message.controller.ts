@@ -1,40 +1,41 @@
 import { Body, Controller, Delete, Get, MessageEvent, Param, Patch, Post, Query, Req, Sse, UnauthorizedException, UseGuards } from '@nestjs/common'
-import {MessageService} from './message.service'
-import {CreateMessageDto} from './dto/create-message.dto'
-import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
-import {ApiResponse} from '../common/utils/api-response'
-import { getClientIp } from '../common/utils/get-client-ip'
-import type { Request } from 'express'
-import { AuthGuard } from 'src/auth/auth.guard'
 import { JwtService } from '@nestjs/jwt'
+import type { Request } from 'express'
 import { map } from 'rxjs'
+import { AuthGuard } from 'src/auth/auth.guard'
+import { ApiResponse } from '../common/utils/api-response'
+import { getClientIp } from '../common/utils/get-client-ip'
+import { CreateAdminReplyDto } from './dto/create-admin-reply.dto'
+import { CreateMessageDto } from './dto/create-message.dto'
+import { MessageService } from './message.service'
+
 @Controller('messages')
 export class MessageController {
-    constructor(
-      private readonly messageService:MessageService,
-      private readonly jwtService: JwtService,
-    ){}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    // 公开页只拿审核通过的留言。
-    @Get()
-    async findAll(){
-        const data = await this.messageService.findAllApproved()
-        return ApiResponse.success(data,'获取留言成功')
-    }
+  // 公开页只拿审核通过的留言。
+  @Get()
+  async findAll() {
+    const data = await this.messageService.findAllApproved()
+    return ApiResponse.success(data, '获取留言成功')
+  }
 
-    // 当前浏览器自己的留言状态恢复：pending / rejected。
-    @Get('mine/:senderId')
-    async findMine(@Param('senderId') senderId: string) {
-      const data = await this.messageService.findMine(senderId)
-      return ApiResponse.success(data, '获取我的留言成功')
-    }
+  // 当前浏览器自己的留言状态恢复：pending / rejected。
+  @Get('mine/:senderId')
+  async findMine(@Param('senderId') senderId: string) {
+    const data = await this.messageService.findMine(senderId)
+    return ApiResponse.success(data, '获取我的留言成功')
+  }
 
-    // 创建留言时，从请求头取真实 IP，让后端补 location、做 pending 限流。
+  // 创建留言时，从请求头取真实 IP，让后端补 location、做 pending 限流。
   @Post()
-     async create(@Body() createMessageDto: CreateMessageDto, @Req() req: Request) {
+  async create(@Body() createMessageDto: CreateMessageDto, @Req() req: Request) {
     const ip = getClientIp(req)
     const data = await this.messageService.create(createMessageDto, ip)
-    return ApiResponse.success(data, '提交留言成功')
+    return ApiResponse.success(data, '提交留言成功', 201)
   }
 
   // admin 管理页完整列表。
@@ -74,7 +75,7 @@ export class MessageController {
   async adminReply(@Param('id') id: string, @Body() dto: CreateAdminReplyDto, @Req() req: Request) {
     const ip = getClientIp(req)
     const data = await this.messageService.createAdminReply(id, dto, ip)
-    return ApiResponse.success(data, '站长回复成功')
+    return ApiResponse.success(data, '站长回复成功', 201)
   }
 
   // SSE 用 query token 做登录校验，前端只负责订阅即可。
