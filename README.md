@@ -126,6 +126,7 @@ CoBlog 是一个基于 `Vue 3 + NestJS + MongoDB` 的个人全栈博客系统，
 - Monorepo：`pnpm workspace`
 - 构建编排：`Turborepo`
 - 包管理与运行环境：`pnpm`、`Node.js`
+- 限流与队列底座：`Redis`
 - 共享类型：`@coblog/types`
 - 代码规范：`ESLint`、`Prettier`
 
@@ -184,6 +185,7 @@ CoBlog/
 | Node.js | `>= 20`   |
 | pnpm    | `>= 10`   |
 | MongoDB | 本地或远程可用实例 |
+| Redis   | 本地或远程可用实例 |
 
 ### 1. 克隆项目
 
@@ -211,6 +213,7 @@ cp .env.example .env
 ```env
 PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017/coblog
+REDIS_URL=redis://127.0.0.1:6379
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=1d
 JWT_REFRESH_SECRET=your_jwt_refresh_secret

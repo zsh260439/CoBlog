@@ -3,7 +3,7 @@ import { ArticleChatDto } from './dto/article-chat.dto'
 import { ConfigService } from '@nestjs/config'
 import { GenerateExcerptDto } from './dto/generate-excerpt.dto'
 import { OptimizeArticleDto } from './dto/optimize-article.dto'
-import { DeepSeekMessage, DeepSeekOptions, DeepSeekResponse } from '@coblog/types'
+import { DeepSeekMessage, DeepSeekOptions, DeepSeekResponse } from './types/deepseek.types'
 
 @Injectable()
 export class AiService {

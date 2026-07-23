@@ -2,6 +2,8 @@ import { Body, Controller, Post, Req, Res, UnauthorizedException, UseGuards } fr
 import { JwtService } from '@nestjs/jwt'
 import type { Request, Response } from 'express'
 import { ApiResponse } from '../common/utils/api-response'
+import { getClientIp } from '../common/utils/get-client-ip'
+import { RateLimitService } from 'src/rate-limit/rate-limit.service'
 import { AuthGuard } from './auth.guard'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
@@ -11,57 +13,72 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
+    private readonly rateLimitService: RateLimitService,
   ) {}
 
-  //登录
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    //1:创建用户信息
+    const ip = getClientIp(req) || 'unknown'
+    await this.rateLimitService.assertAllowed('auth:login', ip, {
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    })
+
     const data = await this.authService.login(loginDto)
-    //2:登陆成功后存入cookie
     response.cookie('refresh_token', data.refreshToken, {
-      httpOnly: true,//前端无法读取 防xss攻击
-      sameSite: 'lax',// 防CSRF跨站攻击
+      httpOnly: true,
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000,
     })
-    //3:返回给前端 只返回短token
-    return ApiResponse.success({
-      accessToken: data.accessToken,
-      user: data.user,
-    }, '登录成功')
+
+    return ApiResponse.success(
+      {
+        accessToken: data.accessToken,
+        user: data.user,
+      },
+      '登录成功',
+    )
   }
 
-  //刷新token
   @Post('refresh')
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
+    const ip = getClientIp(request) || 'unknown'
+    await this.rateLimitService.assertAllowed('auth:refresh', ip, {
+      limit: 20,
+      windowMs: 10 * 60 * 1000,
+    })
+
     const refreshToken = request.cookies?.refresh_token
     if (!refreshToken) throw new UnauthorizedException('缺少refreshToken')
-    //校验这个token是否有效 同时解码出用户所有基本信息
+
     const payload = await this.jwtService.verifyAsync(refreshToken as string, {
       secret: process.env.JWT_REFRESH_SECRET,
     })
-    //调用刷新令牌的方法，传入用户id和旧刷新令牌 获取新的令牌数据
     const data = await this.authService.refreshToken(payload.userId as string, refreshToken as string)
-    //将新的令牌写入响应cookie,配置cookie安全属性
+
     response.cookie('refresh_token', data.refreshToken, {
-      httpOnly: true,    // 仅服务端可访问，防止XSS攻击
-      sameSite: 'lax',   // 限制跨站请求，防范CSRF攻击
+      httpOnly: true,
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,  // Cookie有效期
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
-    return ApiResponse.success({
-      //返回给前端一个短期令牌
-      accessToken: data.accessToken,
-    }, '刷新成功')
+
+    return ApiResponse.success(
+      {
+        accessToken: data.accessToken,
+      },
+      '刷新成功',
+    )
   }
-  //登出
+
   @UseGuards(AuthGuard)
   @Post('logout')
   async logout(

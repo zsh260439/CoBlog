@@ -1,4 +1,3 @@
-// 留言页渲染的单条消息结构。
 export interface MessageItem {
   id: string
   author: string
@@ -16,10 +15,7 @@ export interface MessageItem {
   qq?: string
 }
 
-// 前台提交留言给后端时的请求体。
 export interface CreateMessagePayload {
-  // 前端给当前浏览器持久化一个 senderId，用来跨刷新找回"我的待审核/被拒绝"留言
-  senderId: string
   author: string
   content: string
   parentId?: string
@@ -39,7 +35,6 @@ export interface CreateAdminReplyPayload {
   location?: string
 }
 
-// 留言表单本地状态。
 export interface MessageFormData {
   author: string
   content: string

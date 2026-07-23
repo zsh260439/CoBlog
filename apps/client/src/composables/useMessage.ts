@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { UAParser } from 'ua-parser-js'
 import axios from 'axios'
 import { createMessage, getMessageList, getMyMessageList } from '@/servers/message'
-import { useMessageStore, useVisitorLocationStore } from '@/stores'
+import { useVisitorLocationStore } from '@/stores'
 import type { MessageFormData, MessageItem } from '@/types/message'
 
 export function useMessage() {
@@ -13,7 +13,6 @@ export function useMessage() {
   let loadingPromise: Promise<void> | null = null
 
   const submitLoading = ref(false)
-  const messageStore = useMessageStore()
   const ua = new UAParser(navigator.userAgent)
   const visitorLocationStore = useVisitorLocationStore()
 
@@ -39,7 +38,7 @@ export function useMessage() {
       try {
         const [publicResult, ownResult] = await Promise.all([
           getMessageList(),
-          getMyMessageList(messageStore.senderId),
+          getMyMessageList(),
         ])
         messages.value = mergeMessages(publicResult.data, ownResult.data)
       } catch {
@@ -61,7 +60,6 @@ export function useMessage() {
     try {
       const location = await visitorLocationStore.ensureLocation(true)
       await createMessage({
-        senderId: messageStore.senderId,
         author: form.author,
         content: form.content,
         parentId,
@@ -94,6 +92,5 @@ export function useMessage() {
     loadMessages,
     submitMessage,
     submitLoading,
-    senderId: messageStore.senderId,
   }
 }

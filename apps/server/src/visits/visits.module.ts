@@ -3,10 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { Visit, VisitSchema } from './schema/visit.schema'
 import { VisitsController } from './visits.controller'
 import { VisitsService } from './visits.service'
+import { RateLimitModule } from 'src/rate-limit/rate-limit.module'
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Visit.name, schema: VisitSchema }]),
+    RateLimitModule,
   ],
   controllers: [VisitsController],
   providers: [VisitsService],

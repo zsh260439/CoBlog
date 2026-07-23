@@ -12,14 +12,24 @@ import {
 import { useVisitorLocationStore } from '@/stores'
 import type { AdminMessageItem } from '@/types/admin'
 
+type MessageStreamAction = 'created' | 'updated' | 'deleted' | 'admin-replied'
+
+type MessageStreamPayload = {
+  action: MessageStreamAction
+  message?: AdminMessageItem | null
+  messageId?: string
+  pendingCount?: number
+  status?: AdminMessageItem['status']
+}
+
 export function useAdminMessages() {
   const messages = ref<AdminMessageItem[]>([])
   const isLoading = ref(false)
-  // 事件源
   let source: EventSource | null = null
+
   const ua = new UAParser(navigator.userAgent)
   const visitorLocationStore = useVisitorLocationStore()
-  //默认走sse，没有sse时走loadMessages
+
   const loadMessages = async () => {
     isLoading.value = true
     try {
@@ -30,22 +40,68 @@ export function useAdminMessages() {
     }
   }
 
-  const withAction = async (id: string, action: () => Promise<unknown>, success: string) => {
-    try {
-      await action()
-      if (!source) {
-        await loadMessages()
-      }
-      ElMessage.success(success)
-    } finally {}
+  const upsertMessage = (message: AdminMessageItem) => {
+    const nextMessages = [...messages.value]
+    const index = nextMessages.findIndex((item) => item.id === message.id)
+
+    if (index >= 0) {
+      nextMessages[index] = message
+    } else {
+      nextMessages.unshift(message)
+    }
+
+    messages.value = nextMessages.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
   }
 
-  const approve = (id: string) => withAction(id, () => approveMessage(id), '留言已通过')
-  const reject = (id: string) => withAction(id, () => rejectMessage(id), '留言已拒绝')
-  const remove = (id: string) => withAction(id, () => deleteMessage(id), '留言已删除')
+  const removeMessage = (messageId: string) => {
+    messages.value = messages.value.filter((item) => item.id !== messageId)
+  }
+
+  const applyStreamPayload = (rawData: string) => {
+    try {
+      const payload = JSON.parse(rawData) as MessageStreamPayload
+
+      if (!payload || typeof payload !== 'object' || !payload.action) {
+        throw new Error('Invalid payload')
+      }
+
+      if (payload.action === 'deleted') {
+        if (payload.messageId) {
+          removeMessage(payload.messageId)
+        }
+        return
+      }
+
+      if (payload.message) {
+        upsertMessage(payload.message)
+        return
+      }
+
+      if (payload.action === 'updated' || payload.action === 'created' || payload.action === 'admin-replied') {
+        loadMessages()
+      }
+    } catch {
+      loadMessages()
+    }
+  }
+
+  const withAction = async (action: () => Promise<unknown>, successMessage: string) => {
+    await action()
+    if (!source) {
+      await loadMessages()
+    }
+    ElMessage.success(successMessage)
+  }
+
+  const approve = (id: string) => withAction(() => approveMessage(id), '留言已通过')
+  const reject = (id: string) => withAction(() => rejectMessage(id), '留言已拒绝')
+  const remove = (id: string) => withAction(() => deleteMessage(id), '留言已删除')
 
   const batchApprove = async (ids: string[]) => {
-    if (!ids.length) return
+    if (!ids.length) {
+      return
+    }
+
     await Promise.all(ids.map((id) => approveMessage(id)))
     if (!source) {
       await loadMessages()
@@ -54,7 +110,10 @@ export function useAdminMessages() {
   }
 
   const batchReject = async (ids: string[]) => {
-    if (!ids.length) return
+    if (!ids.length) {
+      return
+    }
+
     await Promise.all(ids.map((id) => rejectMessage(id)))
     if (!source) {
       await loadMessages()
@@ -62,9 +121,8 @@ export function useAdminMessages() {
     ElMessage.success('批量拒绝成功')
   }
 
-   //回复留言
   const reply = (id: string, payload: { author: string; content: string }) =>
-    withAction(id, async () => {
+    withAction(async () => {
       const location = await visitorLocationStore.ensureLocation()
       return createAdminReply(id, {
         ...payload,
@@ -80,27 +138,27 @@ export function useAdminMessages() {
     }
 
     const token = localStorage.getItem('local-token')
-    if (!token) return
-    //创建事件源
-    source = createMessageEventSource(token)
-    //监听错误事件
+    if (!token) {
+      return
+    }
+
+    source = createMessageEventSource()
     source.onerror = () => {
       console.error('SSE connection failed')
       disconnect()
     }
-    //监听消息事件
-    source.onmessage = async () => {
-      await loadMessages()
+    source.onmessage = (event) => {
+      applyStreamPayload(event.data)
     }
   }
-  
+
   const disconnect = () => {
     if (source) {
       source.close()
     }
     source = null
   }
- //在组件卸载时断开连接
+
   onBeforeUnmount(disconnect)
 
   return {

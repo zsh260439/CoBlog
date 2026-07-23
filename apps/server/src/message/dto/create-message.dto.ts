@@ -17,10 +17,6 @@ export class CreateMessageDto {
   @IsString()
   qq?: string
 
-  @IsString()
-  @IsNotEmpty()
-  senderId: string
-
   @IsOptional()
   @IsString()
   parentId?: string

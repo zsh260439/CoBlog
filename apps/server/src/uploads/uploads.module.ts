@@ -5,13 +5,15 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { UploadFileSchema } from "./schema/upload-file.schema";
 import { UploadFile } from "./schema/upload-file.schema";
 import { AuthModule } from "src/auth/auth.module";
+import { RateLimitModule } from "src/rate-limit/rate-limit.module";
 @Module({
     imports:[
         MongooseModule.forFeature([{
             name:UploadFile.name,
             schema:UploadFileSchema,
         }]),
-        AuthModule
+        AuthModule,
+        RateLimitModule,
     ],
     controllers:[UploadsController],
     providers:[UploadsService],

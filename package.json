@@ -4,14 +4,15 @@
   "type": "module",
   "packageManager": "pnpm@10.18.3",
   "scripts": {
-    "dev": "turbo dev",
-    "dev:client": "turbo dev --filter=dev-blog-client",
-    "dev:server": "turbo dev --filter=server",
-    "build": "turbo build",
-    "build:client": "turbo build --filter=dev-blog-client",
-    "build:server": "turbo build --filter=server"
+    "setup": "pnpm --dir apps/server install && pnpm --dir apps/client install",
+    "dev": "concurrently \"pnpm --dir apps/server dev\" \"pnpm --dir apps/client dev\"",
+    "dev:client": "pnpm --dir apps/client dev",
+    "dev:server": "pnpm --dir apps/server dev",
+    "build": "pnpm run build:server && pnpm run build:client",
+    "build:client": "pnpm --dir apps/client build",
+    "build:server": "pnpm --dir apps/server build"
   },
   "devDependencies": {
-    "turbo": "^2.9.6"
+    "concurrently": "^9.2.1"
   }
 }

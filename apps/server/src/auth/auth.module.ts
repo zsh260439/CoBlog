@@ -6,11 +6,13 @@ import { AuthService } from './auth.service'
 import { Login, LoginSchema } from './schema/auth.schema'
 import { AuthGuard } from './auth.guard'
 import { AuthInitService } from './auth-init.service'
+import { RateLimitModule } from 'src/rate-limit/rate-limit.module'
 @Module({
     imports:[
         MongooseModule.forFeature([
             {name:Login.name,schema:LoginSchema}
         ]),
+        RateLimitModule,
         JwtModule.register({
             secret:process.env.JWT_SECRET,
             signOptions:{expiresIn:'1d'}

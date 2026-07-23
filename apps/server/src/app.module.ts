@@ -6,6 +6,7 @@ import { ArticlesModule } from './articles/article.module';
 import { MessageModule } from './message/message.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { AuthModule } from './auth/auth.module';
+import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { VisitsModule } from './visits/visits.module';
 import { SeoModule } from './seo/seo.module';
@@ -16,14 +17,15 @@ import { SeoModule } from './seo/seo.module';
         envFilePath: ['../../.env', '.env']
       }),
       MongooseModule.forRoot(process.env.MONGODB_URI as string),
-      AiModule,
-      ArticlesModule,
+     AiModule,
+     ArticlesModule,
      MessageModule,
      TaxonomyModule,
      AuthModule,
+     RateLimitModule,
      UploadsModule,
-      VisitsModule,
-      SeoModule,
+     VisitsModule,
+     SeoModule,
     ],
 })
 export class AppModule {}
