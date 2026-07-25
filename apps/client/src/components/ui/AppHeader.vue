@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useWindowScroll } from '@vueuse/core'
 import { primaryNav, siteConfig } from '@/config/site'
 import MusicPlayer from '@/components/ui/MusicPlayer.vue'
 
 const isMenuOpen = ref(false)
 const route = useRoute()
+const router = useRouter()
 const { y } = useWindowScroll()
+const searchText = ref('')
 
 const navItems = primaryNav
 
@@ -20,6 +22,19 @@ const brandTrailing = computed(() => siteConfig.name.slice(2))
 const isOverlayHeader = computed(
   () => route.meta.headerStyle === 'overlay' && y.value < 36 && !isMenuOpen.value
 )
+const searchableRouteNames = ['blog', 'category', 'tag']
+const isSearchableRoute = computed(() => searchableRouteNames.includes(String(route.name ?? '')))
+const searchPlaceholder = computed(() => {
+  if (route.name === 'category') {
+    return '搜索当前分类'
+  }
+
+  if (route.name === 'tag') {
+    return '搜索当前标签'
+  }
+
+  return '搜索文章'
+})
 
 // 既支持路径精确匹配，也支持按路由名高亮一组关联页面。
 const isNavItemActive = (path: string, routeNames: string[]) => {
@@ -35,13 +50,48 @@ const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
 }
 
+const submitSearch = async () => {
+  const keyword = searchText.value.trim()
+
+  if (isSearchableRoute.value) {
+    await router.replace({
+      path: route.path,
+      query: keyword ? { ...route.query, q: keyword } : omitSearchQuery(route.query),
+    })
+    return
+  }
+
+  await router.push({
+    path: '/blog',
+    query: keyword ? { q: keyword } : {},
+  })
+}
+
+const resetSearchOnBlur = async () => {
+  if (!isSearchableRoute.value || searchText.value.trim() || route.query.q === undefined) {
+    return
+  }
+
+  await router.replace({
+    path: route.path,
+    query: omitSearchQuery(route.query),
+  })
+}
+
 // 切路由后自动收起移动端菜单，避免旧状态残留到新页面。
 watch(
   () => route.fullPath,
   () => {
     isMenuOpen.value = false
-  }
+    searchText.value = String(route.query.q || '')
+  },
+  { immediate: true }
 )
+
+const omitSearchQuery = (query: typeof route.query) => {
+  const { q: _q, ...restQuery } = query
+  return restQuery
+}
 </script>
 
 <template>
@@ -67,6 +117,16 @@ watch(
         </router-link>
       </nav>
 
+      <form class="header-search header-search--desktop" role="search" @submit.prevent="submitSearch">
+        <input
+          v-model="searchText"
+          type="search"
+          :placeholder="searchPlaceholder"
+          aria-label="搜索文章"
+          @blur="resetSearchOnBlur"
+        />
+      </form>
+
       <button class="menu-btn" @click="toggleMenu" aria-label="菜单">
         <span :class="{ open: isMenuOpen }">
           <span></span>
@@ -89,6 +149,15 @@ watch(
           {{ item.label }}
         </router-link>
 
+        <form class="header-search header-search--mobile" role="search" @submit.prevent="submitSearch">
+          <input
+            v-model="searchText"
+          type="search"
+          :placeholder="searchPlaceholder"
+          aria-label="搜索文章"
+          @blur="resetSearchOnBlur"
+        />
+      </form>
       </nav>
     </Transition>
   </header>
@@ -154,12 +223,50 @@ watch(
 
 .nav-desktop {
   display: none;
-  gap: 2.5rem;
+  gap: 2.15rem;
 }
 
 @media (min-width: 768px) {
   .nav-desktop {
     display: flex;
+  }
+}
+
+.header-search {
+  position: relative;
+}
+
+.header-search input {
+  width: 132px;
+  height: 30px;
+  border: 1px solid rgba(23, 21, 18, 0.08);
+  border-radius: 999px;
+  outline: none;
+  padding: 0 0.85rem;
+  background: rgba(255, 255, 255, 0.54);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, width 0.25s ease;
+}
+
+.header-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.header-search input:focus {
+  width: 168px;
+  border-color: rgba(17, 17, 17, 0.22);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 8px 22px rgba(17, 17, 17, 0.08);
+}
+
+.header-search--desktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .header-search--desktop {
+    display: block;
   }
 }
 
@@ -278,6 +385,21 @@ watch(
 
 .nav-mobile-link.active {
   color: var(--accent-cyan);
+}
+
+.header-search--mobile {
+  display: block;
+  padding: 0.875rem 0 0;
+}
+
+.header-search--mobile input {
+  width: 100%;
+  height: 36px;
+  background: #ffffff;
+}
+
+.header-search--mobile input:focus {
+  width: 100%;
 }
 
 

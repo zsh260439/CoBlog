@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import PostCard from '@/components/blog/PostCard.vue'
 import ProfileSidebarCard from '@/components/sidebar/ProfileSidebarCard.vue'
 import SiteStatsCard from '@/components/sidebar/SiteStatsCard.vue'
@@ -8,16 +9,34 @@ import { siteConfig } from '@/config/site'
 import { useArticles } from '@/composables/useArticles'
 import { useTaxonomies } from '@/composables/useTaxonomies'
 import { useSeo } from '@/utils/seo'
-import { ref } from 'vue'
 
+const route = useRoute()
 const { articles, isLoading, error, loadArticles } = useArticles()
 const { categories } = useTaxonomies()
 const categoryCount = computed(() => categories.value.length)
 const currentPage = ref(1)
 const pageSize = 6
+const searchKeyword = computed(() => String(route.query.q || '').trim().toLowerCase())
+const filteredArticles = computed(() => {
+  if (!searchKeyword.value) {
+    return articles.value
+  }
+
+  return articles.value.filter((article) => {
+    const searchableText = [
+      article.title,
+      article.excerpt,
+      article.category,
+      article.content,
+      ...article.tags,
+    ].join(' ').toLowerCase()
+
+    return searchableText.includes(searchKeyword.value)
+  })
+})
 const pagedArticles = computed(()=>{
    const start = (currentPage.value-1) * pageSize
-   return articles.value.slice(start, start+pageSize)
+   return filteredArticles.value.slice(start, start+pageSize)
 })
 useSeo({
   title: '博客',
@@ -28,6 +47,10 @@ useSeo({
 
 onMounted(() => {
   loadArticles()
+})
+
+watch(searchKeyword, () => {
+  currentPage.value = 1
 })
 
 </script>
@@ -51,7 +74,9 @@ onMounted(() => {
       <div class="blog-main">
         <el-card v-if="isLoading" class="blog-state" shadow="never">正在整理文章列表...</el-card>
         <el-card v-else-if="error" class="blog-state blog-state--error" shadow="never">{{ error }}</el-card>
-        <el-card v-else-if="!articles.length" class="blog-state" shadow="never">还没有文章，后续内容会先落在这里。</el-card>
+        <el-card v-else-if="!filteredArticles.length" class="blog-state" shadow="never">
+          {{ searchKeyword ? '没有匹配的文章。' : '还没有文章，后续内容会先落在这里。' }}
+        </el-card>
        <template v-else>
   <PostCard
     v-for="article in pagedArticles"
@@ -59,12 +84,12 @@ onMounted(() => {
     :article="article"
   />
   <el-pagination
-   v-if="articles.length > pageSize"
+   v-if="filteredArticles.length > pageSize"
    v-model:current-page="currentPage"
    class="blog-pagination"
    layout="prev,pager,next"
    :page-size="pageSize"
-   :total="articles.length"
+   :total="filteredArticles.length"
   >
   </el-pagination>
   

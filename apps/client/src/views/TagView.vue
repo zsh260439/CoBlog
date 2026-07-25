@@ -12,9 +12,27 @@ import { useSeo } from '@/utils/seo'
 
 const route = useRoute()
 const currentTag = computed(() => String(route.params.tag || ''))
+const searchKeyword = computed(() => String(route.query.q || '').trim().toLowerCase())
 
 const { articles, isLoading, error } = useTag(currentTag)
 const { articles: allArticles, loadArticles } = useArticles()
+const filteredArticles = computed(() => {
+  if (!searchKeyword.value) {
+    return articles.value
+  }
+
+  return articles.value.filter((article) => {
+    const searchableText = [
+      article.title,
+      article.excerpt,
+      article.category,
+      article.content,
+      ...article.tags,
+    ].join(' ').toLowerCase()
+
+    return searchableText.includes(searchKeyword.value)
+  })
+})
 
 useSeo({
   title: computed(() => currentTag.value ? `标签 ${currentTag.value}` : '标签'),
@@ -50,12 +68,12 @@ onMounted(() => {
         <el-card v-else-if="error" class="tag-state" shadow="never">
           {{ error }}
         </el-card>
-        <el-card v-else-if="!articles.length" class="tag-state" shadow="never">
-          这个标签下暂时还没有文章。
+        <el-card v-else-if="!filteredArticles.length" class="tag-state" shadow="never">
+          {{ searchKeyword ? '当前标签下没有匹配的文章。' : '这个标签下暂时还没有文章。' }}
         </el-card>
 
         <PostCard
-          v-for="article in articles"
+          v-for="article in filteredArticles"
           v-else
           :key="article.slug"
           :article="article"
