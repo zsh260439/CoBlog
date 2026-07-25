@@ -7,8 +7,18 @@ import { useTaxonomies } from '@/composables/useTaxonomies'
 import { createSlugFromText } from '@/utils'
 import type { AdminTaxonomyForm } from '@/types/admin'
 import type { ArticleCategory } from '@/types/article'
-import { deleteCategory, updateCategory, deleteTag, updateTag } from '@/servers/taxonomy'
-const { categories, tags, isLoading, loadTaxonomies, createCategoryItem, createTagItem } = useTaxonomies()
+const {
+  categories,
+  tags,
+  isLoading,
+  loadTaxonomies,
+  createCategoryItem,
+  createTagItem,
+  updateCategoryItem,
+  updateTagItem,
+  deleteCategoryItem,
+  deleteTagItem,
+} = useTaxonomies()
 const { loadArticles } = useArticles()
 
 const categoryDialogVisible = ref(false)
@@ -51,6 +61,16 @@ const syncTagSlug = () => {
 }
 
 // 分类和标签弹窗共用同一套流程：先校验，再根据 isEdit 决定走新增还是更新。
+const isUserCancel = (error: unknown) => error === 'cancel' || error === 'close'
+
+const getActionErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message
+  }
+
+  return fallback
+}
+
 const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
    if (!categoryForm.label.trim() || !categoryForm.slug.trim()) {
     ElMessage.warning('请先填写完整的分类名称和 slug')
@@ -60,7 +80,7 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
   //如果是编辑模式 走这里
   if (isEdit) {
     try {
-      await updateCategory(preCategorySlug.trim(),{
+      await updateCategoryItem(preCategorySlug.trim(),{
         label: categoryForm.label.trim(),
         slug: categoryForm.slug.trim(),
       })
@@ -69,12 +89,11 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
       categoryDialogVisible.value = false
       //重置form表单
       resetCategoryForm()
-    } catch {
-      ElMessage.error('分类编辑失败')
-    } finally {
+    } catch (error) {
+      ElMessage.error(getActionErrorMessage(error, 'Category update failed'))
       submittingCategory.value = false
       categorySlugEdited.value = false
-      await Promise.all([loadTaxonomies(), loadArticles()])
+      await loadArticles()
     }
   }else{
     try {
@@ -85,12 +104,11 @@ const submitCategory = async (isEdit: boolean,preCategorySlug:string) => {
       ElMessage.success('分类新增成功')
       categoryDialogVisible.value = false
       resetCategoryForm()
-    } catch {
-      ElMessage.error('分类新增失败')
-    } finally {
+    } catch (error) {
+      ElMessage.error(getActionErrorMessage(error, 'Category create failed'))
       submittingCategory.value = false
       //更新页面
-      await Promise.all([loadTaxonomies(), loadArticles()])
+      await loadArticles()
     }
   }
 }
@@ -105,7 +123,7 @@ const submitTag = async (isEdit: boolean,preTagSlug:string) => {
 
   try {
     if (isEdit) {
-      await updateTag(preTagSlug.trim(),{
+      await updateTagItem(preTagSlug.trim(),{
         label: tagForm.label.trim(),
         slug: tagForm.slug.trim(),
       })
@@ -121,14 +139,14 @@ const submitTag = async (isEdit: boolean,preTagSlug:string) => {
       tagDialogVisible.value = false
       resetTagForm()
     }
-  } catch {
-    ElMessage.error(isEdit ? '标签编辑失败' : '标签新增失败')
+  } catch (error) {
+    ElMessage.error(getActionErrorMessage(error, isEdit ? 'Tag update failed' : 'Tag create failed'))
   } finally {
     submittingTag.value = false
     //无论是否成功 都需要将 tagSlugEdited 重置为 false
     tagSlugEdited.value = false
     //更新页面
-    await Promise.all([loadTaxonomies(), loadArticles()])
+    await loadArticles()
   } 
 }
 //编辑标签 首先回填原有数据 但是这个时候因为共用一个弹窗 所以需要判断是否是编辑操作 如果是编辑操作 则需要将弹窗标题改为编辑标签
@@ -151,31 +169,39 @@ const handleEditCategory = async (row: ArticleCategory) => {
 const handleDeleteCategory = async (slug: string) => {
   //当我点击进来 必须要询问确认删除 因为删除分类包含全部文章
   try {
-    await ElMessageBox.confirm('确认删除分类吗？这会删除该分类下的所有文章!', '删除分类', {
+    await ElMessageBox.confirm('Only empty categories can be deleted. Continue?', 'Delete category', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    await deleteCategory(slug)
+    await deleteCategoryItem(slug)
     ElMessage.success('分类删除成功')
-    await Promise.all([loadTaxonomies(), loadArticles()])
-  } catch {
-    ElMessage.error('分类删除失败')
+    await loadArticles()
+  } catch (error) {
+    if (isUserCancel(error)) {
+      return
+    }
+
+    ElMessage.error(getActionErrorMessage(error, 'Category delete failed'))
   }
 }
-//删除标签
+// Delete tag
 const handleDeleteTag = async (slug: string) => {
   try {
-    await ElMessageBox.confirm('确认删除这类标签吗？', '删除标签', {
+    await ElMessageBox.confirm('Only unused tags can be deleted. Continue?', 'Delete tag', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    await deleteTag(slug)
+    await deleteTagItem(slug)
     ElMessage.success('标签删除成功')
-    await Promise.all([loadTaxonomies(), loadArticles()])
-  } catch {
-    ElMessage.error('标签删除失败')
+    await loadArticles()
+  } catch (error) {
+    if (isUserCancel(error)) {
+      return
+    }
+
+    ElMessage.error(getActionErrorMessage(error, 'Tag delete failed'))
   }
 }
 onMounted(() => {

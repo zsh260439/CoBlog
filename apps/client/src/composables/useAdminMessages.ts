@@ -144,8 +144,7 @@ export function useAdminMessages() {
 
     source = createMessageEventSource()
     source.onerror = () => {
-      console.error('SSE connection failed')
-      disconnect()
+      console.warn('SSE connection interrupted; EventSource will retry')
     }
     source.onmessage = (event) => {
       applyStreamPayload(event.data)

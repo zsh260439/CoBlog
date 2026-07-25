@@ -24,6 +24,10 @@ export interface ArticleAiChatResult {
   content: string
 }
 
+export interface ArticleAiStreamSessionResult {
+  sessionId: string
+}
+
 export interface GenerateExcerptPayload {
   title?: string
   content: string

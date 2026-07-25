@@ -12,7 +12,7 @@ import { ImageModule } from "src/utils/image.module";
      schema:ArticleSchema
    }]),
    AuthModule,
-   ImageModule
+   ImageModule,
   ],
    controllers:[ArticlesController],
     providers:[ArticlesService],

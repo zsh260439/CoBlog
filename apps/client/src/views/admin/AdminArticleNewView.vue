@@ -3,9 +3,9 @@ import { computed, onMounted, reactive, ref, toRaw, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import { ArrowLeft, Promotion } from '@element-plus/icons-vue'
+import { ArrowLeft, Plus, Promotion } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
-import { generateArticleExcerptWithAi, optimizeArticleWithAi } from '@/servers/ai'
+import { generateArticleExcerptWithAi } from '@/servers/ai'
 import { useArticles } from '@/composables/useArticles'
 import { ensureMarkdownConfigured } from '@/config/markdown'
 import { useTaxonomies } from '@/composables/useTaxonomies'
@@ -17,13 +17,18 @@ import type { AdminArticleForm } from '@/types/admin'
 import { useDebounce } from '@/composables/useDebounce'
 import ArticleAiDrawer from '@/components/ArticleAiDrawer.vue'
 ensureMarkdownConfigured()
+type MarkdownApplyMode = 'replace' | 'append'
+type ArticleAiDrawerExpose = InstanceType<typeof ArticleAiDrawer> & {
+  clearPendingResult: () => void
+}
+
 const route = useRoute()
 const router = useRouter()
 defineOptions({
   name: 'AdminArticleNewView'
 })
 const { saveArticleDraft, getArticleDraft, clearArticleDraft } = useArticleDraftStore()
-const { categories, tags, loadTaxonomies } = useTaxonomies()
+const { categories, tags, loadTaxonomies, ensureCategoryItem, ensureTagItem } = useTaxonomies()
 const { articles, loadArticles, setArticles } = useArticles()
 // 创建文章表单的默认值
 const createDefaultForm = (): AdminArticleForm => ({
@@ -44,8 +49,13 @@ const submitError = ref('')
 const pageLoading = ref(false)
 const slugTouched = ref(false)
 const aiInstruction = ref('')
-const aiLoading = ref<'optimize'| ''>('')
 const aiDrawerVisible = ref(false)
+const aiWritingActive = ref(false)
+const aiDrawerRef = ref<ArticleAiDrawerExpose | null>(null)
+const aiMarkdownResult = ref<{ content: string; mode: MarkdownApplyMode } | null>(null)
+const aiMarkdownOriginalContent = ref<string | null>(null)
+const customCategoryName = ref('')
+const customTagName = ref('')
 
 const resolvedCategories = computed(() => categories.value)
 
@@ -57,8 +67,23 @@ const selectedCategory = computed(() => {
 // 判断当前页面是否处于编辑文章模式
 const isEditMode = computed(() => String(route.params.id || '').length > 0)
 
-// 截取一部分标签作为后台快速选择列表
-const suggestedTags = computed(() => tags.value.slice(0, 16))
+// 已选标签必须优先展示，否则 AI 新标签写进 form 后会“看不见”。
+const suggestedTags = computed(() => {
+  const baseTags = tags.value.slice(0, 16)
+  const baseLabels = new Set(baseTags.map((tag) => tag.label))
+  const selectedOnlyTags = form.tags
+    .filter((label) => !baseLabels.has(label))
+    .map((label) => ({
+      _id: `selected-${label}`,
+      label,
+      slug: createSlugFromText(label, 32),
+      count: 0,
+      createdAt: '',
+      updatedAt: '',
+    }))
+
+  return [...selectedOnlyTags, ...baseTags]
+})
 
 // 在切换分类时同步更新 categorySlug
 const syncCategory = () => {
@@ -92,6 +117,23 @@ const toggleTag = (tag: string) => {
 }
 
 // 上传单张图片
+const stripTrailingAiTaxonomyNotes = (content: string) => {
+  const lines = content.replace(/\r\n/g, '\n').split('\n')
+  const taxonomyLinePattern = /^\s*(?:[-*]\s*)?(?:\*\*)?\s*(?:标签|分类)(?:建议)?\s*(?:\*\*)?\s*[:：]/
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if (lines.length - index > 12) {
+      break
+    }
+
+    if (taxonomyLinePattern.test(lines[index])) {
+      return lines.slice(0, index).join('\n').trim()
+    }
+  }
+
+  return content.trim()
+}
+
 const uploadSingleImage = async (file: File) => {
   const result = await uploadImage(file)
   const url = result.data.url
@@ -139,33 +181,6 @@ const validateForm = () => {
   return ''
 }
 
-// AI 优化正文时只回填 Markdown 内容，避免覆盖用户自己调整过的其他字段。
-const handleOptimizeContent = async () => {
-  if (!form.content.trim()) {
-    ElMessage.warning('请先输入正文内容再进行优化')
-    return
-  }
-
-  aiLoading.value = 'optimize'
-
-  try {
-    const result = await optimizeArticleWithAi({
-      title: form.title.trim(),
-      content: form.content,
-      instruction: aiInstruction.value.trim(),
-    })
-
-    const optimizedContent = result.data.content.trim()
-
-    form.content = optimizedContent
-    ElMessage.success('AI 已优化正文，可继续手动微调')
-  } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || error?.message || 'AI 优化失败')
-  } finally {
-    aiLoading.value = ''
-  }
-}
-
 const handleGenerateExcerpt = async () => {
   if (!form.content.trim()) {
     ElMessage.warning('正文不存在,无法生成摘要')
@@ -196,7 +211,173 @@ const handleAppendContentByAi = (content: string) => {
   form.content = `${form.content.trim()}\n\n${content}`.trim()
 }
 
+const handleUpdateTitleByAi = (title: string) => {
+  form.title = title
+}
+
+const handleUpdateExcerptByAi = (excerpt: string) => {
+  form.excerpt = excerpt
+}
+
+const handleSuggestTaxonomyByAi = async (payload: { category?: string; tags: string[] }) => {
+  if (payload.category) {
+    const category = await ensureCategoryItem({
+      label: payload.category,
+      slug: createSlugFromText(payload.category, 32),
+    })
+    form.category = category.label
+    form.categorySlug = category.slug
+  }
+
+  const nextTags = await Promise.all(
+    payload.tags.map((tag) => {
+      return ensureTagItem({
+        label: tag,
+        slug: createSlugFromText(tag, 32),
+      })
+    }),
+  )
+  form.tags = nextTags.map((tag) => tag.label)
+}
+
+const handleAiWorkingChange = (value: boolean) => {
+  aiWritingActive.value = value
+}
+
+const formatAiMarkdownContent = (value: { content: string; mode: MarkdownApplyMode }) => {
+  const content = stripTrailingAiTaxonomyNotes(value.content)
+  const originalContent = aiMarkdownOriginalContent.value || form.content
+
+  if (value.mode === 'append') {
+    return `${originalContent.trim()}\n\n${content}`.trim()
+  }
+
+  return content
+}
+
+const applyAiMarkdownDraftToEditor = (value: { content: string; mode: MarkdownApplyMode }) => {
+  if (aiMarkdownOriginalContent.value === null) {
+    aiMarkdownOriginalContent.value = form.content
+  }
+
+  form.content = formatAiMarkdownContent(value)
+}
+
+const handleAiMarkdownResultChange = (value: { content: string; mode: MarkdownApplyMode } | null) => {
+  if (!value) {
+    if (aiMarkdownOriginalContent.value !== null && aiMarkdownResult.value) {
+      form.content = aiMarkdownOriginalContent.value
+    }
+    aiMarkdownResult.value = null
+    aiMarkdownOriginalContent.value = null
+    return
+  }
+
+  aiMarkdownResult.value = {
+    ...value,
+    content: stripTrailingAiTaxonomyNotes(value.content),
+  }
+}
+
+const handleAiMarkdownDraftChange = (value: { content: string; mode: MarkdownApplyMode } | null) => {
+  if (!value) {
+    return
+  }
+
+  const sanitizedValue = {
+    ...value,
+    content: stripTrailingAiTaxonomyNotes(value.content),
+  }
+
+  applyAiMarkdownDraftToEditor(sanitizedValue)
+  aiMarkdownResult.value = sanitizedValue
+}
+
+const clearAiMarkdownResult = () => {
+  aiMarkdownResult.value = null
+  aiMarkdownOriginalContent.value = null
+  aiDrawerRef.value?.clearPendingResult()
+}
+
+const applyAiMarkdownResult = (mode: MarkdownApplyMode) => {
+  if (!aiMarkdownResult.value) {
+    return
+  }
+
+  const originalContent = aiMarkdownOriginalContent.value || ''
+  const nextContent = stripTrailingAiTaxonomyNotes(aiMarkdownResult.value.content)
+
+  form.content = mode === 'append'
+    ? `${originalContent.trim()}\n\n${nextContent}`.trim()
+    : nextContent
+
+  ElMessage.success(mode === 'append' ? 'AI 内容已追加到正文末尾' : 'AI 内容已替换正文')
+  clearAiMarkdownResult()
+}
+
+const rejectAiMarkdownResult = () => {
+  if (aiMarkdownOriginalContent.value !== null) {
+    form.content = aiMarkdownOriginalContent.value
+  }
+  clearAiMarkdownResult()
+  ElMessage.info('已拒绝本次 AI Markdown 结果')
+}
+
+const handleCreateCategoryInline = async () => {
+  const label = customCategoryName.value.trim()
+  if (!label) {
+    ElMessage.warning('请输入分类名称')
+    return
+  }
+
+  const category = await ensureCategoryItem({
+    label,
+    slug: createSlugFromText(label, 32),
+  })
+  form.category = category.label
+  form.categorySlug = category.slug
+  customCategoryName.value = ''
+  ElMessage.success('分类已新增并选中')
+}
+
+const handleCreateTagInline = async () => {
+  const label = customTagName.value.trim()
+  if (!label) {
+    ElMessage.warning('请输入标签名称')
+    return
+  }
+
+  const tag = await ensureTagItem({
+    label,
+    slug: createSlugFromText(label, 32),
+  })
+  addTag(tag.label)
+  customTagName.value = ''
+  ElMessage.success('标签已新增并选中')
+}
+
 // 发布和编辑共用这一条提交流程：先补摘要，再根据当前模式决定 create 还是 update。
+const ensureFormTaxonomies = async () => {
+  if (form.category.trim()) {
+    const category = await ensureCategoryItem({
+      label: form.category.trim(),
+      slug: form.categorySlug.trim() || createSlugFromText(form.category, 32),
+    })
+    form.category = category.label
+    form.categorySlug = category.slug
+  }
+
+  const ensuredTags = await Promise.all(
+    form.tags.map((tag) => {
+      return ensureTagItem({
+        label: tag,
+        slug: createSlugFromText(tag, 32),
+      })
+    }),
+  )
+  form.tags = ensuredTags.map((tag) => tag.label)
+}
+
 const publishArticle = async () => {
   syncCategory()
   submitError.value = ''
@@ -211,7 +392,10 @@ const publishArticle = async () => {
   submitLoading.value = true
 
   try {
-    await handleGenerateExcerpt()
+    if (!form.excerpt.trim()) {
+      await handleGenerateExcerpt()
+    }
+    await ensureFormTaxonomies()
     const payload = {
       ...form,
       slug: form.slug.trim(),
@@ -222,12 +406,12 @@ const publishArticle = async () => {
       setArticles(
         articles.value.map((item) => (item._id === result.data._id ? result.data : item))
       )
-      await loadTaxonomies()
+      await loadTaxonomies(true)
       ElMessage.success('文章更新成功')
     } else {
       const result = await createArticle(payload)
       setArticles([result.data, ...articles.value])
-      await loadTaxonomies()
+      await loadTaxonomies(true)
       clearArticleDraft()
       Object.assign(form, createDefaultForm())
       slugTouched.value = false
@@ -329,23 +513,33 @@ onMounted(async () => {
 
         <div class="form-field">
           <label>摘要（AI自动生成）：</label>
-          <el-input v-model="form.excerpt" readonly type="textarea" :rows="4" placeholder="AI将会自动生成的摘要,发布前自动补充" />
+          <el-input v-model="form.excerpt" type="textarea" :rows="4" placeholder="可手动填写摘要；留空时发布前自动生成" />
         </div>
 
         <div class="form-field">
           <label>正文内容 (Markdown)</label>
 
-          <MdEditor
-            v-model="form.content"
-            class="article-create-page__editor"
-            theme="light"
-            preview-theme="github"
-            code-theme="atom"
-            language="zh-CN"
-            placeholder="请输入 Markdown 格式的文章内容..."
-            :toolbars-exclude="['save', 'github', 'catalog']"
-            :on-upload-img="handleUploadImages"
-          />
+          <div class="article-create-page__editor-wrap" :class="{ 'article-create-page__editor-wrap--locked': aiWritingActive }">
+            <MdEditor
+              v-model="form.content"
+              class="article-create-page__editor"
+              theme="light"
+              preview-theme="github"
+              code-theme="atom"
+              language="zh-CN"
+              placeholder="请输入 Markdown 格式的文章内容..."
+              :toolbars-exclude="['save', 'github', 'catalog']"
+              :on-upload-img="handleUploadImages"
+            />
+            <div v-if="aiWritingActive" class="article-create-page__editor-lock">
+              AI 正在生成内容，正文编辑区已临时锁定
+            </div>
+            <div v-else-if="aiMarkdownResult" class="article-create-page__editor-ai-actions">
+              <el-button size="small" @click="rejectAiMarkdownResult">&#x62D2;&#x7EDD;</el-button>
+              <el-button size="small" @click="applyAiMarkdownResult('replace')">&#x66FF;&#x6362;</el-button>
+              <el-button size="small" type="primary" @click="applyAiMarkdownResult('append')">&#x8FFD;&#x52A0;</el-button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -381,11 +575,8 @@ onMounted(async () => {
           </div>
 
           <div class="publish-actions publish-actions--stack">
-            <el-button :loading="aiLoading === 'optimize'" @click="handleOptimizeContent">
-              AI 优化正文
-            </el-button>
             <el-button @click="aiDrawerVisible = true">
-              AI 对话助手
+              打开 AI 写作工作台
             </el-button>
           </div>
 
@@ -400,6 +591,11 @@ onMounted(async () => {
           <el-select v-model="form.category" placeholder="选择分类" class="article-create-page__full" @change="syncCategory">
             <el-option v-for="item in resolvedCategories" :key="item.slug" :label="item.label" :value="item.label" />
           </el-select>
+
+          <div class="inline-create">
+            <el-input v-model="customCategoryName" placeholder="新分类名称" />
+            <el-button :icon="Plus" @click="handleCreateCategoryInline">新增</el-button>
+          </div>
 
           <p v-if="selectedCategory" class="taxonomy-hint">当前分类 slug：{{ selectedCategory.slug }}</p>
         </section>
@@ -419,6 +615,11 @@ onMounted(async () => {
               {{ tag.label }}
             </button>
           </div>
+
+          <div class="inline-create">
+            <el-input v-model="customTagName" placeholder="新标签名称" />
+            <el-button :icon="Plus" @click="handleCreateTagInline">新增</el-button>
+          </div>
         </section>
 
         <section class="article-create-card">
@@ -429,12 +630,19 @@ onMounted(async () => {
     </div>
 
     <ArticleAiDrawer
+      ref="aiDrawerRef"
       v-model:visible="aiDrawerVisible"
       :title="form.title"
       :content="form.content"
       :instruction="aiInstruction"
       @replace-content="handleReplaceContentByAi"
       @append-content="handleAppendContentByAi"
+      @update-title="handleUpdateTitleByAi"
+      @update-excerpt="handleUpdateExcerptByAi"
+      @suggest-taxonomy="handleSuggestTaxonomyByAi"
+      @working-change="handleAiWorkingChange"
+      @markdown-result-change="handleAiMarkdownResultChange"
+      @markdown-draft-change="handleAiMarkdownDraftChange"
     />
   </div>
 </template>
@@ -520,6 +728,50 @@ onMounted(async () => {
 .form-field label {
   font-size: 14px;
   font-weight: 600;
+}
+
+.article-create-page__editor-wrap {
+  position: relative;
+}
+
+.article-create-page__editor-wrap--locked .article-create-page__editor {
+  pointer-events: none;
+  user-select: none;
+}
+
+.article-create-page__editor-lock {
+  position: absolute;
+  inset: auto 14px 14px auto;
+  z-index: 3;
+  padding: 8px 12px;
+  border: 1px solid rgba(209, 213, 219, 0.86);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #374151;
+  font-size: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.article-create-page__editor-ai-actions {
+  position: absolute;
+  inset: auto 14px 14px auto;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(209, 213, 219, 0.86);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.article-create-page__editor-ai-actions :deep(.el-button--primary) {
+  --el-button-bg-color: #111111;
+  --el-button-border-color: #111111;
+  --el-button-hover-bg-color: #2c2c2c;
+  --el-button-hover-border-color: #2c2c2c;
 }
 
 .article-create-page__editor {
@@ -617,6 +869,13 @@ onMounted(async () => {
 
 .article-create-page__full {
   width: 100%;
+}
+
+.inline-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .taxonomy-hint {

@@ -3,6 +3,7 @@ import { API_BASE_URL } from '@/config/http'
 import type {
   ArticleAiChatPayload,
   ArticleAiChatResult,
+  ArticleAiStreamSessionResult,
   GenerateExcerptPayload,
   GenerateExcerptResult,
   OptimizeArticlePayload,
@@ -25,26 +26,36 @@ export const streamChatWithArticleAi = async (
   payload: ArticleAiChatPayload,
   onChunk: (chunk: string) => void,
 ) => {
-  const token = localStorage.getItem('local-token')
-  const response = await fetch(`${API_BASE_URL}/ai/article/chat/stream`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: 'include',
-    body: JSON.stringify(payload),
+  const sessionResult = await requestWithOptions<ArticleAiStreamSessionResult>(
+    '/ai/article/chat/stream-session',
+    'POST',
+    payload,
+    { timeout: 120000 },
+  )
+  const sessionId = sessionResult.data.sessionId
+
+  await new Promise<void>((resolve, reject) => {
+    const eventSource = new EventSource(`${API_BASE_URL}/ai/article/chat/stream/${sessionId}`, {
+      withCredentials: true,
+    })
+
+    eventSource.addEventListener('chunk', (event) => {
+      onChunk(event.data)
+    })
+
+    eventSource.addEventListener('done', () => {
+      eventSource.close()
+      resolve()
+    })
+
+    eventSource.addEventListener('stream_error', (event) => {
+      eventSource.close()
+      const message = event instanceof MessageEvent && event.data ? String(event.data) : 'AI stream failed'
+      reject(new Error(message))
+    })
+
+    eventSource.onerror = () => {
+      console.warn('AI SSE connection interrupted; EventSource will retry')
+    }
   })
-
-  if (!response.ok) {
-    throw new Error(await response.text())
-  }
-
-  const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader()
-
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
-    onChunk(value)
-  }
 }

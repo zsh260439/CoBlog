@@ -111,31 +111,36 @@ export class TaxonomyService {
       updatedAt: this.toISO(tag.updatedAt),
     }
   }
-  //删除分类,如果要删除全部文章，要用到promise
+  // ?????????????????????????
   async removeCategory(slug: string): Promise<{ deletedCount: number }> {
-    const category = await this.categoryModel.findOneAndDelete({slug})
-    if(!category){
-      throw new NotFoundException('分类不存在')
+    const category = await this.categoryModel.findOne({ slug })
+    if (!category) {
+      throw new NotFoundException('?????')
     }
-    return this.articleModel.deleteMany({categorySlug:category.slug})
+
+    const articleCount = await this.articleModel.countDocuments({ categorySlug: category.slug })
+    if (articleCount > 0) {
+      throw new ConflictException('Category is still used by articles')
+    }
+
+    const deleteResult = await this.categoryModel.deleteOne({ slug: category.slug })
+    return { deletedCount: deleteResult.deletedCount || 0 }
   }
-  //删除标签
-  async removeTag(slug:string):Promise<{deletedCount:number}>{
+
+  // ????????????????????????????
+  async removeTag(slug: string): Promise<{ deletedCount: number }> {
     const tag = await this.tagModel.findOne({ slug })
-    if(!tag){
-      throw new NotFoundException('标签不存在')
+    if (!tag) {
+      throw new NotFoundException('?????')
     }
-    //同步文章的标签 因为一个文章tag可能很多，所以要精准定位tag并且只修改这个tag
-    const updateResult = await this.articleModel.updateMany(
-      { tags: tag.label },
-      { $pull: { tags: tag.label } }
-    )
 
-    await this.tagModel.deleteOne({ slug })
-
-    return {
-      deletedCount: updateResult.modifiedCount
+    const articleCount = await this.articleModel.countDocuments({ tags: tag.label })
+    if (articleCount > 0) {
+      throw new ConflictException('Tag is still used by articles')
     }
+
+    const deleteResult = await this.tagModel.deleteOne({ slug })
+    return { deletedCount: deleteResult.deletedCount || 0 }
   }
   //更新分类 其中所对应的文章数量也需要更新
   async updateCategory(slug:string,categoryDto:CreateCategoryDto){

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model, Types } from 'mongoose'
 import { concatWith, from, Observable, Subject } from 'rxjs'
@@ -9,7 +9,7 @@ import { Message, MessageDocument } from './schema/message.schema'
 import { isMainlandLocation, normalizeLocation } from '../common/utils/normalize-location'
 
 type MessageStatus = 'pending' | 'approved' | 'rejected'
-type StreamAction = 'created' | 'updated' | 'deleted' | 'admin-replied'
+type StreamAction = 'created' | 'updated' | 'deleted' | 'admin-replied' | 'ping'
 
 interface StreamPayload {
   action: StreamAction
@@ -34,15 +34,27 @@ type MessageRecord = Record<string, unknown> & {
 }
 
 @Injectable()
-export class MessageService {
+export class MessageService implements OnModuleDestroy {
   private readonly stream$ = new Subject<StreamEvent>()
   private readonly streamHistory: StreamEvent[] = []
   private streamId = 0
+  private readonly heartbeatTimer: NodeJS.Timeout
 
   constructor(
     @InjectModel(Message.name) private readonly messageModel: Model<MessageDocument>,
     private readonly messageMailService: MessageMailService,
-  ) {}
+  ) {
+    this.heartbeatTimer = setInterval(() => {
+      this.publish({
+        action: 'ping',
+      })
+    }, 20000)
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.heartbeatTimer)
+    this.stream$.complete()
+  }
 
   private serialize(message: MessageRecord | null) {
     if (!message) {

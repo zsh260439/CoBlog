@@ -5,6 +5,7 @@ import { TaxonomyController } from './taxonomy.controller'
 import { TaxonomyService } from './taxonomy.service'
 import { Category, CategorySchema } from './schema/category.schema'
 import { Tag, TagSchema } from './schema/tag.schema'
+import { AuthModule } from '../auth/auth.module'
 
 @Module({
   imports: [
@@ -12,7 +13,8 @@ import { Tag, TagSchema } from './schema/tag.schema'
       { name: Category.name, schema: CategorySchema },
       { name: Tag.name, schema: TagSchema },
       { name: Article.name, schema: ArticleSchema },
-    ])
+    ]),
+    AuthModule,
   ],
   controllers: [TaxonomyController],
   providers: [TaxonomyService],

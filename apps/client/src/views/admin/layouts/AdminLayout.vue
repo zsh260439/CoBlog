@@ -1,8 +1,4 @@
 <script setup lang="ts">
-defineOptions({
-  name: 'AdminLayout'
-})
-
 import { computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
@@ -13,16 +9,19 @@ import {
   Document,
   EditPen,
   Fold,
-  User,
   SwitchButton,
+  User,
 } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { siteConfig } from '@/config/site'
 import { logout } from '@/servers/auth'
-import { ElMessage } from 'element-plus'
+
+defineOptions({
+  name: 'AdminLayout',
+})
 
 const route = useRoute()
 const router = useRouter()
-
 const collapsed = ref(false)
 
 const navItems = [
@@ -63,8 +62,9 @@ const handleLogout = async () => {
   try {
     await logout()
   } catch {
-    // 忽略 logout API 错误
+    // 退出接口失败不阻断本地登录态清理。
   }
+
   localStorage.removeItem('local-token')
   ElMessage.success('已退出登录')
   router.push('/login')
@@ -128,9 +128,9 @@ const handleLogout = async () => {
       <main class="page-main">
         <RouterView v-slot="{ Component }">
           <keep-alive>
-            <component v-if="route.meta.title === '新建文章'" :is="Component"/>
+            <component v-if="route.name === 'admin-article-new'" :is="Component" />
           </keep-alive>
-            <component v-if="route.meta.title !== '新建文章'" :is="Component"/>
+          <component v-if="route.name !== 'admin-article-new'" :is="Component" />
         </RouterView>
       </main>
     </div>
@@ -267,7 +267,6 @@ const handleLogout = async () => {
   overflow-y: auto;
   padding: 24px;
 }
-
 
 .page-fade-enter-active,
 .page-fade-leave-active {

@@ -1,5 +1,7 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common'
-import type { Request, Response } from 'express'
+import { Body, Controller, Headers, MessageEvent, Param, Post, Req, Sse, UnauthorizedException, UseGuards } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import type { Request } from 'express'
+import { map, Observable } from 'rxjs'
 import { AuthGuard } from 'src/auth/auth.guard'
 import { ApiResponse } from 'src/common/utils/api-response'
 import { RateLimitService } from 'src/rate-limit/rate-limit.service'
@@ -14,14 +16,15 @@ type AuthenticatedRequest = Request & {
   }
 }
 
-@UseGuards(AuthGuard)
 @Controller('ai/article')
 export class AiController {
   constructor(
     private readonly aiService: AiService,
     private readonly rateLimitService: RateLimitService,
+    private readonly jwtService: JwtService,
   ) {}
 
+  @UseGuards(AuthGuard)
   @Post('optimize')
   async optimize(@Body() dto: OptimizeArticleDto, @Req() req: Request) {
     const userId = String((req as AuthenticatedRequest).user?.userId || 'unknown')
@@ -34,6 +37,7 @@ export class AiController {
     return ApiResponse.success(data, 'AI 优化完成')
   }
 
+  @UseGuards(AuthGuard)
   @Post('excerpt')
   async excerpt(@Body() dto: GenerateExcerptDto, @Req() req: Request) {
     const userId = String((req as AuthenticatedRequest).user?.userId || 'unknown')
@@ -46,6 +50,7 @@ export class AiController {
     return ApiResponse.success(data, 'AI 摘要生成成功')
   }
 
+  @UseGuards(AuthGuard)
   @Post('chat')
   async chat(@Body() dto: ArticleChatDto, @Req() req: Request) {
     const userId = String((req as AuthenticatedRequest).user?.userId || 'unknown')
@@ -58,24 +63,46 @@ export class AiController {
     return ApiResponse.success(data, 'AI 助手回复成功')
   }
 
-  @Post('chat/stream')
-  async streamChat(@Body() dto: ArticleChatDto, @Req() req: Request, @Res() response: Response) {
+  @UseGuards(AuthGuard)
+  @Post('chat/stream-session')
+  async createStreamSession(@Body() dto: ArticleChatDto, @Req() req: Request) {
     const userId = String((req as AuthenticatedRequest).user?.userId || 'unknown')
     await this.rateLimitService.assertAllowed('ai:chat:stream', userId, {
       limit: 20,
       windowMs: 60 * 60 * 1000,
     })
 
-    response.setHeader('Content-Type', 'text/plain; charset=utf-8')
-    response.setHeader('Cache-Control', 'no-cache, no-transform')
-    response.setHeader('Connection', 'keep-alive')
-    response.setHeader('X-Accel-Buffering', 'no')
-    response.flushHeaders()
+    const data = this.aiService.createArticleStreamSession(userId, dto)
+    return ApiResponse.success(data, 'AI stream session created')
+  }
 
-    await this.aiService.streamArticleAssistant(dto, (chunk) => {
-      response.write(chunk)
-    })
+  @Sse('chat/stream/:sessionId')
+  streamChat(
+    @Param('sessionId') sessionId: string,
+    @Headers('last-event-id') lastEventId: string | undefined,
+    @Req() req: Request,
+  ): Observable<MessageEvent> {
+    const refreshToken = req.cookies?.refresh_token
+    if (!refreshToken) {
+      throw new UnauthorizedException('未登录')
+    }
 
-    response.end()
+    const payload = this.jwtService.verify(refreshToken, {
+      secret: process.env.JWT_REFRESH_SECRET,
+    }) as { userId?: string }
+    return this.aiService
+      .streamArticleSession(
+        sessionId,
+        String(payload.userId || 'unknown'),
+        lastEventId,
+      )
+      .pipe(
+        map((event): MessageEvent => ({
+          id: event.id,
+          type: event.type,
+          data: event.data,
+          retry: event.retry,
+        })),
+      )
   }
 }

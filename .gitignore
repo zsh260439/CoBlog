@@ -26,5 +26,6 @@ tmp-test/
 tmp/
 **/tmp-test/
 docs/
+MEMORY.md
 tmp-test.mjs
 /cert.pem

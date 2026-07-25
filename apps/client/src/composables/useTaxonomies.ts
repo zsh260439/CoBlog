@@ -1,5 +1,14 @@
 import { computed, ref } from 'vue'
-import { createCategory, createTag, getCategoryList, getTagList } from '@/servers/taxonomy'
+import {
+  createCategory,
+  createTag,
+  deleteCategory,
+  deleteTag,
+  getCategoryList,
+  getTagList,
+  updateCategory,
+  updateTag,
+} from '@/servers/taxonomy'
 import type {
   ArticleCategory,
   ArticleTag,
@@ -48,13 +57,55 @@ export function useTaxonomies() {
 
   const createCategoryItem = async (payload: CreateArticleCategoryPayload) => {
     const result = await createCategory(payload)
-    categories.value = [...categories.value, result.data]
+    await loadTaxonomies(true)
     return result.data
   }
 
   const createTagItem = async (payload: CreateArticleTagPayload) => {
     const result = await createTag(payload)
-    tags.value = [...tags.value, result.data]
+    await loadTaxonomies(true)
+    return result.data
+  }
+
+  const ensureCategoryItem = async (payload: CreateArticleCategoryPayload) => {
+    const currentCategory = categories.value.find((item) => item.label === payload.label || item.slug === payload.slug)
+    if (currentCategory) {
+      return currentCategory
+    }
+
+    return createCategoryItem(payload)
+  }
+
+  const ensureTagItem = async (payload: CreateArticleTagPayload) => {
+    const currentTag = tags.value.find((item) => item.label === payload.label || item.slug === payload.slug)
+    if (currentTag) {
+      return currentTag
+    }
+
+    return createTagItem(payload)
+  }
+
+  const updateCategoryItem = async (slug: string, payload: CreateArticleCategoryPayload) => {
+    const result = await updateCategory(slug, payload)
+    await loadTaxonomies(true)
+    return result.data
+  }
+
+  const updateTagItem = async (slug: string, payload: CreateArticleTagPayload) => {
+    const result = await updateTag(slug, payload)
+    await loadTaxonomies(true)
+    return result.data
+  }
+
+  const deleteCategoryItem = async (slug: string) => {
+    const result = await deleteCategory(slug)
+    await loadTaxonomies(true)
+    return result.data
+  }
+
+  const deleteTagItem = async (slug: string) => {
+    const result = await deleteTag(slug)
+    await loadTaxonomies(true)
     return result.data
   }
 
@@ -66,5 +117,11 @@ export function useTaxonomies() {
     loadTaxonomies,
     createCategoryItem,
     createTagItem,
+    ensureCategoryItem,
+    ensureTagItem,
+    updateCategoryItem,
+    updateTagItem,
+    deleteCategoryItem,
+    deleteTagItem,
   }
 }

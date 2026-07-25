@@ -70,7 +70,7 @@ const handleDelete = async (id: string, title: string) => {
 
     await deleteArticle(id)
     setArticles(articles.value.filter((item) => item._id !== id))
-    await loadTaxonomies()
+    await loadTaxonomies(true)
     ElMessage.success('文章删除成功')
   } catch (error: any) {
     if (error === 'cancel') {
