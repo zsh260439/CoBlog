@@ -21,8 +21,13 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
+          cache-dependency-path: |
+            apps/server/pnpm-lock.yaml
+            apps/client/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/server install --frozen-lockfile
+
+      - run: pnpm --dir apps/client install --frozen-lockfile
 
       - run: pnpm build
         env:
