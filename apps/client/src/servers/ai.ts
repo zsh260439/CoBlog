@@ -38,23 +38,30 @@ export const streamChatWithArticleAi = async (
     const eventSource = new EventSource(`${API_BASE_URL}/ai/article/chat/stream/${sessionId}`, {
       withCredentials: true,
     })
+    let streamFinished = false
 
     eventSource.addEventListener('chunk', (event) => {
       onChunk(event.data)
     })
 
     eventSource.addEventListener('done', () => {
+      streamFinished = true
       eventSource.close()
       resolve()
     })
 
     eventSource.addEventListener('stream_error', (event) => {
+      streamFinished = true
       eventSource.close()
       const message = event instanceof MessageEvent && event.data ? String(event.data) : 'AI stream failed'
       reject(new Error(message))
     })
 
     eventSource.onerror = () => {
+      if (streamFinished) {
+        return
+      }
+
       console.warn('AI SSE connection interrupted; EventSource will retry')
     }
   })
