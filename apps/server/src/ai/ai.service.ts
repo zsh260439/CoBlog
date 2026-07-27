@@ -247,7 +247,8 @@ export class AiService {
     if (session.completed) {
       return new Observable<ArticleStreamEvent>((subscriber) => {
         replayEvents.forEach((event) => subscriber.next(event))
-        subscriber.complete()
+        // 已完成的会话只做事件回放，不主动 complete。
+        // EventSource 看到服务端关闭会按规范自动重连，导致已完成任务反复请求旧 session。
       })
     }
 
@@ -329,7 +330,7 @@ export class AiService {
       await this.streamArticleAssistant(session.dto, (chunk) => {
         this.publishArticleStreamEvent(session, 'chunk', chunk)
       })
-      this.publishArticleStreamEvent(session, 'done', '')
+      this.publishArticleStreamEvent(session, 'done', '[DONE]')
     } catch (error: unknown) {
       this.publishArticleStreamEvent(
         session,
@@ -344,7 +345,6 @@ export class AiService {
           [...this.streamSessions.entries()].find(([, item]) => item === session)?.[0] || '',
         )
       }, this.streamSessionTtlMs)
-      session.stream$.complete()
     }
   }
 
