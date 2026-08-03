@@ -101,16 +101,31 @@ jobs:
             -r apps/server/dist \
             "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/apps/server/"
 
-      - name: Upload client dist
+      - name: Upload client dist (atomic swap)
         shell: bash
         run: |
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
+            -p 22 \
+            "rm -rf '$DEPLOY_ROOT/apps/client/dist-tmp' && mkdir -p '$DEPLOY_ROOT/apps/client'"
+          # 先完整上传到临时目录，再一次性切换，避免 index.html 先于构建产物落盘的 404 窗口
           scp \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_rsa \
             -P 22 \
             -r apps/client/dist \
-            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/apps/client/"
+            "$DEPLOY_USER"@"$DEPLOY_HOST":"$DEPLOY_ROOT/apps/client/dist-tmp"
+          ssh \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_rsa \
+            "$DEPLOY_USER"@"$DEPLOY_HOST" \
+            -p 22 \
+            "rm -rf '$DEPLOY_ROOT/apps/client/dist-old'; mv '$DEPLOY_ROOT/apps/client/dist' '$DEPLOY_ROOT/apps/client/dist-old' 2>/dev/null; mv '$DEPLOY_ROOT/apps/client/dist-tmp' '$DEPLOY_ROOT/apps/client/dist'; rm -rf '$DEPLOY_ROOT/apps/client/dist-old'"
 
       - name: Upload nginx config
         shell: bash
