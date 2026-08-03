@@ -23,18 +23,17 @@ const isAdminShell = computed(() => route.meta.appShell === 'admin')
 const showTechCursor = computed(() => !isAdminShell.value && route.name !== 'home' && route.name !== 'login')
 
 let lastTrackedPath = ''
+let visitHeartbeatTimer: number | undefined
 
-const trackPageVisit = async (path: string, appShell: unknown, routeName: unknown) => {
+const trackPageVisit = async (path: string, appShell: unknown, routeName: unknown, force = false) => {
   if (appShell === 'admin' || routeName === 'login') return
-  if (path === lastTrackedPath) return
+  if (!force && path === lastTrackedPath) return
 
   try {
     await visitorLocationStore.ensureLocation()
-    const res = await trackVisit(path, vistorStore.senderId, location.value)
+    await trackVisit(path, vistorStore.senderId, location.value)
     lastTrackedPath = path
-    if (res.data.counted) {
-      await loadVisitStats(true)
-    }
+    await loadVisitStats(true)
   } catch {
     // 统计失败不影响页面正常浏览
   }
@@ -48,11 +47,20 @@ onMounted(async () => {
   removeAfterEach = router.afterEach(async (to) => {
     await trackPageVisit(to.fullPath, to.meta.appShell, to.name)
   })
+
+  visitHeartbeatTimer = window.setInterval(async () => {
+    if (document.visibilityState !== 'visible') return
+    await trackPageVisit(route.fullPath, route.meta.appShell, route.name, true)
+  }, 60 * 1000)
 })
 
 onBeforeUnmount(() => {
   if (removeAfterEach) {
     removeAfterEach()
+  }
+
+  if (visitHeartbeatTimer) {
+    window.clearInterval(visitHeartbeatTimer)
   }
 })
 </script>

@@ -28,9 +28,9 @@ export class VisitsController {
   @Post('track')
   async track(@Body() dto: TrackVisitDto, @Req() req: Request) {
     const ip = getClientIp(req) || 'unknown'
-    await this.rateLimitService.assertAllowed('visits:track', ip, {
-      limit: 60,
-      windowMs: 60 * 60 * 1000,
+    await this.rateLimitService.assertAllowed('visits:track', `${ip}:${dto.senderId}`, {
+      limit: 120,
+      windowMs: 10 * 60 * 1000,
     })
 
     const data = await this.visitsService.track(dto, ip, req.headers['user-agent'] || '')

@@ -30,7 +30,14 @@ export class VisitsService {
     if (existing) {
       await this.visitModel.updateOne(
         { _id: existing._id },
-        { $set: { lastActiveAt: now } },
+        {
+          $set: {
+            lastActiveAt: now,
+            lastPath: dto.path,
+            userAgent,
+            location: normalizeLocation(dto.location),
+          },
+        },
         { upsert: true }
       )
       return { ok: true, counted: false }
