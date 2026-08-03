@@ -116,7 +116,11 @@ httpInstance.interceptors.request.use(
 // 普通响应拦截器
 // 刷新锁保证同一时间只发起一次 refresh，其余 401 请求进入队列等待新 token。
 let isRefreshing = false
-let requestQueue: Array<(token: string) => void> = []
+let requestQueue: Array<{
+  config: RetryableAxiosRequestConfig
+  resolve: (value: unknown) => void
+  reject: (reason?: unknown) => void
+}> = []
 httpInstance.interceptors.response.use(
   //正常请求不用管
   (res) => {
@@ -133,12 +137,12 @@ httpInstance.interceptors.response.use(
     if (status === 401 && originalRequest && !originalRequest._retry) {
       //场景1:正在刷新token 加入请求队列
       if (isRefreshing) {
-        //把这个请求推入队列
-        return new Promise((resolve) => {
-          requestQueue.push((token: string) => {
-            originalRequest.headers = originalRequest.headers || {}
-            originalRequest.headers.Authorization = `Bearer ${token}`
-            resolve(httpInstance(originalRequest))
+        //把这个请求推入队列，刷新成功用新 token 重放，失败则一并释放
+        return new Promise((resolve, reject) => {
+          requestQueue.push({
+            config: originalRequest,
+            resolve,
+            reject,
           })
         })
       }
@@ -151,18 +155,32 @@ httpInstance.interceptors.response.use(
         const result = await refreshAccessToken()
         const newToken = result.data.accessToken
         localStorage.setItem('local-token', newToken)
-        requestQueue.forEach((callback) => callback(newToken))
+        requestQueue.forEach(({config, resolve}) => {
+          config.headers = config.headers || {}
+          config.headers.Authorization = `Bearer ${newToken}`
+          resolve(httpInstance(config))
+        })
         requestQueue = []
         originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return httpInstance(originalRequest)
       }
-      //refreshToken也过期了
       catch (refreshError) {
-        localStorage.removeItem('local-token')
-        requestQueue = []
-        ElMessage.warning('登录状态失效,请重新登录')
-        window.location.href = '/login'
+        const refreshErrorBody = refreshError as AxiosError<ApiResult<unknown>>
+        const refreshStatus = refreshErrorBody.response?.status
+        //只有刷新接口确认返回401（长token真正失效）才清空登录态
+        if (refreshStatus === 401) {
+          localStorage.removeItem('local-token')
+          requestQueue.forEach(({reject}) => reject(refreshError))
+          requestQueue = []
+          ElMessage.warning('登录状态失效,请重新登录')
+          window.location.href = '/login'
+        } else {
+          //网络、限流或服务端临时错误：保留登录态，释放排队请求，不让页面误跳登录
+          requestQueue.forEach(({reject}) => reject(refreshError))
+          requestQueue = []
+          refreshErrorBody.message = getErrorMessage(refreshErrorBody)
+        }
         return Promise.reject(refreshError)
       } finally {
         //解锁状态

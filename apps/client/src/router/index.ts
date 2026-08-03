@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import type { AxiosError } from 'axios'
+import type { ApiResult } from '@/types/http'
 import { ElMessage } from 'element-plus'
 import HomeView from '@/views/homeView/index.vue'
 import { siteConfig } from '@/config/site'
@@ -189,10 +191,17 @@ router.beforeEach(async (to) => {
     const newToken = result.data.accessToken
     localStorage.setItem('local-token', newToken)
     return true
-  } catch {
-    localStorage.removeItem('local-token')
-    ElMessage.warning('登录状态已过期，请重新登录')
-    return '/login'
+  } catch (refreshError) {
+    const status = (refreshError as AxiosError<ApiResult<unknown>>).response?.status
+    //只有刷新接口确认返回401（长token真正失效）才判定登录失效
+    if (status === 401) {
+      localStorage.removeItem('local-token')
+      ElMessage.warning('登录状态已过期，请重新登录')
+      return '/login'
+    }
+    //网络、限流或服务端临时错误：保留登录态，取消本次导航
+    ElMessage.warning('网络异常，请稍后重试')
+    return false
   }
 })
 

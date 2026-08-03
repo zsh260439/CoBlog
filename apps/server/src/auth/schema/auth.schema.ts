@@ -16,6 +16,12 @@ export class Login {
 
     @Prop({default:''})
     refreshToken:string
+
+    @Prop({default:''})
+    previousRefreshToken:string
+
+    @Prop({default:null})
+    refreshTokenRotatedAt?:Date | null
 }
 
 export type LoginDocument = HydratedDocument<Login>

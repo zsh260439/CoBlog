@@ -5,6 +5,10 @@ import {InjectModel} from '@nestjs/mongoose'
 import {JwtService} from '@nestjs/jwt'
 import {LoginDto} from './dto/login.dto'
 import * as bcrypt from 'bcrypt'
+
+// 旋转宽限期：多标签页并发刷新时，上一代 token 在此时间内仍可换取新 token
+const REFRESH_ROTATION_GRACE_MS = 20 * 60 * 1000
+
 @Injectable()
 export class AuthService {
 constructor(@InjectModel(Login.name)
@@ -57,7 +61,9 @@ private readonly jwtService:JwtService
        const refreshTokenHash = await bcrypt.hash(token.refreshToken,10)
        //4:存储加密令牌
        await this.loginModel.findByIdAndUpdate(user._id,{
-          refreshToken:refreshTokenHash
+          refreshToken:refreshTokenHash,
+          previousRefreshToken:'',
+          refreshTokenRotatedAt:null
        })
        //5:返回给前端 短token 长token 用户信息
        return {
@@ -76,16 +82,24 @@ private readonly jwtService:JwtService
         const user = await this.loginModel.findById(userId)
         //2:如果用户不存在或者没存过长哈希token
         if(!user || !user.refreshToken) throw new UnauthorizedException('RefreshToken无效!')
-        //3:对比逻辑是否匹配
-       const isMatch = await bcrypt.compare(refreshToken,user.refreshToken)
-        if(!isMatch) throw new UnauthorizedException('RefreshToken无效!')
+        //3:当前代 token 匹配，或上一代 token 在旋转宽限期内匹配（兼容多标签页并发刷新）
+        const isCurrentMatch = await bcrypt.compare(refreshToken,user.refreshToken)
+        const rotatedAt = user.refreshTokenRotatedAt?.getTime() ?? 0
+        const isPreviousMatch = Boolean(
+            user.previousRefreshToken &&
+            Date.now() - rotatedAt <= REFRESH_ROTATION_GRACE_MS &&
+            (await bcrypt.compare(refreshToken,user.previousRefreshToken))
+        )
+        if(!isCurrentMatch && !isPreviousMatch) throw new UnauthorizedException('RefreshToken无效!')
         //4:生成新的双token 短+长
         const newToken = await this.generateTokens(user)
         //5:加密长token
         const refreshTokenHash = await bcrypt.hash(newToken.refreshToken,10)
-        //6:更新数据库
+        //6:旋转令牌：上一代始终指向“本次刷新前的当前 token”，并发刷新时各标签页最多相差一代
         await this.loginModel.findByIdAndUpdate(user._id,{
-            refreshToken:refreshTokenHash
+            refreshToken:refreshTokenHash,
+            previousRefreshToken:user.refreshToken,
+            refreshTokenRotatedAt:new Date()
         })
         //7:返回新的长短token
         return {
@@ -96,7 +110,9 @@ private readonly jwtService:JwtService
     //登出
     async logout(userId:string){
         await this.loginModel.findByIdAndUpdate(userId,{
-            refreshToken:''
+            refreshToken:'',
+            previousRefreshToken:'',
+            refreshTokenRotatedAt:null
         })
         return {success:true}
     }

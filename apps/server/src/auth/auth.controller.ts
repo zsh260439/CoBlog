@@ -68,7 +68,8 @@ export class AuthController {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      // 与 JWT 长 token 的 1 天有效期保持一致，避免 cookie 还在但 token 已过期
+      maxAge: 24 * 60 * 60 * 1000,
     })
 
     return ApiResponse.success(
