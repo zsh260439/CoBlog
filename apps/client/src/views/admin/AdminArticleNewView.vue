@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, toRaw, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, toRaw, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
@@ -66,6 +66,10 @@ const selectedCategory = computed(() => {
 
 // 判断当前页面是否处于编辑文章模式
 const isEditMode = computed(() => String(route.params.id || '').length > 0)
+// 编辑模式草稿按文章 id 分槽，避免与新建文章草稿互相覆盖
+const editDraftKey = computed(() => (isEditMode.value ? `edit:${String(route.params.id)}` : undefined))
+// 初始回填完成后才启用自动保存，避免打开页面就存一份镜像草稿
+let draftAutosaveReady = false
 
 // 已选标签必须优先展示，否则 AI 新标签写进 form 后会“看不见”。
 const suggestedTags = computed(() => {
@@ -163,7 +167,7 @@ const saveDraft = () => {
   saveArticleDraft({
     ...rawForm,
     tags: [...rawForm.tags],
-  })
+  }, editDraftKey.value)
   ElMessage.success('草稿已保存')
 }
 //创建防抖
@@ -407,6 +411,7 @@ const publishArticle = async () => {
         articles.value.map((item) => (item._id === result.data._id ? result.data : item))
       )
       await loadTaxonomies(true)
+      clearArticleDraft(editDraftKey.value)
       ElMessage.success('文章更新成功')
     } else {
       const result = await createArticle(payload)
@@ -435,10 +440,10 @@ watch(
   }
 )
 
-//监视草稿 防抖自动保存避免退出
+//监视草稿 防抖自动保存避免退出（新建与编辑模式都生效）
 watch(form ,
 () => {
-  if(isEditMode.value) return
+  if(!draftAutosaveReady) return
   if(!form.title.trim() && !form.content.trim()) return
   debouncedSaveDraft()
 }, {
@@ -464,26 +469,40 @@ onMounted(async () => {
         content: result.data.content,
       })
       slugTouched.value = true
+      // 编辑模式也恢复本地草稿：存在则以草稿为准，继续上次未提交的修改
+      const cachedDraft = getArticleDraft(editDraftKey.value)
+      if (cachedDraft) {
+        Object.assign(form, {
+          ...createDefaultForm(),
+          ...cachedDraft,
+          tags: cachedDraft.tags,
+        })
+        slugTouched.value = true
+      }
     } catch (error: any) {
       submitError.value = error?.response?.data?.message || '文章加载失败'
     } finally {
       pageLoading.value = false
     }
 
+    // 等初始回填引起的 watch 先跑完，避免打开页面就自动存一次
+    await nextTick()
+    draftAutosaveReady = true
     return
   }
 
   const cachedDraft = getArticleDraft()
-  if (!cachedDraft) {
-    return
+  if (cachedDraft) {
+    Object.assign(form, {
+      ...createDefaultForm(),
+      ...cachedDraft,
+      tags: cachedDraft.tags,
+    })
+    slugTouched.value = Boolean(cachedDraft.slug)
   }
 
-  Object.assign(form, {
-    ...createDefaultForm(),
-    ...cachedDraft,
-    tags: cachedDraft.tags,
-  })
-  slugTouched.value = Boolean(cachedDraft.slug)
+  await nextTick()
+  draftAutosaveReady = true
 })
 </script>
 <template>
