@@ -9,6 +9,12 @@ export const ensureMarkdownConfigured = () => {
   }
 
   mdEditorConfig({
+    // 自托管 mermaid 运行时，避免依赖 unpkg CDN 导致流程图偶尔加载失败
+    editorExtensions: {
+      mermaid: {
+        js: '/vendor/mermaid.min.js',
+      },
+    },
     katexConfig(baseConfig) {
       return {
         ...baseConfig,
