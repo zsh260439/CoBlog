@@ -296,6 +296,18 @@ export class AiService {
     const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader()
     let buffer = ''
 
+    const handleLine = (line: string) => {
+      if (!line.startsWith('data: ')) return false
+
+      const payload = line.slice(6).trim()
+      if (payload === '[DONE]') return true
+
+      const json = JSON.parse(payload)
+      const content = json.choices?.[0]?.delta?.content || ''
+      if (content) onChunk(content)
+      return false
+    }
+
     while (true) {
       const { value, done } = await reader.read()
       if (done) break
@@ -305,18 +317,13 @@ export class AiService {
       buffer = lines.pop() || ''
 
       for (const line of lines) {
-        if (!line.startsWith('data: ')) continue
-
-        const payload = line.slice(6).trim()
-        if (payload === '[DONE]') return
-
-        const json = JSON.parse(payload)
-        const content = json.choices?.[0]?.delta?.content || ''
-        if (content) {
-          onChunk(content)
-        }
+        if (handleLine(line)) return
       }
     }
+
+    // 上游可能在最后一条 SSE 数据后直接结束响应，没有补换行。
+    // 这里处理残留缓冲，避免尾部 token 被静默丢弃。
+    if (buffer && handleLine(buffer)) return
   }
 
   private async runArticleStreamSession(session: ArticleStreamSession) {

@@ -13,6 +13,7 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
 })
 
 const listRef = ref<HTMLElement | null>(null)
+const isSelectingHeading = ref(false)
 const prefersReducedMotion = typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -91,11 +92,20 @@ const scrollToHeading = (id: string) => {
   const offset = 110
   const top = window.scrollY + element.getBoundingClientRect().top - offset
 
+  isSelectingHeading.value = true
   window.scrollTo({ top, behavior: 'smooth' })
   window.history.replaceState(null, '', `#${id}`)
+
+  window.setTimeout(() => {
+    isSelectingHeading.value = false
+  }, 700)
 }
 
 const syncActiveItemIntoView = () => {
+  if (isSelectingHeading.value) {
+    return
+  }
+
   const container = listRef.value
   const activeItem = container?.querySelector<HTMLElement>('.article-toc__item.active')
 
@@ -103,22 +113,17 @@ const syncActiveItemIntoView = () => {
     return
   }
 
-  const itemTop = activeItem.offsetTop
-  const itemBottom = itemTop + activeItem.offsetHeight
-  const visibleTop = container.scrollTop
-  const visibleBottom = visibleTop + container.clientHeight
+  const containerRect = container.getBoundingClientRect()
+  const itemRect = activeItem.getBoundingClientRect()
   const padding = 8
 
-  if (itemTop < visibleTop + padding) {
-    container.scrollTo({ top: Math.max(itemTop - padding, 0), behavior: 'smooth' })
+  if (itemRect.top < containerRect.top + padding) {
+    container.scrollBy({ top: itemRect.top - containerRect.top - padding, behavior: 'auto' })
     return
   }
 
-  if (itemBottom > visibleBottom - padding) {
-    container.scrollTo({
-      top: itemBottom - container.clientHeight + padding,
-      behavior: 'smooth',
-    })
+  if (itemRect.bottom > containerRect.bottom - padding) {
+    container.scrollBy({ top: itemRect.bottom - containerRect.bottom + padding, behavior: 'auto' })
   }
 }
 
