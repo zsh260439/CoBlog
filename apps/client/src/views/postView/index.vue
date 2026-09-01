@@ -143,6 +143,10 @@ watch([y, tocItems], () => {
 
       <section class="article-shell page-content-reveal">
         <div class="article-main">
+          <div class="article-mobile-toc">
+            <ArticleToc :items="tocItems" :active-id="activeHeadingId" />
+          </div>
+
           <article class="article-card article-card--content">
             <div class="article-excerpt">
               <span class="article-excerpt__icon">▣</span>
@@ -380,6 +384,10 @@ watch([y, tocItems], () => {
   padding-top: 0;
 }
 
+.article-mobile-toc {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .article-shell {
     grid-template-columns: 1fr;
@@ -485,6 +493,11 @@ watch([y, tocItems], () => {
     display: none;
   }
 
+  .article-mobile-toc {
+    display: block;
+    margin: 0 0 0.85rem;
+  }
+
   .article-card--nav,
   .article-card--related {
     padding-top: 1rem;
@@ -499,4 +512,5 @@ watch([y, tocItems], () => {
     grid-template-columns: 1fr;
   }
 }
+
 </style>

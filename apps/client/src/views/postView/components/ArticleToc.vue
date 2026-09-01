@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
 
 const listRef = ref<HTMLElement | null>(null)
 const isSelectingHeading = ref(false)
+const expandedIds = ref(new Set<string>())
 const prefersReducedMotion = typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -81,20 +82,46 @@ const activeRootId = computed(() => {
 })
 
 const isInActivePath = (id: string) => activePath.value.includes(id)
+const isExpanded = (id: string) => expandedIds.value.has(id) || isInActivePath(id)
 
-const scrollToHeading = (id: string) => {
+const expandPathTo = (id: string) => {
+  const next = new Set(expandedIds.value)
+  const addAncestors = (nodes: TocNode[], parents: string[]): boolean => {
+    for (const node of nodes) {
+      if (node.id === id) {
+        parents.forEach((parentId) => next.add(parentId))
+        next.add(node.id)
+        return true
+      }
+
+      if (addAncestors(node.children, [...parents, node.id])) {
+        return true
+      }
+    }
+    return false
+  }
+
+  addAncestors(tree.value, [])
+  expandedIds.value = next
+}
+
+const scrollToHeading = async (id: string) => {
   const element = document.getElementById(id)
 
   if (!element) {
     return
   }
 
+  expandPathTo(id)
   const offset = 110
-  const top = window.scrollY + element.getBoundingClientRect().top - offset
 
   isSelectingHeading.value = true
-  window.scrollTo({ top, behavior: 'smooth' })
   window.history.replaceState(null, '', `#${id}`)
+
+  // 先让目录展开完成，再读取标题位置，避免展开动画改变正文定位结果。
+  await nextTick()
+  const top = window.scrollY + element.getBoundingClientRect().top - offset
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
 
   window.setTimeout(() => {
     isSelectingHeading.value = false
@@ -107,7 +134,9 @@ const syncActiveItemIntoView = () => {
   }
 
   const container = listRef.value
-  const activeItem = container?.querySelector<HTMLElement>('.article-toc__item.active')
+  const activeItem = Array.from(
+    container?.querySelectorAll<HTMLElement>('.article-toc__item.active') || [],
+  ).find((item) => item.dataset.tocId === props.activeId)
 
   if (!container || !activeItem) {
     return
@@ -240,12 +269,13 @@ watch(
             <button
               type="button"
               class="article-toc__item article-toc__item--root"
+              :data-toc-id="root.id"
               :class="{
                 active: isInActivePath(root.id),
                 [`level-${root.level}`]: true,
               }"
               :title="root.text"
-              @click="scrollToHeading(root.id)"
+                @click.prevent="scrollToHeading(root.id)"
             >
               <span class="article-toc__text">{{ root.text }}</span>
             </button>
@@ -259,19 +289,20 @@ watch(
               @after-leave="handleBranchAfterLeave"
             >
               <ul
-                v-if="root.children.length && isInActivePath(root.id)"
+                v-if="root.children.length && isExpanded(root.id)"
                 class="article-toc__children"
               >
                 <li v-for="child in root.children" :key="child.id" class="article-toc__child">
                   <button
                     type="button"
                     class="article-toc__item"
+                    :data-toc-id="child.id"
                     :class="{
                       active: isInActivePath(child.id),
                       [`level-${child.level}`]: true,
                     }"
                     :title="child.text"
-                    @click="scrollToHeading(child.id)"
+                    @click.prevent="scrollToHeading(child.id)"
                   >
                     <span class="article-toc__text">{{ child.text }}</span>
                   </button>
@@ -285,19 +316,20 @@ watch(
                     @after-leave="handleBranchAfterLeave"
                   >
                     <ul
-                      v-if="child.children.length && isInActivePath(child.id)"
+                      v-if="child.children.length && isExpanded(child.id)"
                       class="article-toc__children article-toc__children--nested"
                     >
                       <li v-for="grandchild in child.children" :key="grandchild.id" class="article-toc__child">
                         <button
                           type="button"
                           class="article-toc__item"
+                          :data-toc-id="grandchild.id"
                           :class="{
                             active: isInActivePath(grandchild.id),
                             [`level-${grandchild.level}`]: true,
                           }"
                           :title="grandchild.text"
-                          @click="scrollToHeading(grandchild.id)"
+                          @click.prevent="scrollToHeading(grandchild.id)"
                         >
                           <span class="article-toc__text">{{ grandchild.text }}</span>
                         </button>
