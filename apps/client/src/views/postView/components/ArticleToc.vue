@@ -100,12 +100,16 @@ const isInActivePath = (id: string) => activePath.value.includes(id)
 const isExpanded = (id: string) => expandedIds.value.has(id) || (!isMobileViewport.value && isInActivePath(id))
 
 watch(activePath, (path) => {
+  if (isMobileViewport.value) {
+    return
+  }
+
   // 只保留当前标题路径，切换章节时收起之前打开的分支。
   expandedIds.value = new Set(path)
 })
 
 const expandPathTo = (id: string) => {
-  const next = new Set(expandedIds.value)
+  const next = new Set(isMobileViewport.value ? [] : expandedIds.value)
   const addAncestors = (nodes: TocNode[], parents: string[]): boolean => {
     for (const node of nodes) {
       if (node.id === id) {
@@ -149,7 +153,7 @@ const scrollToHeading = async (id: string) => {
 }
 
 const syncActiveItemIntoView = () => {
-  if (isSelectingHeading.value) {
+  if (isSelectingHeading.value || isMobileViewport.value) {
     return
   }
 
@@ -260,6 +264,42 @@ const handleBranchAfterLeave = (element: Element) => {
   clearBranchAnimation(element)
 }
 
+const handleBeforeEnter = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchBeforeEnter(element)
+  }
+}
+
+const handleEnter = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchEnter(element)
+  }
+}
+
+const handleAfterEnter = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchAfterEnter(element)
+  }
+}
+
+const handleBeforeLeave = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchBeforeLeave(element)
+  }
+}
+
+const handleLeave = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchLeave(element)
+  }
+}
+
+const handleAfterLeave = (element: Element) => {
+  if (!isMobileViewport.value) {
+    handleBranchAfterLeave(element)
+  }
+}
+
 watch(
   () => [props.activeId, tree.value.length, activeRootId.value],
   async () => {
@@ -301,12 +341,12 @@ watch(
             </button>
 
             <Transition
-              @before-enter="handleBranchBeforeEnter"
-              @enter="handleBranchEnter"
-              @after-enter="handleBranchAfterEnter"
-              @before-leave="handleBranchBeforeLeave"
-              @leave="handleBranchLeave"
-              @after-leave="handleBranchAfterLeave"
+              @before-enter="handleBeforeEnter"
+              @enter="handleEnter"
+              @after-enter="handleAfterEnter"
+              @before-leave="handleBeforeLeave"
+              @leave="handleLeave"
+              @after-leave="handleAfterLeave"
             >
               <ul
                 v-if="root.children.length && isExpanded(root.id)"
@@ -328,12 +368,12 @@ watch(
                   </button>
 
                   <Transition
-                    @before-enter="handleBranchBeforeEnter"
-                    @enter="handleBranchEnter"
-                    @after-enter="handleBranchAfterEnter"
-                    @before-leave="handleBranchBeforeLeave"
-                    @leave="handleBranchLeave"
-                    @after-leave="handleBranchAfterLeave"
+                    @before-enter="handleBeforeEnter"
+                    @enter="handleEnter"
+                    @after-enter="handleAfterEnter"
+                    @before-leave="handleBeforeLeave"
+                    @leave="handleLeave"
+                    @after-leave="handleAfterLeave"
                   >
                     <ul
                       v-if="child.children.length && isExpanded(child.id)"
