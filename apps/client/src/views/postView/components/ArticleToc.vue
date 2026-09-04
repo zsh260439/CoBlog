@@ -96,8 +96,13 @@ const activeRootId = computed(() => {
 })
 
 const isInActivePath = (id: string) => activePath.value.includes(id)
-// 移动端滚动时只更新高亮，不改变目录展开状态，避免布局变化和滚动监听互相触发。
+// 移动端不依赖 activePath 自动展开，避免滚动和目录布局互相触发。
 const isExpanded = (id: string) => expandedIds.value.has(id) || (!isMobileViewport.value && isInActivePath(id))
+
+watch(activePath, (path) => {
+  // 只保留当前标题路径，切换章节时收起之前打开的分支。
+  expandedIds.value = new Set(path)
+})
 
 const expandPathTo = (id: string) => {
   const next = new Set(expandedIds.value)
