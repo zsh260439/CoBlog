@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Document } from '@element-plus/icons-vue'
 import type { ArticleTocProps } from '@/types/article'
 import type { MarkdownHeading } from '@/types/content'
@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<ArticleTocProps>(), {
 const listRef = ref<HTMLElement | null>(null)
 const isSelectingHeading = ref(false)
 const expandedIds = ref(new Set<string>())
+const isMobileViewport = ref(false)
 const prefersReducedMotion = typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -46,6 +47,19 @@ const buildHeadingTree = (items: MarkdownHeading[]) => {
 }
 
 const tree = computed(() => buildHeadingTree(props.items))
+
+const updateViewportMode = () => {
+  isMobileViewport.value = window.matchMedia('(max-width: 767px)').matches
+}
+
+onMounted(() => {
+  updateViewportMode()
+  window.addEventListener('resize', updateViewportMode)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewportMode)
+})
 
 const activePath = computed(() => {
   const path: string[] = []
@@ -82,7 +96,8 @@ const activeRootId = computed(() => {
 })
 
 const isInActivePath = (id: string) => activePath.value.includes(id)
-const isExpanded = (id: string) => expandedIds.value.has(id) || isInActivePath(id)
+// 移动端滚动时只更新高亮，不改变目录展开状态，避免布局变化和滚动监听互相触发。
+const isExpanded = (id: string) => expandedIds.value.has(id) || (!isMobileViewport.value && isInActivePath(id))
 
 const expandPathTo = (id: string) => {
   const next = new Set(expandedIds.value)
